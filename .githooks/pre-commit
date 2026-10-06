@@ -1,0 +1,16 @@
+#!/bin/sh
+# 커밋 단계에서 시크릿/개인정보 스캔. CI(.gitlab-ci.yml)와 동일한 정규식을 사용한다.
+#
+# 설치 (프로젝트 루트에서 1회):
+#   git config core.hooksPath .githooks
+#
+# 스테이징된 파일에 비밀번호/토큰/API 키 형태의 값이 있으면 커밋을 차단한다.
+echo "🔒 pre-commit: 시크릿 스캔 실행..."
+
+go run . secret-scan || {
+  echo
+  echo "❌ 커밋 차단: 스테이징된 파일에 credential 형태의 값이 있습니다."
+  echo "   - 토큰/키는 환경변수(AI_CONFIG_SERVER_*) 또는 kube/secret.yaml(ignored)로 관리하세요."
+  echo "   - 샘플 값은 kube/secret.example.yaml, *.example.* 명명 규칙을 사용하세요."
+  exit 1
+}

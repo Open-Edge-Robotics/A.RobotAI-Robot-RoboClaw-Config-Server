@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-config-server
+  namespace: ai-config
+  labels:
+    app: ai-config-server
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: ai-config-server
+  template:
+    metadata:
+      labels:
+        app: ai-config-server
+    spec:
+      securityContext:
+        fsGroup: 1000
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: ai-config-server
+          image: lgecloudroboticstask/ai-config-server:latest
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: GIN_MODE
+              value: release
+            - name: AI_CONFIG_SERVER_DATABASE_PATH
+              value: /app/data/ai-config-server.db
+            - name: AI_CONFIG_SERVER_SECURITY_ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ai-config-server-secret
+                  key: admin_token
+            - name: AI_CONFIG_SERVER_SECURITY_DEVICE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ai-config-server-secret
+                  key: device_token
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+          path: /ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+          path: /ready
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config.yaml
+              subPath: config.yaml
+            - name: db-volume
+              mountPath: /app/data
+            - name: timezone-volume
+              mountPath: /etc/localtime
+              readOnly: true
+      volumes:
+        - name: config-volume
+          configMap:
+            name: ai-config-server-config
+        - name: db-volume
+          persistentVolumeClaim:
+            claimName: ai-config-server-db-pvc
+        - name: timezone-volume
+          hostPath:
+            path: /etc/localtime
+            type: File

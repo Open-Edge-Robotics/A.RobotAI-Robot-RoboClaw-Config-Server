@@ -1,0 +1,34 @@
+# Git
+.git
+.gitmodules
+.gitignore
+
+# Go Build & DB Cache
+ai-config-server
+aics
+ai-config-server.db
+ai-config-server.db-journal
+ai-config-server.db-shm
+ai-config-server.db-wal
+*.log
+*.exe
+
+# Flutter Local & Build Caches
+frontend/build/
+frontend/.dart_tool/
+frontend/.packages
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+
+# Test artifacts
+frontend/coverage/
+coverage.out
+
+# IDE Caches
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp

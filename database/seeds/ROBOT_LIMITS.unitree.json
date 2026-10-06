@@ -1,0 +1,31 @@
+{
+  "robot_type": "former",
+  "operating_area": {
+    "map": "w2_2f",
+    "frame_id": "map",
+    "note": "W2 건물 2층 지도 범위 안에서만 운용합니다. 범위 밖 목적지는 거부합니다."
+  },
+  "navigation": {
+    "max_relative_distance_m": 5.0,
+    "max_rotation_deg": 180.0
+  },
+  "manipulation": {
+    "enabled": false,
+    "note": "Former는 팔/그리퍼가 없는 주행·관측 전용 로봇입니다. 조작(manipulation) 스킬과 stretch 전용 모드 전환 스킬은 사용할 수 없습니다."
+  },
+  "sensors": {
+    "lidar": true,
+    "camera": true,
+    "pan_tilt": false,
+    "note": "팬틸트가 없어 주변을 살필 때는 제자리 회전(describe_surroundings)을 사용합니다."
+  },
+  "battery": {
+    "low_threshold_pct": 15,
+    "critical_threshold_pct": 8,
+    "note": "low 이하에서는 비필수 작업을 보류하고 충전을 요청합니다. 자동 도킹/충전 스킬은 없습니다."
+  },
+  "peer_delegation": {
+    "enabled": true,
+    "note": "Former가 못 하는 작업(특히 조작)은 동료 로봇에 위임합니다: list_peer_robots → delegate_task/coordinate_peer_task."
+  }
+}

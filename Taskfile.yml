@@ -1,0 +1,231 @@
+# ai-config-server Taskfile
+# 사용법: task <대상명>
+# task 설치: https://taskfile.dev/installation/
+#   - macOS:  brew install go-task/tap/go-task
+#   - Linux:   sh -c "$(curl --location https://taskfile.dev/install.sh)"
+#   - Windows: scoop install task
+
+version: "3"
+
+vars:
+  BINARY: aics
+  DOCKER_IMAGE: ai-config-server:latest
+  DOCKER_NAME: ai-config-server
+
+tasks:
+  default:
+    desc: 도움말 출력
+    cmds:
+      - task --list
+
+  deps:
+    desc: Go 및 Flutter 의존성 패키지 다운로드
+    cmds:
+      - go mod download
+      - task: flutter-pub-get
+
+  flutter-pub-get:
+    internal: true
+    dir: frontend
+    cmds:
+      - flutter pub get
+
+  build-web:
+    desc: Flutter Web 대시보드 클라이언트 빌드 (--base-href /web/)
+    dir: frontend
+    cmds:
+      - flutter build web --base-href "/web/" --release
+
+  build-server:
+    desc: Go Gin 백엔드 서버 컴파일 및 바이너리 빌드 (SQLite CGO 사용)
+    cmds:
+      - go build -o {{.BINARY}} .
+
+  build:
+    desc: 웹 클라이언트 빌드 후 백엔드 빌드 순차 실행
+    deps: [build-web, build-server]
+    cmds:
+      - echo "==> 전체 빌드 완료! ./{{.BINARY}} serve 명령으로 실행할 수 있습니다."
+
+  run:
+    desc: 컴파일된 Go 백엔드 서버 실행
+    cmds:
+      - ./{{.BINARY}} serve
+
+  fmt:
+    desc: Go 및 Dart 소스 코드 포맷팅
+    cmds:
+      - gofmt -w cmd/ config/ database/ handler/ internal/ main.go
+      - task: dart-format
+
+  dart-format:
+    internal: true
+    dir: frontend
+    cmds:
+      - dart format lib test
+
+  fmt-check:
+    desc: 포맷 위반 여부 검사 (파일을 수정하지 않음)
+    cmds:
+      - gofmt -l cmd/ config/ database/ handler/ internal/ main.go
+      - task: dart-format-check
+
+  dart-format-check:
+    internal: true
+    dir: frontend
+    cmds:
+      - dart format --output=none --set-exit-if-changed lib test
+
+  vet:
+    desc: Go 정적 분석 (go vet) 실행
+    cmds:
+      - go vet ./...
+
+  test:
+    desc: 백엔드 Go 단위 테스트 실행
+    cmds:
+      - go test ./...
+
+  test:race:
+    desc: 경쟁 상태 탐지(-race) 포함 테스트
+    cmds:
+      - go test -race ./...
+
+  test:coverage:
+    desc: 백엔드 테스트 커버리지 리포트
+    cmds:
+      - go test ./... -coverprofile=coverage.out
+      - go tool cover -func=coverage.out
+      - rm -f coverage.out
+
+  test:frontend:
+    desc: 프론트엔드 정적 분석 + 단위 테스트 (순차)
+    cmds:
+      - task: analyze
+      - task: flutter-test
+
+  test:coverage:frontend:
+    desc: 프론트엔드 테스트 커버리지(lcov)
+    dir: frontend
+    cmds:
+      - flutter test --coverage
+
+  test:all:
+    desc: 백엔드 + 프론트엔드 전체 테스트 (단위/경쟁/커버리지/분석)
+    deps: [test, test:race, test:coverage, test:frontend]
+
+  analyze:
+    desc: Flutter 정적 분석 (flutter analyze) 실행
+    dir: frontend
+    cmds:
+      - flutter analyze
+
+  flutter-test:
+    desc: Flutter 단위 테스트 실행
+    dir: frontend
+    cmds:
+      - flutter test
+
+  frontend-contract:
+    desc: Generated runtime contract와 Flutter serialization 검증
+    dir: frontend
+    cmds:
+      - flutter test test/runtime_config_contract_test.dart test/runtime_config_validator_test.dart
+      - dart format --output=none --set-exit-if-changed lib/models/runtime_config_contract.g.dart
+
+  secret-scan:
+    desc: Git 추적 파일의 시크릿/개인정보 패턴 검사
+    cmds:
+      - go run . secret-scan
+
+  schema-check:
+    desc: RoboClaw canonical runtime schema checksum 검증
+    cmds:
+      - go run . contract check --schema-only
+
+  contract-check:
+    desc: Vendored common runtime contract checksum 검증
+    cmds:
+      - go run . contract check
+
+  contract-update:
+    desc: GitLab contract release 갱신 (VERSION 또는 BUNDLE 지정)
+    vars:
+      BUNDLE: ""
+      VERSION: ""
+    cmds:
+      - sh -c 'if [ -n "{{.BUNDLE}}" ]; then go run . contract update --from "{{.BUNDLE}}"; elif [ -n "{{.VERSION}}" ]; then go run . contract update --version "{{.VERSION}}"; else echo "VERSION 또는 BUNDLE을 지정하세요" >&2; exit 1; fi'
+      - task: contract-check
+      - task: frontend-contract
+
+  contract-generate:
+    desc: Vendored common runtime contract에서 Flutter artifact 생성
+    cmds:
+      - go run . contract generate
+
+  check:
+    desc: 커밋/푸시 전 전체 검증 (순차 실행)
+    cmds:
+      - task: secret-scan
+      - task: schema-check
+      - task: contract-check
+      - task: fmt-check
+      - task: vet
+      - task: test
+      - task: analyze
+      - task: flutter-test
+      - task: frontend-contract
+      - echo "==> 전체 검증 완료!"
+
+  ci:
+    desc: CI 파이프라인 (시크릿/포맷/분석/테스트/빌드 순차 실행)
+    cmds:
+      - task: secret-scan
+      - task: schema-check
+      - task: contract-check
+      - task: fmt-check
+      - task: vet
+      - task: test
+      - task: analyze
+      - task: flutter-test
+      - task: frontend-contract
+      - task: build-server
+      - task: build-web
+      - echo "==> CI 완료!"
+
+  clean:
+    desc: 빌드 바이너리 및 프론트엔드 빌드 캐시 청소
+    cmds:
+      - rm -f {{.BINARY}}
+      - rm -rf frontend/build/
+      - rm -rf frontend/.dart_tool/
+      - echo "==> 정리 완료."
+
+  docker-build:
+    desc: 통합 Docker 이미지 빌드
+    cmds:
+      - docker build -t {{.DOCKER_IMAGE}} .
+
+  docker-run:
+    desc: SQLite 데이터 영속성을 위한 볼륨이 바인딩된 컨테이너 가동
+    cmds:
+      - mkdir -p {{.ROOT_DIR}}/data
+      - docker run -d -p 8080:8080 -v {{.ROOT_DIR}}/data:/app/data --name {{.DOCKER_NAME}} {{.DOCKER_IMAGE}}
+      - echo "==> 컨테이너가 백그라운드에서 구동을 시작했습니다."
+
+  docker-stop:
+    desc: 가동 중인 Docker 컨테이너 정지 및 자원 삭제
+    cmds:
+      - docker stop {{.DOCKER_NAME}} || true
+      - docker rm {{.DOCKER_NAME}} || true
+      - echo "==> 완료."
+
+  docker-logs:
+    desc: 컨테이너 로그 실시간 확인 (Ctrl+C 로 종료)
+    cmds:
+      - docker logs -f {{.DOCKER_NAME}}
+
+  docker-ps:
+    desc: 컨테이너 실행 상태 확인
+    cmds:
+      - docker ps --filter name={{.DOCKER_NAME}}

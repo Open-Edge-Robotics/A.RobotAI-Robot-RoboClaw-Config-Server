@@ -1,0 +1,43 @@
+{
+  "robot_type": "stretch3",
+  "operating_area": {
+    "map": "w2_2f",
+    "frame_id": "map",
+    "note": "W2 건물 2층 지도 범위 안에서만 운용합니다. 범위 밖 목적지는 거부합니다."
+  },
+  "navigation": {
+    "max_relative_distance_m": 5.0,
+    "max_rotation_deg": 180.0,
+    "note": "주행(베이스 이동) 전에는 팔을 접어야 합니다. 시스템이 베이스 이동 스킬 직전에 stow_for_navigation을 자동 삽입합니다. 팔이 펴진 채 주행하는 계획은 세우지 않습니다."
+  },
+  "manipulation": {
+    "enabled": true,
+    "arm_side": "right",
+    "note": "Stretch3는 신축형 팔+그리퍼로 물체를 집고 내려놓을 수 있습니다. 팔이 몸통 오른쪽에 있어 정면 물체는 베이스를 약 90도 회전해 정렬합니다(고수준 pick 스킬이 자동 처리). 조작 전에는 position 모드가 필요합니다.",
+    "high_level_pick_skills": ["adaptive_pick_object", "pick_front_object", "vla_pick_front_object", "vla_pick_gripper_object"],
+    "low_level_arm_skills": ["arm_pose", "move_joints", "move_pose"],
+    "gripper_skills": ["open_gripper", "close_gripper"]
+  },
+  "control_modes": {
+    "navigation_mode": "주행(Nav2/베이스) 전용",
+    "position_mode": "팔/그리퍼 제어 전용",
+    "note": "stow_for_navigation / stretch_navigation_mode / stretch_position_mode / switch_stretch_mode 로 전환합니다."
+  },
+  "sensors": {
+    "lidar": true,
+    "camera": true,
+    "head_camera": true,
+    "gripper_camera": true,
+    "pan_tilt": true,
+    "note": "팬틸트 헤드 카메라가 있어 베이스를 돌리지 않고 head_pan_tilt로 시선을 옮길 수 있습니다. 그리퍼 카메라는 근접 파지 정렬(observe_gripper_target/servo_gripper_to_object)에 사용합니다."
+  },
+  "battery": {
+    "low_threshold_pct": 15,
+    "critical_threshold_pct": 8,
+    "note": "low 이하에서는 비필수 작업을 보류하고 충전을 요청합니다."
+  },
+  "peer_delegation": {
+    "enabled": true,
+    "note": "Stretch3는 조작을 위임받아 수행할 수 있습니다. 반대로 장거리 순찰 등 스스로 하기 어려운 작업은 동료 로봇에 위임합니다: list_peer_robots → delegate_task/coordinate_peer_task."
+  }
+}
