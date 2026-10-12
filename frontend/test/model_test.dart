@@ -3,6 +3,33 @@ import 'package:frontend/models/config_model.dart';
 import 'package:frontend/models/scenario_model.dart';
 
 void main() {
+  test('RoboClawConfig cleanup demo allowlist를 API JSON에서 보존한다', () {
+    final config = RoboClawConfig.fromJson({
+      'name': 'cloid-one',
+      'robot_name': 'cloid',
+      'environment': 'cloi01',
+      'cloid_cleanup_demo_enabled': false,
+      'cloid_cleanup_demo_motion_ids_json': '[22,60]',
+    });
+
+    expect(config.toJson()['cloid_cleanup_demo_enabled'], isFalse);
+    expect(config.toJson()['cloid_cleanup_demo_motion_ids_json'], '[22,60]');
+  });
+
+  test(
+    'cleanup demo defaults match the contract and CLOi profile fallback',
+    () {
+      final config = RoboClawConfig.fromJson({
+        'name': 'default',
+        'robot_name': 'cloid',
+        'environment': 'cloi01',
+      });
+
+      expect(config.cloidCleanupDemoEnabled, isTrue);
+      expect(config.cloidCleanupDemoMotionIdsJson, '');
+    },
+  );
+
   test('RoboClawConfig JSON 직렬화 값을 보존한다', () {
     final config = RoboClawConfig(
       id: 10,

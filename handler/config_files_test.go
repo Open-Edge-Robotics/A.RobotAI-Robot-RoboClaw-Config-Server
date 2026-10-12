@@ -74,6 +74,28 @@ func TestGeneratedEnvEscapesNewlines(t *testing.T) {
 
 // TestGeneratedEnvIncludesDashboardNode 는 .env에 Dashboard 노드 환경변수가
 // 포함되는지 검증한다. (RC_DASHBOARD_HOST / RC_DASHBOARD_PORT)
+func TestGeneratedEnvIncludesCLOiCleanupDemoMotionIDs(t *testing.T) {
+	cfg := &models.RoboClawConfig{
+		CloidCleanupDemoEnabled:       boolPtr(true),
+		CloidCleanupDemoMotionIDsJson: "[22,60]",
+	}
+
+	content := string(generateEnvContent(cfg))
+	if !strings.Contains(content, `RC_CLOID_CLEANUP_DEMO_ENABLED=true`) {
+		t.Fatalf("expected CLOi cleanup-demo enable switch in generated dotenv, got %q", content)
+	}
+	if !strings.Contains(content, `RC_CLOID_CLEANUP_DEMO_MOTION_IDS_JSON=[22,60]`) {
+		t.Fatalf("expected CLOi cleanup-demo allowlist in generated dotenv, got %q", content)
+	}
+}
+
+func TestGeneratedEnvDefaultsCleanupDemoEnabled(t *testing.T) {
+	content := string(generateEnvContent(&models.RoboClawConfig{}))
+	if !strings.Contains(content, `RC_CLOID_CLEANUP_DEMO_ENABLED=true`) {
+		t.Fatalf("expected contract default cleanup-demo switch in generated dotenv, got %q", content)
+	}
+}
+
 func TestGeneratedEnvIncludesDashboardNode(t *testing.T) {
 	cfg := &models.RoboClawConfig{
 		RobotName:     "butler",

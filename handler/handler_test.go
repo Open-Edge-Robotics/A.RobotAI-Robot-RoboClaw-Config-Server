@@ -120,6 +120,24 @@ func TestValidateJSONFieldsSystem1Thresholds(t *testing.T) {
 	}
 }
 
+func TestValidateCleanupDemoMotionIDsRequiresJsonArray(t *testing.T) {
+	if err := validateJSONFields("", "", "", "", "", "", "", "", "[22,60]"); err != nil {
+		t.Fatalf("expected valid motion ID array, got %v", err)
+	}
+	if err := validateJSONFields("", "", "", "", "", "", "", "", "22"); err == nil {
+		t.Fatal("expected scalar motion ID JSON to be rejected")
+	}
+	if err := validateJSONFields("", "", "", "", "", "", "", "", "[22,"); err == nil {
+		t.Fatal("expected malformed motion ID JSON to be rejected")
+	}
+	if err := validateJSONFields("", "", "", "", "", "", "", "", `["22"]`); err == nil {
+		t.Fatal("expected string motion IDs to be rejected")
+	}
+	if err := validateJSONFields("", "", "", "", "", "", "", "", "[-1]"); err == nil {
+		t.Fatal("expected negative motion IDs to be rejected")
+	}
+}
+
 func TestValidateJSONFieldsMcpServers(t *testing.T) {
 	// 1. 올바른 stdio 서버 배열
 	err := validateJSONFields("", "", "", "", "", `[{"name":"fs","transport":"stdio","command":"npx"}]`)

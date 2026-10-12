@@ -63,6 +63,7 @@ http_allowed_cidrs_json
 http_allowed_skills_json
 http_blocked_skills_json
 grpc_target_peers_json
+cloid_cleanup_demo_motion_ids_json
 mcp_servers_json
 ```
 
@@ -86,7 +87,9 @@ ollama_options_json
 ]
 ```
 
-UI가 모르는 Ollama 옵션과 peer capabilities도 저장 시 보존됩니다.
+동료 로봇 편집 폼에서 capability를 쉼표로 구분해 설정합니다. CLOi 정리 시연 피어는 역할과 별도로 `cleanup_demo`를 명시해야 하며, `manipulation`으로 등록하지 않습니다. Ollama 옵션과 같이 UI가 별도로 편집하지 않는 기존 JSON 항목은 저장 시 보존됩니다.
+
+CLOi 정리 시연 설정에서 기능을 켜고 허용 모션 ID를 JSON array로 관리합니다. 배포 `.env`에는 `RC_CLOID_CLEANUP_DEMO_ENABLED`와 `RC_CLOID_CLEANUP_DEMO_MOTION_IDS_JSON`으로 출력합니다. 빈 allowlist는 CLOi 1호 승인 기본값 `[22,60]`을 사용하고 `[]`는 시연을 끕니다. 이 설정은 CLOi 1호 프로필에만 적용되며, catalog `pre_id`가 있는 모션은 선택하지 않고 prerequisite를 자동 실행하지 않습니다. MotionCmd 요청은 모션/정리 완료를 보증하지 않습니다.
 
 ## API 사용
 

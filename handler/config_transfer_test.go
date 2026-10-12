@@ -113,6 +113,32 @@ func TestConfigTransferRoundTripPreservesSystem1Settings(t *testing.T) {
 	}
 }
 
+func TestConfigTransferRoundTripPreservesCLOiCleanupDemoSettings(t *testing.T) {
+	cfg := models.RoboClawConfig{
+		CloidCleanupDemoEnabled:       boolPtr(true),
+		CloidCleanupDemoMotionIDsJson: "[22,60]",
+	}
+
+	tr := configToTransfer(&cfg, false)
+	model := tr.toModel(nil)
+	if model.CloidCleanupDemoEnabled == nil || !*model.CloidCleanupDemoEnabled || model.CloidCleanupDemoMotionIDsJson != "[22,60]" {
+		t.Fatalf("expected CLOi cleanup-demo settings preserved through transfer, got %+v", model)
+	}
+}
+
+func TestConfigTransferDefaultsCleanupDemoEnabledForOlderBackups(t *testing.T) {
+	model := (ConfigTransfer{}).toModel(nil)
+	if model.CloidCleanupDemoEnabled == nil || !*model.CloidCleanupDemoEnabled {
+		t.Fatal("expected older backups without the field to use the safe compatible default")
+	}
+
+	existing := &models.RoboClawConfig{CloidCleanupDemoEnabled: boolPtr(false)}
+	model = (ConfigTransfer{}).toModel(existing)
+	if model.CloidCleanupDemoEnabled == nil || *model.CloidCleanupDemoEnabled {
+		t.Fatal("expected absent backup field to preserve the existing profile value")
+	}
+}
+
 func TestConfigTransferRoundTripPreservesLangsmithWorkspaceID(t *testing.T) {
 	cfg := models.RoboClawConfig{LangsmithWorkspaceId: "workspace-123"}
 

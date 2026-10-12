@@ -1,5 +1,5 @@
 {
-  "contract_version": "2.4.0",
+  "contract_version": "2.6.0",
   "schema_version": "2.0",
   "fields": [
     {
@@ -87,6 +87,50 @@
       "api_json": "agent_id",
       "launch_argument": "agent_id",
       "ros_parameter": "agent_id",
+      "value_type": "string",
+      "modes": [
+        "local",
+        "docker",
+        "simulation",
+        "config_server"
+      ]
+    },
+    {
+      "canonical": "agent.cloid_cleanup_demo_enabled",
+      "type": "boolean",
+      "scope": "robot_profile",
+      "default": true,
+      "secret": false,
+      "description": "CLOi cleanup-demo launch switch. RoboClaw forcibly disables the path for non-CLOi-1 agent profiles; an empty peer list or unsafe motion catalog still prevents execution.",
+      "enum": [],
+      "minimum": null,
+      "maximum": null,
+      "env": "RC_CLOID_CLEANUP_DEMO_ENABLED",
+      "api_json": "cloid_cleanup_demo_enabled",
+      "launch_argument": "cloid_cleanup_demo_enabled",
+      "ros_parameter": "",
+      "value_type": "bool",
+      "modes": [
+        "local",
+        "docker",
+        "simulation",
+        "config_server"
+      ]
+    },
+    {
+      "canonical": "agent.cloid_cleanup_demo_motion_ids_json",
+      "type": "string",
+      "scope": "robot_profile",
+      "default": "",
+      "secret": false,
+      "description": "Optional JSON array allowlist of reviewed CLOi cleanup-demo motion IDs. An empty value uses the CLOi 1 profile default [22,60]; [] disables the demo. The runtime still rejects catalog entries with pre_id and never runs prerequisites automatically.",
+      "enum": [],
+      "minimum": null,
+      "maximum": null,
+      "env": "RC_CLOID_CLEANUP_DEMO_MOTION_IDS_JSON",
+      "api_json": "cloid_cleanup_demo_motion_ids_json",
+      "launch_argument": "cloid_cleanup_demo_motion_ids_json",
+      "ros_parameter": "cloid_cleanup_demo_motion_ids_json",
       "value_type": "string",
       "modes": [
         "local",
@@ -241,6 +285,28 @@
       "api_json": "grpc_peer_token",
       "launch_argument": "grpc_peer_token",
       "ros_parameter": "grpc_peer_token",
+      "value_type": "string",
+      "modes": [
+        "local",
+        "docker",
+        "simulation",
+        "config_server"
+      ]
+    },
+    {
+      "canonical": "messenger.target_peers_json",
+      "type": "string",
+      "scope": "runtime",
+      "default": "[]",
+      "secret": false,
+      "description": "JSON array of gRPC peer records. Declare peer capabilities explicitly; role is descriptive and does not grant a capability. CLOi cleanup-demo peers use capabilities [\"cleanup_demo\"], not manipulation.",
+      "enum": [],
+      "minimum": null,
+      "maximum": null,
+      "env": "GRPC_TARGET_PEERS_JSON",
+      "api_json": "grpc_target_peers_json",
+      "launch_argument": "target_peers_json",
+      "ros_parameter": "target_peers_json",
       "value_type": "string",
       "modes": [
         "local",

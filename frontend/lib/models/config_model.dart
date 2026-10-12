@@ -14,6 +14,8 @@ class RoboClawConfig {
   // ROS 2 설정
   int rosDomainId;
   String agentId;
+  bool cloidCleanupDemoEnabled;
+  String cloidCleanupDemoMotionIdsJson;
 
   // LLM 기본
   String llmProvider;
@@ -174,6 +176,8 @@ class RoboClawConfig {
     this.description = '',
     this.rosDomainId = 0,
     this.agentId = '',
+    this.cloidCleanupDemoEnabled = true,
+    this.cloidCleanupDemoMotionIdsJson = '',
     this.llmProvider = 'azure',
     this.llmModel = 'gpt-4o',
     this.azureOpenaiEndpoint = '',
@@ -298,6 +302,9 @@ class RoboClawConfig {
       description: json['description'] ?? '',
       rosDomainId: json['ros_domain_id'] ?? 0,
       agentId: json['agent_id'] ?? '',
+      cloidCleanupDemoEnabled: json['cloid_cleanup_demo_enabled'] ?? true,
+      cloidCleanupDemoMotionIdsJson:
+          json['cloid_cleanup_demo_motion_ids_json'] ?? '',
       llmProvider: json['llm_provider'] ?? 'azure',
       llmModel: json['llm_model'] ?? 'gpt-4o',
       azureOpenaiEndpoint: json['azure_openai_endpoint'] ?? '',
@@ -431,6 +438,8 @@ class RoboClawConfig {
       'description': description,
       'ros_domain_id': rosDomainId,
       'agent_id': agentId,
+      'cloid_cleanup_demo_enabled': cloidCleanupDemoEnabled,
+      'cloid_cleanup_demo_motion_ids_json': cloidCleanupDemoMotionIdsJson,
       'llm_provider': llmProvider,
       'llm_model': llmModel,
       'azure_openai_endpoint': azureOpenaiEndpoint,

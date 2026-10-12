@@ -79,19 +79,21 @@ type ConfigTransfer struct {
 	QdrantUrl            string  `json:"qdrant_url"`
 	QdrantCollection     string  `json:"qdrant_collection"`
 
-	EnableDiscord       bool    `json:"enable_discord"`
-	EnableTelegram      bool    `json:"enable_telegram"`
-	EnableSlack         bool    `json:"enable_slack"`
-	EnableGrpc          bool    `json:"enable_grpc"`
-	UseGrpc             bool    `json:"use_grpc"`
-	EnableGrpcClient    bool    `json:"enable_grpc_client"`
-	GrpcTargetHost      string  `json:"grpc_target_host"`
-	GrpcTargetPort      int     `json:"grpc_target_port"`
-	GrpcTargetPeersJson string  `json:"grpc_target_peers_json"`
-	DiscordBotToken     *string `json:"discord_bot_token,omitempty"`
-	SlackAppToken       *string `json:"slack_app_token,omitempty"`
-	SlackBotToken       *string `json:"slack_bot_token,omitempty"`
-	TelegramBotToken    *string `json:"telegram_bot_token,omitempty"`
+	EnableDiscord                 bool    `json:"enable_discord"`
+	EnableTelegram                bool    `json:"enable_telegram"`
+	EnableSlack                   bool    `json:"enable_slack"`
+	EnableGrpc                    bool    `json:"enable_grpc"`
+	UseGrpc                       bool    `json:"use_grpc"`
+	EnableGrpcClient              bool    `json:"enable_grpc_client"`
+	GrpcTargetHost                string  `json:"grpc_target_host"`
+	GrpcTargetPort                int     `json:"grpc_target_port"`
+	GrpcTargetPeersJson           string  `json:"grpc_target_peers_json"`
+	CloidCleanupDemoEnabled       *bool   `json:"cloid_cleanup_demo_enabled,omitempty"`
+	CloidCleanupDemoMotionIDsJson string  `json:"cloid_cleanup_demo_motion_ids_json"`
+	DiscordBotToken               *string `json:"discord_bot_token,omitempty"`
+	SlackAppToken                 *string `json:"slack_app_token,omitempty"`
+	SlackBotToken                 *string `json:"slack_bot_token,omitempty"`
+	TelegramBotToken              *string `json:"telegram_bot_token,omitempty"`
 
 	SoulContent            string `json:"soul_content"`
 	SkillsContent          string `json:"skills_content"`
@@ -268,10 +270,15 @@ type ImportResult struct {
 // ============================================================================
 
 func strPtr(s string) *string { return new(s) }
+func boolPtr(v bool) *bool    { return new(v) }
 
 // configToTransfer는 DB 원본(마스킹 전)을 전송 DTO로 변환한다.
 // includeSecrets=false 이면 민감 필드를 생략한다.
 func configToTransfer(cfg *models.RoboClawConfig, includeSecrets bool) ConfigTransfer {
+	cleanupDemoEnabled := true
+	if cfg.CloidCleanupDemoEnabled != nil {
+		cleanupDemoEnabled = *cfg.CloidCleanupDemoEnabled
+	}
 	t := ConfigTransfer{
 		Name:                              cfg.Name,
 		RobotName:                         cfg.RobotName,
@@ -301,6 +308,8 @@ func configToTransfer(cfg *models.RoboClawConfig, includeSecrets bool) ConfigTra
 		GrpcTargetHost:                    cfg.GrpcTargetHost,
 		GrpcTargetPort:                    cfg.GrpcTargetPort,
 		GrpcTargetPeersJson:               cfg.GrpcTargetPeersJson,
+		CloidCleanupDemoEnabled:           boolPtr(cleanupDemoEnabled),
+		CloidCleanupDemoMotionIDsJson:     cfg.CloidCleanupDemoMotionIDsJson,
 		SoulContent:                       cfg.SoulContent,
 		SkillsContent:                     cfg.SkillsContent,
 		TroubleshootingContent:            cfg.TroubleshootingContent,
@@ -418,6 +427,14 @@ func (t ConfigTransfer) toModel(existing *models.RoboClawConfig) models.RoboClaw
 		return get(cur)
 	}
 
+	cleanupDemoEnabled := true
+	if cur != nil && cur.CloidCleanupDemoEnabled != nil {
+		cleanupDemoEnabled = *cur.CloidCleanupDemoEnabled
+	}
+	if t.CloidCleanupDemoEnabled != nil {
+		cleanupDemoEnabled = *t.CloidCleanupDemoEnabled
+	}
+
 	cfg := models.RoboClawConfig{
 		Name:                              t.Name,
 		RobotName:                         t.RobotName,
@@ -451,6 +468,8 @@ func (t ConfigTransfer) toModel(existing *models.RoboClawConfig) models.RoboClaw
 		GrpcTargetHost:                    t.GrpcTargetHost,
 		GrpcTargetPort:                    t.GrpcTargetPort,
 		GrpcTargetPeersJson:               t.GrpcTargetPeersJson,
+		CloidCleanupDemoEnabled:           boolPtr(cleanupDemoEnabled),
+		CloidCleanupDemoMotionIDsJson:     t.CloidCleanupDemoMotionIDsJson,
 		DiscordBotToken:                   resolve(t.DiscordBotToken, curStr(func(c *models.RoboClawConfig) string { return c.DiscordBotToken })),
 		SlackAppToken:                     resolve(t.SlackAppToken, curStr(func(c *models.RoboClawConfig) string { return c.SlackAppToken })),
 		SlackBotToken:                     resolve(t.SlackBotToken, curStr(func(c *models.RoboClawConfig) string { return c.SlackBotToken })),
@@ -733,7 +752,7 @@ func validateBackupDocument(doc *BackupDocument, existingConfigs map[string]*mod
 		seenConfigs[key] = true
 
 		// 중첩 JSON 무결성 검증
-		if err := validateJSONFields(cfg.LimitsContent, cfg.OllamaOptionsJson, cfg.HttpAllowedCidrsJson, cfg.HttpAllowedSkillsJson, cfg.HttpBlockedSkillsJson, strOr(cfg.McpServersJson), "", cfg.System1ConfThresholdsJson); err != nil {
+		if err := validateJSONFields(cfg.LimitsContent, cfg.OllamaOptionsJson, cfg.HttpAllowedCidrsJson, cfg.HttpAllowedSkillsJson, cfg.HttpBlockedSkillsJson, strOr(cfg.McpServersJson), "", cfg.System1ConfThresholdsJson, cfg.CloidCleanupDemoMotionIDsJson); err != nil {
 			res.Errors = append(res.Errors, fmt.Sprintf("설정 %q: %v", cfg.Name, err))
 		}
 		if cfg.GrpcTargetPeersJson != "" && !json.Valid([]byte(cfg.GrpcTargetPeersJson)) {

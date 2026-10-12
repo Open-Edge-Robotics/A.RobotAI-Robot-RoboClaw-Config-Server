@@ -220,7 +220,7 @@ configuration guide 및 `contracts/contract.lock.json`을 확인하세요.
 
 ## Kubernetes 배포
 
-Kubernetes 환경에서의 안정적인 가동을 위해 [kube/deployment.yaml](file:///home/seoyc/Workspace/server/ai-config-server/kube/deployment.yaml) 배포 사양이 제공됩니다.
+Kubernetes 환경에서의 안정적인 가동을 위해 [kube/deployment.yaml](kube/deployment.yaml) 배포 사양이 제공됩니다.
 
 - **타임존 동기화**: 호스트 머신의 `/etc/localtime`을 컨테이너 내부에 볼륨 마운트하여 서버 로그 시간대를 호스트 컴퓨터 시간대에 맞춥니다.
 - **헬스체크 (Probe)**: `/ping` 엔드포인트를 기반으로 Liveness Probe 및 Readiness Probe를 구성하여 파드(Pod) 자가 복구를 지원합니다.

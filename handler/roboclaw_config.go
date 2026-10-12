@@ -85,8 +85,12 @@ func CreateConfig(c *gin.Context) {
 		return
 	}
 
+	if item.CloidCleanupDemoEnabled == nil {
+		item.CloidCleanupDemoEnabled = boolPtr(true)
+	}
+
 	// JSON 포맷 사전 검증
-	if err := validateJSONFields(item.LimitsContent, item.OllamaOptionsJson, item.HttpAllowedCidrsJson, item.HttpAllowedSkillsJson, item.HttpBlockedSkillsJson, item.McpServersJson, "", item.System1ConfThresholdsJson); err != nil {
+	if err := validateJSONFields(item.LimitsContent, item.OllamaOptionsJson, item.HttpAllowedCidrsJson, item.HttpAllowedSkillsJson, item.HttpBlockedSkillsJson, item.McpServersJson, "", item.System1ConfThresholdsJson, item.CloidCleanupDemoMotionIDsJson); err != nil {
 		LogAndRespondError(c, http.StatusBadRequest, "입력값의 JSON 포맷이 올바르지 않습니다.", err)
 		return
 	}
@@ -189,7 +193,7 @@ func UpdateConfig(c *gin.Context) {
 	}
 
 	// JSON 포맷 사전 검증
-	if err := validateJSONFields(req.LimitsContent, req.OllamaOptionsJson, req.HttpAllowedCidrsJson, req.HttpAllowedSkillsJson, req.HttpBlockedSkillsJson, req.McpServersJson, req.GrpcTargetPeersJson, req.System1ConfThresholdsJson); err != nil {
+	if err := validateJSONFields(req.LimitsContent, req.OllamaOptionsJson, req.HttpAllowedCidrsJson, req.HttpAllowedSkillsJson, req.HttpBlockedSkillsJson, req.McpServersJson, req.GrpcTargetPeersJson, req.System1ConfThresholdsJson, req.CloidCleanupDemoMotionIDsJson); err != nil {
 		LogAndRespondError(c, http.StatusBadRequest, "입력값의 JSON 포맷이 올바르지 않습니다.", err)
 		return
 	}
@@ -314,7 +318,7 @@ func CloneConfig(c *gin.Context) {
 	}
 
 	// JSON 포맷 사전 검증 (원본 데이터 보존)
-	if err := validateJSONFields(clone.LimitsContent, clone.OllamaOptionsJson, clone.HttpAllowedCidrsJson, clone.HttpAllowedSkillsJson, clone.HttpBlockedSkillsJson, clone.McpServersJson, "", clone.System1ConfThresholdsJson); err != nil {
+	if err := validateJSONFields(clone.LimitsContent, clone.OllamaOptionsJson, clone.HttpAllowedCidrsJson, clone.HttpAllowedSkillsJson, clone.HttpBlockedSkillsJson, clone.McpServersJson, "", clone.System1ConfThresholdsJson, clone.CloidCleanupDemoMotionIDsJson); err != nil {
 		LogAndRespondError(c, http.StatusBadRequest, "원본 입력값의 JSON 포맷이 올바르지 않아 복제할 수 없습니다.", err)
 		return
 	}
@@ -449,6 +453,24 @@ func validateJSONFields(limits, ollamaOptions, allowedCidrs, allowedSkills, bloc
 	}
 	if err := validateJSONShape("system1_conf_thresholds_json", thresholds, false); err != nil {
 		return err
+	}
+	cleanupDemoMotionIDs := ""
+	if len(peerValues) > 2 {
+		cleanupDemoMotionIDs = peerValues[2]
+	}
+	if err := validateJSONShape("cloid_cleanup_demo_motion_ids_json", cleanupDemoMotionIDs, true); err != nil {
+		return err
+	}
+	if cleanupDemoMotionIDs != "" {
+		var motionIDs []int
+		if err := json.Unmarshal([]byte(cleanupDemoMotionIDs), &motionIDs); err != nil {
+			return fmt.Errorf("cloid_cleanup_demo_motion_ids_json must contain integer IDs: %w", err)
+		}
+		for _, motionID := range motionIDs {
+			if motionID < 0 {
+				return fmt.Errorf("cloid_cleanup_demo_motion_ids_json must not contain negative IDs")
+			}
+		}
 	}
 	return nil
 }

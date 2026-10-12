@@ -1,5 +1,6 @@
 export 'config_basic_section.dart';
 export 'config_camera_section.dart';
+export 'config_cleanup_demo_section.dart';
 export 'config_dashboard_section.dart';
 export 'config_http_sec_section.dart';
 export 'config_learning_section.dart';

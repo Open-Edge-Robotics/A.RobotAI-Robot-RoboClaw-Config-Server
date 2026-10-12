@@ -180,7 +180,13 @@ func generateEnvContent(cfg *models.RoboClawConfig) string {
 	} else {
 		sb.WriteString("GRPC_TARGET_PORT=50052\n")
 	}
-	fmt.Fprintf(&sb, "GRPC_TARGET_PEERS_JSON=%s\n\n", cfg.GrpcTargetPeersJson)
+	fmt.Fprintf(&sb, "GRPC_TARGET_PEERS_JSON=%s\n", cfg.GrpcTargetPeersJson)
+	cleanupDemoEnabled := true
+	if cfg.CloidCleanupDemoEnabled != nil {
+		cleanupDemoEnabled = *cfg.CloidCleanupDemoEnabled
+	}
+	fmt.Fprintf(&sb, "RC_CLOID_CLEANUP_DEMO_ENABLED=%t\n", cleanupDemoEnabled)
+	fmt.Fprintf(&sb, "RC_CLOID_CLEANUP_DEMO_MOTION_IDS_JSON=%s\n\n", cfg.CloidCleanupDemoMotionIDsJson)
 	if cfg.GrpcPeerToken != "" {
 		fmt.Fprintf(&sb, "GRPC_PEER_TOKEN=%s\n", cfg.GrpcPeerToken)
 	}

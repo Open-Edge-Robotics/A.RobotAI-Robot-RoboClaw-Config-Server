@@ -286,6 +286,28 @@ class _GrpcPeersInputFormState extends State<GrpcPeersInputForm> {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          TextFormField(
+            key: ValueKey('peer_capabilities_$index'),
+            initialValue: peer.capabilities.join(', '),
+            enabled: widget.isEditing,
+            decoration: InputDecoration(
+              labelText: '기능 목록 (쉼표로 구분)'.tr,
+              hintText: '예: cleanup_demo, navigation'.tr,
+              helperText:
+                  '정리 시연 기능은 cleanup_demo로 지정합니다. manipulation과 구분됩니다.'.tr,
+              isDense: true,
+            ),
+            onChanged: (value) {
+              peer.capabilities = value
+                  .split(',')
+                  .map((capability) => capability.trim())
+                  .where((capability) => capability.isNotEmpty)
+                  .toSet()
+                  .toList();
+              _updateController();
+            },
+          ),
         ],
       ),
     );

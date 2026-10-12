@@ -15,6 +15,7 @@ func TestGetActiveRuntimeConfigV2ReturnsVersionedEnvelope(t *testing.T) {
 	database.DB.Create(&models.RoboClawConfig{
 		Name: "active", RobotName: "butler", Environment: "office", IsActive: true,
 		LlmProvider: "ollama", LlmModel: "llama3.2", OpenaiApiKey: "secret",
+		CloidCleanupDemoEnabled: boolPtr(false), CloidCleanupDemoMotionIDsJson: "[22,60]",
 	})
 
 	r := gin.New()
@@ -33,5 +34,8 @@ func TestGetActiveRuntimeConfigV2ReturnsVersionedEnvelope(t *testing.T) {
 	config := response["config"].(map[string]any)
 	if config["openai_api_key"] != "********" {
 		t.Fatalf("runtime manifest leaked secret: %#v", config["openai_api_key"])
+	}
+	if config["cloid_cleanup_demo_enabled"] != false || config["cloid_cleanup_demo_motion_ids_json"] != "[22,60]" {
+		t.Fatalf("runtime manifest omitted CLOi cleanup-demo settings: %#v", config)
 	}
 }

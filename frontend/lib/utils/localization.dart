@@ -383,6 +383,14 @@ class LanguageManager {
     '헤더 (headers)': 'Headers (headers)',
     '예: https://example.com/mcp/sse': 'e.g. https://example.com/mcp/sse',
 
+    // ===== CLOi Cleanup Demo Section =====
+    'CLOi 1호 정리 시연 설정': 'CLOi 1 Cleanup Demonstration Settings',
+    '정리 시연 기능 사용': 'Enable cleanup demonstration',
+    '정리 시연 허용 모션 ID (JSON 배열)': 'Allowed cleanup-demo motion IDs (JSON array)',
+    '예: [22,60]': 'e.g. [22,60]',
+    'CLOi 1호 전용입니다. 빈 값은 승인된 기본값 [22,60]을 사용합니다. []는 시연을 끕니다. catalog pre_id가 있는 모션은 실행하지 않습니다.':
+        'CLOi 1 only. Empty uses the approved default [22,60]. [] disables the demo. Motions with catalog pre_id are never run.',
+
     // ===== gRPC Peers Input Form =====
     '등록된 동료 로봇이 없습니다.': 'No peer robots registered.',
     '동료 로봇 추가': 'Add Peer Robot',
@@ -396,6 +404,10 @@ class LanguageManager {
     '예: 집게 팔 장착 매니퓰레이터': 'e.g. Manipulator with gripper arm',
     '역할 / 타입': 'Role / Type',
     '예: manipulator': 'e.g. manipulator',
+    '기능 목록 (쉼표로 구분)': 'Capabilities (comma-separated)',
+    '예: cleanup_demo, navigation': 'e.g. cleanup_demo, navigation',
+    '정리 시연 기능은 cleanup_demo로 지정합니다. manipulation과 구분됩니다.':
+        'Set cleanup_demo for the cleanup demonstration; it is distinct from manipulation.',
 
     // ===== Scenario Detail Panel =====
     '조회할 테스트 시나리오를 선택하거나 추가 버튼을 누르세요.':

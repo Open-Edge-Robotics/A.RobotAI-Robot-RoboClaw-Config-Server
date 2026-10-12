@@ -45,6 +45,8 @@ class ConfigTabState extends State<ConfigTab> {
   final _descCtrl = TextEditingController();
   final _rosDomainCtrl = TextEditingController();
   final _agentIdCtrl = TextEditingController();
+  bool _cloidCleanupDemoEnabled = true;
+  final _cloidCleanupDemoMotionIdsJsonCtrl = TextEditingController();
 
   String _llmProvider = 'azure';
   final _llmModelCtrl = TextEditingController();
@@ -215,6 +217,7 @@ class ConfigTabState extends State<ConfigTab> {
     _descCtrl.dispose();
     _rosDomainCtrl.dispose();
     _agentIdCtrl.dispose();
+    _cloidCleanupDemoMotionIdsJsonCtrl.dispose();
     _llmModelCtrl.dispose();
     _azureEndpointCtrl.dispose();
     _azureApiKeyCtrl.dispose();
@@ -439,6 +442,9 @@ class ConfigTabState extends State<ConfigTab> {
       description: _descCtrl.text,
       rosDomainId: int.tryParse(_rosDomainCtrl.text) ?? 0,
       agentId: _agentIdCtrl.text.trim(),
+      cloidCleanupDemoEnabled: _cloidCleanupDemoEnabled,
+      cloidCleanupDemoMotionIdsJson: _cloidCleanupDemoMotionIdsJsonCtrl.text
+          .trim(),
       llmProvider: _llmProvider,
       llmModel: _llmModelCtrl.text,
       azureOpenaiEndpoint: _azureEndpointCtrl.text,
@@ -582,6 +588,9 @@ class ConfigTabState extends State<ConfigTab> {
     _descCtrl.text = config.description;
     _rosDomainCtrl.text = config.rosDomainId.toString();
     _agentIdCtrl.text = config.agentId;
+    _cloidCleanupDemoEnabled = config.cloidCleanupDemoEnabled;
+    _cloidCleanupDemoMotionIdsJsonCtrl.text =
+        config.cloidCleanupDemoMotionIdsJson;
 
     _llmProvider = config.llmProvider;
     _llmModelCtrl.text = config.llmModel;
@@ -1206,6 +1215,14 @@ class ConfigTabState extends State<ConfigTab> {
                 grpcTargetPeersJsonCtrl: _grpcTargetPeersJsonCtrl,
                 grpcPeerTokenCtrl: _grpcPeerTokenCtrl,
                 grpcPortCtrl: _grpcPortCtrl,
+              ),
+              const SizedBox(height: 28),
+              ConfigCleanupDemoSection(
+                isEditing: _isEditing,
+                enabled: _cloidCleanupDemoEnabled,
+                onEnabledChanged: (value) =>
+                    setState(() => _cloidCleanupDemoEnabled = value),
+                motionIdsJsonCtrl: _cloidCleanupDemoMotionIdsJsonCtrl,
               ),
               const SizedBox(height: 28),
               ConfigHttpSecSection(

@@ -43,6 +43,20 @@ void main() {
     expect(find.text('등록된 동료 로봇이 없습니다.'), findsOneWidget);
   });
 
+  testWidgets('capabilities 입력을 피어 JSON에 저장한다', (tester) async {
+    final controller = TextEditingController(
+      text:
+          '[{"name":"cloid 1호","host":"192.168.50.130","port":50152,"capabilities":[]}]',
+    );
+    await pumpForm(tester, controller);
+
+    final capabilitiesField = find.byKey(const ValueKey('peer_capabilities_0'));
+    expect(capabilitiesField, findsOneWidget);
+    await tester.enterText(capabilitiesField, 'cleanup_demo');
+
+    expect(controller.text, contains('"capabilities":["cleanup_demo"]'));
+  });
+
   testWidgets('동료 로봇 추가 버튼으로 폼을 추가한다', (tester) async {
     final controller = TextEditingController(text: '[]');
     await pumpForm(tester, controller);
