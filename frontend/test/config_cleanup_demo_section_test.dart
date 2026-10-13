@@ -2,6 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/widgets/config_cleanup_demo_section.dart';
 
+Widget _host({
+  required bool enabled,
+  required ValueChanged<bool> onEnabledChanged,
+  required TextEditingController controller,
+  bool expressionEnabled = false,
+  ValueChanged<bool>? onExpressionEnabledChanged,
+}) {
+  return MaterialApp(
+    home: Scaffold(
+      body: ConfigCleanupDemoSection(
+        isEditing: true,
+        enabled: enabled,
+        onEnabledChanged: onEnabledChanged,
+        motionIdsJsonCtrl: controller,
+        expressionEnabled: expressionEnabled,
+        onExpressionEnabledChanged: onExpressionEnabledChanged ?? (_) {},
+      ),
+    ),
+  );
+}
+
 void main() {
   testWidgets('CLOi cleanup demo allowlist is editable as JSON', (
     tester,
@@ -10,15 +31,10 @@ void main() {
     var enabled = true;
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: ConfigCleanupDemoSection(
-            isEditing: true,
-            enabled: enabled,
-            onEnabledChanged: (value) => enabled = value,
-            motionIdsJsonCtrl: controller,
-          ),
-        ),
+      _host(
+        enabled: enabled,
+        onEnabledChanged: (value) => enabled = value,
+        controller: controller,
       ),
     );
 
@@ -31,5 +47,25 @@ void main() {
     await tester.enterText(field, '[]');
     expect(controller.text, '[]');
     expect(find.textContaining('pre_id'), findsOneWidget);
+  });
+
+  testWidgets('CLOi 상황별 표현 모션 스위치를 켜고 끌 수 있다', (tester) async {
+    var expressionEnabled = false;
+
+    await tester.pumpWidget(
+      _host(
+        enabled: true,
+        onEnabledChanged: (_) {},
+        controller: TextEditingController(text: ''),
+        expressionEnabled: expressionEnabled,
+        onExpressionEnabledChanged: (value) => expressionEnabled = value,
+      ),
+    );
+
+    final toggle = find.byKey(const ValueKey('cloid_expression_enabled'));
+    expect(toggle, findsOneWidget);
+
+    await tester.tap(toggle);
+    expect(expressionEnabled, isTrue);
   });
 }

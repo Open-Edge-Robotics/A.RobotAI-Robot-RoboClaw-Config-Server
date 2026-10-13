@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 ### 추가됨
+- **CLOiD 상황별 표현 모션 스위치**: 공통 runtime contract v2.7.0의 `cloid_expression_enabled`(`RC_CLOID_EXPRESSION_ENABLED`)을 DB/API/백업/배포 `.env`/Flutter 모델·폼에 연결했습니다. 기본값은 꺼짐이며, 켜면 로봇이 태스크를 마친 뒤 상황에 맞는 등록 모션을 한 번 재생합니다(주행 태스크 제외).
+- **공통 runtime contract v2.7.0 반영**: 생성 schema/Dart artifact와 lock을 갱신했습니다. 공식 contract release는 아직 발행하지 않았습니다.
 - **CLOi 정리 시연 설정**: 공통 runtime contract v2.6.0의 `cloid_cleanup_demo_enabled` 및 `cloid_cleanup_demo_motion_ids_json`을 DB/API/백업/배포 `.env`/Flutter 모델·폼에 연결합니다. JSON allowlist 배열을 검증하고 기본 모션 ID는 사용자가 지정하지 않아도 RoboClaw의 CLOi 1호 기본 정책을 따릅니다.
 - **gRPC 동료 로봇 capability 편집**: peer 폼에서 capability 목록을 입력하고 `grpc_target_peers_json`으로 저장하도록 지원합니다. 정리 시연 피어는 `cleanup_demo`를 명시하며 `manipulation`과 구분합니다.
 - **공통 runtime contract v2.6.0 반영**: 시연 스위치/모션 allowlist와 기존 `messenger.target_peers_json` 매핑을 반영하고 생성된 schema/Dart artifact 및 lock을 갱신합니다. 공식 contract release는 아직 발행하지 않았습니다.

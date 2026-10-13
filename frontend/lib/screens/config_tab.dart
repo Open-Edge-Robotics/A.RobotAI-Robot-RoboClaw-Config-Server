@@ -47,6 +47,7 @@ class ConfigTabState extends State<ConfigTab> {
   final _agentIdCtrl = TextEditingController();
   bool _cloidCleanupDemoEnabled = true;
   final _cloidCleanupDemoMotionIdsJsonCtrl = TextEditingController();
+  bool _cloidExpressionEnabled = false;
 
   String _llmProvider = 'azure';
   final _llmModelCtrl = TextEditingController();
@@ -445,6 +446,7 @@ class ConfigTabState extends State<ConfigTab> {
       cloidCleanupDemoEnabled: _cloidCleanupDemoEnabled,
       cloidCleanupDemoMotionIdsJson: _cloidCleanupDemoMotionIdsJsonCtrl.text
           .trim(),
+      cloidExpressionEnabled: _cloidExpressionEnabled,
       llmProvider: _llmProvider,
       llmModel: _llmModelCtrl.text,
       azureOpenaiEndpoint: _azureEndpointCtrl.text,
@@ -591,6 +593,7 @@ class ConfigTabState extends State<ConfigTab> {
     _cloidCleanupDemoEnabled = config.cloidCleanupDemoEnabled;
     _cloidCleanupDemoMotionIdsJsonCtrl.text =
         config.cloidCleanupDemoMotionIdsJson;
+    _cloidExpressionEnabled = config.cloidExpressionEnabled;
 
     _llmProvider = config.llmProvider;
     _llmModelCtrl.text = config.llmModel;
@@ -1223,6 +1226,9 @@ class ConfigTabState extends State<ConfigTab> {
                 onEnabledChanged: (value) =>
                     setState(() => _cloidCleanupDemoEnabled = value),
                 motionIdsJsonCtrl: _cloidCleanupDemoMotionIdsJsonCtrl,
+                expressionEnabled: _cloidExpressionEnabled,
+                onExpressionEnabledChanged: (value) =>
+                    setState(() => _cloidExpressionEnabled = value),
               ),
               const SizedBox(height: 28),
               ConfigHttpSecSection(

@@ -88,6 +88,9 @@ func CreateConfig(c *gin.Context) {
 	if item.CloidCleanupDemoEnabled == nil {
 		item.CloidCleanupDemoEnabled = boolPtr(true)
 	}
+	if item.CloidExpressionEnabled == nil {
+		item.CloidExpressionEnabled = boolPtr(false)
+	}
 
 	// JSON 포맷 사전 검증
 	if err := validateJSONFields(item.LimitsContent, item.OllamaOptionsJson, item.HttpAllowedCidrsJson, item.HttpAllowedSkillsJson, item.HttpBlockedSkillsJson, item.McpServersJson, "", item.System1ConfThresholdsJson, item.CloidCleanupDemoMotionIDsJson); err != nil {

@@ -202,6 +202,14 @@ connector 설정입니다. `maestro_ip`가 비어 있으면 connector가 비활�
 지정하며 API 응답에서는 마스킹됩니다. 실행 `.env`에는 `SYSTEM1_*` 설정이 포함되고,
 `SYSTEM1_CONF_THRESHOLDS_JSON`은 한 줄 JSON 객체로 정규화됩니다.
 
+### CLOiD 상황별 표현 모션 (contract v2.7.0)
+
+`CLOi` 섹션에서 `cloid_expression_enabled`(배포 `.env` `RC_CLOID_EXPRESSION_ENABLED`)를
+설정합니다. 기본값은 꺼짐입니다. 켜면 RoboClaw 가 태스크를 마친 뒤 상황(인사·대화·탐색·실패)에
+맞는 등록 모션을 한 번 재생합니다. 베이스 주행이 포함된 태스크에서는 재생하지 않습니다.
+선택 가능한 모션 ID 는 RoboClaw 코드 상수 allowlist 로 고정되어 있고, 모두 `pre_id` 없는
+모션입니다. 상체 구동 오류 개체는 이 값을 꺼 둡니다.
+
 ## 운영 확인
 
 서버 상태:

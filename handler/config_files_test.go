@@ -169,3 +169,22 @@ func TestGeneratedEnvIncludesSystem1RouterSettings(t *testing.T) {
 		}
 	}
 }
+
+// TestGeneratedEnvIncludesCLOiExpressionSwitch 는 .env에 상황별 표현 모션
+// 스위치(RC_CLOID_EXPRESSION_ENABLED)가 포함되는지 검증한다.
+func TestGeneratedEnvIncludesCLOiExpressionSwitch(t *testing.T) {
+	cfg := &models.RoboClawConfig{CloidExpressionEnabled: boolPtr(true)}
+
+	content := string(generateEnvContent(cfg))
+	if !strings.Contains(content, `RC_CLOID_EXPRESSION_ENABLED=true`) {
+		t.Fatalf("expected CLOi expression switch in generated dotenv, got %q", content)
+	}
+}
+
+// TestGeneratedEnvDefaultsExpressionDisabled 는 기본값이 꺼짐인지 검증한다.
+func TestGeneratedEnvDefaultsExpressionDisabled(t *testing.T) {
+	content := string(generateEnvContent(&models.RoboClawConfig{}))
+	if !strings.Contains(content, `RC_CLOID_EXPRESSION_ENABLED=false`) {
+		t.Fatalf("expected default-off expression switch in generated dotenv, got %q", content)
+	}
+}

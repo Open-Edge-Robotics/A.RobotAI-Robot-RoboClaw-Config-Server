@@ -27,8 +27,21 @@ void main() {
 
       expect(config.cloidCleanupDemoEnabled, isTrue);
       expect(config.cloidCleanupDemoMotionIdsJson, '');
+      expect(config.cloidExpressionEnabled, isFalse);
     },
   );
+
+  test('RoboClawConfig 상황별 표현 모션 스위치를 API JSON에서 보존한다', () {
+    final config = RoboClawConfig.fromJson({
+      'name': 'cloid-one',
+      'robot_name': 'cloid',
+      'environment': 'cloi01',
+      'cloid_expression_enabled': true,
+    });
+
+    expect(config.cloidExpressionEnabled, isTrue);
+    expect(config.toJson()['cloid_expression_enabled'], isTrue);
+  });
 
   test('RoboClawConfig JSON 직렬화 값을 보존한다', () {
     final config = RoboClawConfig(

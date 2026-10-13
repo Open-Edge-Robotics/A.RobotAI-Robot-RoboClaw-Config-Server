@@ -90,6 +90,7 @@ type ConfigTransfer struct {
 	GrpcTargetPeersJson           string  `json:"grpc_target_peers_json"`
 	CloidCleanupDemoEnabled       *bool   `json:"cloid_cleanup_demo_enabled,omitempty"`
 	CloidCleanupDemoMotionIDsJson string  `json:"cloid_cleanup_demo_motion_ids_json"`
+	CloidExpressionEnabled        *bool   `json:"cloid_expression_enabled,omitempty"`
 	DiscordBotToken               *string `json:"discord_bot_token,omitempty"`
 	SlackAppToken                 *string `json:"slack_app_token,omitempty"`
 	SlackBotToken                 *string `json:"slack_bot_token,omitempty"`
@@ -279,6 +280,10 @@ func configToTransfer(cfg *models.RoboClawConfig, includeSecrets bool) ConfigTra
 	if cfg.CloidCleanupDemoEnabled != nil {
 		cleanupDemoEnabled = *cfg.CloidCleanupDemoEnabled
 	}
+	cloidExpressionEnabled := false
+	if cfg.CloidExpressionEnabled != nil {
+		cloidExpressionEnabled = *cfg.CloidExpressionEnabled
+	}
 	t := ConfigTransfer{
 		Name:                              cfg.Name,
 		RobotName:                         cfg.RobotName,
@@ -310,6 +315,7 @@ func configToTransfer(cfg *models.RoboClawConfig, includeSecrets bool) ConfigTra
 		GrpcTargetPeersJson:               cfg.GrpcTargetPeersJson,
 		CloidCleanupDemoEnabled:           boolPtr(cleanupDemoEnabled),
 		CloidCleanupDemoMotionIDsJson:     cfg.CloidCleanupDemoMotionIDsJson,
+		CloidExpressionEnabled:            boolPtr(cloidExpressionEnabled),
 		SoulContent:                       cfg.SoulContent,
 		SkillsContent:                     cfg.SkillsContent,
 		TroubleshootingContent:            cfg.TroubleshootingContent,
@@ -435,6 +441,14 @@ func (t ConfigTransfer) toModel(existing *models.RoboClawConfig) models.RoboClaw
 		cleanupDemoEnabled = *t.CloidCleanupDemoEnabled
 	}
 
+	cloidExpressionEnabled := false
+	if cur != nil && cur.CloidExpressionEnabled != nil {
+		cloidExpressionEnabled = *cur.CloidExpressionEnabled
+	}
+	if t.CloidExpressionEnabled != nil {
+		cloidExpressionEnabled = *t.CloidExpressionEnabled
+	}
+
 	cfg := models.RoboClawConfig{
 		Name:                              t.Name,
 		RobotName:                         t.RobotName,
@@ -470,6 +484,7 @@ func (t ConfigTransfer) toModel(existing *models.RoboClawConfig) models.RoboClaw
 		GrpcTargetPeersJson:               t.GrpcTargetPeersJson,
 		CloidCleanupDemoEnabled:           boolPtr(cleanupDemoEnabled),
 		CloidCleanupDemoMotionIDsJson:     t.CloidCleanupDemoMotionIDsJson,
+		CloidExpressionEnabled:            boolPtr(cloidExpressionEnabled),
 		DiscordBotToken:                   resolve(t.DiscordBotToken, curStr(func(c *models.RoboClawConfig) string { return c.DiscordBotToken })),
 		SlackAppToken:                     resolve(t.SlackAppToken, curStr(func(c *models.RoboClawConfig) string { return c.SlackAppToken })),
 		SlackBotToken:                     resolve(t.SlackBotToken, curStr(func(c *models.RoboClawConfig) string { return c.SlackBotToken })),
