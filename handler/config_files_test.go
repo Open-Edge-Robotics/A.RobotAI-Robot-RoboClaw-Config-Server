@@ -188,3 +188,22 @@ func TestGeneratedEnvDefaultsExpressionDisabled(t *testing.T) {
 		t.Fatalf("expected default-off expression switch in generated dotenv, got %q", content)
 	}
 }
+
+// TestGeneratedEnvIncludesCLOiNavigationPoseSwitch 는 .env에 주행 전 boxing 자세
+// 스위치(RC_CLOID_NAVIGATION_POSE_ENABLED)가 포함되는지 검증한다.
+func TestGeneratedEnvIncludesCLOiNavigationPoseSwitch(t *testing.T) {
+	cfg := &models.RoboClawConfig{CloidNavigationPoseEnabled: boolPtr(true)}
+
+	content := string(generateEnvContent(cfg))
+	if !strings.Contains(content, `RC_CLOID_NAVIGATION_POSE_ENABLED=true`) {
+		t.Fatalf("expected CLOi navigation pose switch in generated dotenv, got %q", content)
+	}
+}
+
+// TestGeneratedEnvDefaultsNavigationPoseDisabled 는 기본값이 꺼짐인지 검증한다.
+func TestGeneratedEnvDefaultsNavigationPoseDisabled(t *testing.T) {
+	content := string(generateEnvContent(&models.RoboClawConfig{}))
+	if !strings.Contains(content, `RC_CLOID_NAVIGATION_POSE_ENABLED=false`) {
+		t.Fatalf("expected default-off navigation pose switch in generated dotenv, got %q", content)
+	}
+}

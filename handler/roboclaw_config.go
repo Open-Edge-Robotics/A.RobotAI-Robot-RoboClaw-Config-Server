@@ -91,6 +91,9 @@ func CreateConfig(c *gin.Context) {
 	if item.CloidExpressionEnabled == nil {
 		item.CloidExpressionEnabled = boolPtr(false)
 	}
+	if item.CloidNavigationPoseEnabled == nil {
+		item.CloidNavigationPoseEnabled = boolPtr(false)
+	}
 
 	// JSON 포맷 사전 검증
 	if err := validateJSONFields(item.LimitsContent, item.OllamaOptionsJson, item.HttpAllowedCidrsJson, item.HttpAllowedSkillsJson, item.HttpBlockedSkillsJson, item.McpServersJson, "", item.System1ConfThresholdsJson, item.CloidCleanupDemoMotionIDsJson); err != nil {

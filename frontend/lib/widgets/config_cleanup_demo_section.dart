@@ -10,6 +10,8 @@ class ConfigCleanupDemoSection extends StatelessWidget {
   final TextEditingController motionIdsJsonCtrl;
   final bool expressionEnabled;
   final ValueChanged<bool> onExpressionEnabledChanged;
+  final bool navigationPoseEnabled;
+  final ValueChanged<bool> onNavigationPoseEnabledChanged;
 
   const ConfigCleanupDemoSection({
     super.key,
@@ -19,6 +21,8 @@ class ConfigCleanupDemoSection extends StatelessWidget {
     required this.motionIdsJsonCtrl,
     required this.expressionEnabled,
     required this.onExpressionEnabledChanged,
+    required this.navigationPoseEnabled,
+    required this.onNavigationPoseEnabledChanged,
   });
 
   @override
@@ -68,6 +72,23 @@ class ConfigCleanupDemoSection extends StatelessWidget {
           onChanged: isEditing
               ? (value) {
                   if (value != null) onExpressionEnabledChanged(value);
+                }
+              : null,
+        ),
+        const SizedBox(height: 12),
+        CheckboxListTile(
+          key: const ValueKey('cloid_navigation_pose_enabled'),
+          contentPadding: EdgeInsets.zero,
+          dense: true,
+          title: Text('주행 전 boxing 자세 자동 정렬'.tr),
+          subtitle: Text(
+            '베이스 이동 스킬 직전에 CLOiD를 최소 부피(boxing) 자세로 한 번 정렬하고, 실패하면 주행을 거부합니다. 주행 후 자세는 자동 복원되지 않습니다. cloid 프로필 전용입니다.'
+                .tr,
+          ),
+          value: navigationPoseEnabled,
+          onChanged: isEditing
+              ? (value) {
+                  if (value != null) onNavigationPoseEnabledChanged(value);
                 }
               : null,
         ),

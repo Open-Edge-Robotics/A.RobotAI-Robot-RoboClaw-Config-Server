@@ -139,6 +139,31 @@ func TestConfigTransferDefaultsCleanupDemoEnabledForOlderBackups(t *testing.T) {
 	}
 }
 
+func TestConfigTransferRoundTripPreservesCLOiNavigationPose(t *testing.T) {
+	cfg := models.RoboClawConfig{
+		CloidNavigationPoseEnabled: boolPtr(true),
+	}
+
+	tr := configToTransfer(&cfg, false)
+	model := tr.toModel(nil)
+	if model.CloidNavigationPoseEnabled == nil || !*model.CloidNavigationPoseEnabled {
+		t.Fatalf("expected CLOi navigation pose switch preserved through transfer, got %+v", model)
+	}
+}
+
+func TestConfigTransferDefaultsNavigationPoseDisabledForOlderBackups(t *testing.T) {
+	model := (ConfigTransfer{}).toModel(nil)
+	if model.CloidNavigationPoseEnabled == nil || *model.CloidNavigationPoseEnabled {
+		t.Fatal("expected older backups without the field to default to false")
+	}
+
+	existing := &models.RoboClawConfig{CloidNavigationPoseEnabled: boolPtr(true)}
+	model = (ConfigTransfer{}).toModel(existing)
+	if model.CloidNavigationPoseEnabled == nil || !*model.CloidNavigationPoseEnabled {
+		t.Fatal("expected absent backup field to preserve the existing profile value")
+	}
+}
+
 func TestConfigTransferRoundTripPreservesLangsmithWorkspaceID(t *testing.T) {
 	cfg := models.RoboClawConfig{LangsmithWorkspaceId: "workspace-123"}
 

@@ -91,6 +91,7 @@ type ConfigTransfer struct {
 	CloidCleanupDemoEnabled       *bool   `json:"cloid_cleanup_demo_enabled,omitempty"`
 	CloidCleanupDemoMotionIDsJson string  `json:"cloid_cleanup_demo_motion_ids_json"`
 	CloidExpressionEnabled        *bool   `json:"cloid_expression_enabled,omitempty"`
+	CloidNavigationPoseEnabled    *bool   `json:"cloid_navigation_pose_enabled,omitempty"`
 	DiscordBotToken               *string `json:"discord_bot_token,omitempty"`
 	SlackAppToken                 *string `json:"slack_app_token,omitempty"`
 	SlackBotToken                 *string `json:"slack_bot_token,omitempty"`
@@ -284,6 +285,10 @@ func configToTransfer(cfg *models.RoboClawConfig, includeSecrets bool) ConfigTra
 	if cfg.CloidExpressionEnabled != nil {
 		cloidExpressionEnabled = *cfg.CloidExpressionEnabled
 	}
+	cloidNavigationPoseEnabled := false
+	if cfg.CloidNavigationPoseEnabled != nil {
+		cloidNavigationPoseEnabled = *cfg.CloidNavigationPoseEnabled
+	}
 	t := ConfigTransfer{
 		Name:                              cfg.Name,
 		RobotName:                         cfg.RobotName,
@@ -316,6 +321,7 @@ func configToTransfer(cfg *models.RoboClawConfig, includeSecrets bool) ConfigTra
 		CloidCleanupDemoEnabled:           boolPtr(cleanupDemoEnabled),
 		CloidCleanupDemoMotionIDsJson:     cfg.CloidCleanupDemoMotionIDsJson,
 		CloidExpressionEnabled:            boolPtr(cloidExpressionEnabled),
+		CloidNavigationPoseEnabled:        boolPtr(cloidNavigationPoseEnabled),
 		SoulContent:                       cfg.SoulContent,
 		SkillsContent:                     cfg.SkillsContent,
 		TroubleshootingContent:            cfg.TroubleshootingContent,
@@ -449,6 +455,14 @@ func (t ConfigTransfer) toModel(existing *models.RoboClawConfig) models.RoboClaw
 		cloidExpressionEnabled = *t.CloidExpressionEnabled
 	}
 
+	cloidNavigationPoseEnabled := false
+	if cur != nil && cur.CloidNavigationPoseEnabled != nil {
+		cloidNavigationPoseEnabled = *cur.CloidNavigationPoseEnabled
+	}
+	if t.CloidNavigationPoseEnabled != nil {
+		cloidNavigationPoseEnabled = *t.CloidNavigationPoseEnabled
+	}
+
 	cfg := models.RoboClawConfig{
 		Name:                              t.Name,
 		RobotName:                         t.RobotName,
@@ -485,6 +499,7 @@ func (t ConfigTransfer) toModel(existing *models.RoboClawConfig) models.RoboClaw
 		CloidCleanupDemoEnabled:           boolPtr(cleanupDemoEnabled),
 		CloidCleanupDemoMotionIDsJson:     t.CloidCleanupDemoMotionIDsJson,
 		CloidExpressionEnabled:            boolPtr(cloidExpressionEnabled),
+		CloidNavigationPoseEnabled:        boolPtr(cloidNavigationPoseEnabled),
 		DiscordBotToken:                   resolve(t.DiscordBotToken, curStr(func(c *models.RoboClawConfig) string { return c.DiscordBotToken })),
 		SlackAppToken:                     resolve(t.SlackAppToken, curStr(func(c *models.RoboClawConfig) string { return c.SlackAppToken })),
 		SlackBotToken:                     resolve(t.SlackBotToken, curStr(func(c *models.RoboClawConfig) string { return c.SlackBotToken })),

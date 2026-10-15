@@ -17,6 +17,7 @@ class RoboClawConfig {
   bool cloidCleanupDemoEnabled;
   String cloidCleanupDemoMotionIdsJson;
   bool cloidExpressionEnabled;
+  bool cloidNavigationPoseEnabled;
 
   // LLM 기본
   String llmProvider;
@@ -180,6 +181,7 @@ class RoboClawConfig {
     this.cloidCleanupDemoEnabled = true,
     this.cloidCleanupDemoMotionIdsJson = '',
     this.cloidExpressionEnabled = false,
+    this.cloidNavigationPoseEnabled = false,
     this.llmProvider = 'azure',
     this.llmModel = 'gpt-4o',
     this.azureOpenaiEndpoint = '',
@@ -308,6 +310,8 @@ class RoboClawConfig {
       cloidCleanupDemoMotionIdsJson:
           json['cloid_cleanup_demo_motion_ids_json'] ?? '',
       cloidExpressionEnabled: json['cloid_expression_enabled'] ?? false,
+      cloidNavigationPoseEnabled:
+          json['cloid_navigation_pose_enabled'] ?? false,
       llmProvider: json['llm_provider'] ?? 'azure',
       llmModel: json['llm_model'] ?? 'gpt-4o',
       azureOpenaiEndpoint: json['azure_openai_endpoint'] ?? '',
@@ -444,6 +448,7 @@ class RoboClawConfig {
       'cloid_cleanup_demo_enabled': cloidCleanupDemoEnabled,
       'cloid_cleanup_demo_motion_ids_json': cloidCleanupDemoMotionIdsJson,
       'cloid_expression_enabled': cloidExpressionEnabled,
+      'cloid_navigation_pose_enabled': cloidNavigationPoseEnabled,
       'llm_provider': llmProvider,
       'llm_model': llmModel,
       'azure_openai_endpoint': azureOpenaiEndpoint,

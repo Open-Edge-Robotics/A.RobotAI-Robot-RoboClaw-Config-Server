@@ -8,6 +8,8 @@ Widget _host({
   required TextEditingController controller,
   bool expressionEnabled = false,
   ValueChanged<bool>? onExpressionEnabledChanged,
+  bool navigationPoseEnabled = false,
+  ValueChanged<bool>? onNavigationPoseEnabledChanged,
 }) {
   return MaterialApp(
     home: Scaffold(
@@ -18,6 +20,9 @@ Widget _host({
         motionIdsJsonCtrl: controller,
         expressionEnabled: expressionEnabled,
         onExpressionEnabledChanged: onExpressionEnabledChanged ?? (_) {},
+        navigationPoseEnabled: navigationPoseEnabled,
+        onNavigationPoseEnabledChanged:
+            onNavigationPoseEnabledChanged ?? (_) {},
       ),
     ),
   );
@@ -67,5 +72,26 @@ void main() {
 
     await tester.tap(toggle);
     expect(expressionEnabled, isTrue);
+  });
+
+  testWidgets('CLOi 주행 전 boxing 자세 스위치를 켜고 끌 수 있다', (tester) async {
+    var navigationPoseEnabled = false;
+
+    await tester.pumpWidget(
+      _host(
+        enabled: true,
+        onEnabledChanged: (_) {},
+        controller: TextEditingController(text: ''),
+        navigationPoseEnabled: navigationPoseEnabled,
+        onNavigationPoseEnabledChanged: (value) =>
+            navigationPoseEnabled = value,
+      ),
+    );
+
+    final toggle = find.byKey(const ValueKey('cloid_navigation_pose_enabled'));
+    expect(toggle, findsOneWidget);
+
+    await tester.tap(toggle);
+    expect(navigationPoseEnabled, isTrue);
   });
 }

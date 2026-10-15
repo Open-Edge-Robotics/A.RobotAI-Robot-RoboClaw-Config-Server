@@ -18,6 +18,7 @@ type RoboClawConfig struct {
 	CloidCleanupDemoEnabled       *bool  `gorm:"default:true" json:"cloid_cleanup_demo_enabled"`
 	CloidCleanupDemoMotionIDsJson string `gorm:"type:text;default:''" json:"cloid_cleanup_demo_motion_ids_json"`
 	CloidExpressionEnabled        *bool  `gorm:"default:false" json:"cloid_expression_enabled"`
+	CloidNavigationPoseEnabled    *bool  `gorm:"default:false" json:"cloid_navigation_pose_enabled"`
 
 	// ── LLM 기본 설정 ──
 	LlmProvider string `gorm:"default:'azure'" json:"llm_provider"` // azure, openai, anthropic, ollama

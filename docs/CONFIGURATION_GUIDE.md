@@ -210,6 +210,13 @@ connector 설정입니다. `maestro_ip`가 비어 있으면 connector가 비활�
 선택 가능한 모션 ID 는 RoboClaw 코드 상수 allowlist 로 고정되어 있고, 모두 `pre_id` 없는
 모션입니다. 상체 구동 오류 개체는 이 값을 꺼 둡니다.
 
+### CLOiD 주행 전 boxing 자세 정렬 (contract v2.8.0)
+
+`CLOi` 섹션에서 `cloid_navigation_pose_enabled`(배포 `.env` `RC_CLOID_NAVIGATION_POSE_ENABLED`)를
+설정합니다. 기본값은 꺼짐입니다. 켜면 RoboClaw가 베이스가 움직이는 스킬 직전에 CLOiD를
+최소 부피(boxing) 자세로 만드는 실행(`cloid.move_boxing`)을 한 번 요청하고, 요청이 실패하면
+이동을 거부합니다. cloid 프로필 전용이며 주행 완료 후 상체 자세 복원은 자동으로 수행하지 않습니다.
+
 ## 운영 확인
 
 서버 상태:

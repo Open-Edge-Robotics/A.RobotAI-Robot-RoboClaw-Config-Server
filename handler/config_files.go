@@ -191,7 +191,12 @@ func generateEnvContent(cfg *models.RoboClawConfig) string {
 	if cfg.CloidExpressionEnabled != nil {
 		cloidExpressionEnabled = *cfg.CloidExpressionEnabled
 	}
-	fmt.Fprintf(&sb, "RC_CLOID_EXPRESSION_ENABLED=%t\n\n", cloidExpressionEnabled)
+	fmt.Fprintf(&sb, "RC_CLOID_EXPRESSION_ENABLED=%t\n", cloidExpressionEnabled)
+	cloidNavigationPoseEnabled := false
+	if cfg.CloidNavigationPoseEnabled != nil {
+		cloidNavigationPoseEnabled = *cfg.CloidNavigationPoseEnabled
+	}
+	fmt.Fprintf(&sb, "RC_CLOID_NAVIGATION_POSE_ENABLED=%t\n\n", cloidNavigationPoseEnabled)
 	if cfg.GrpcPeerToken != "" {
 		fmt.Fprintf(&sb, "GRPC_PEER_TOKEN=%s\n", cfg.GrpcPeerToken)
 	}

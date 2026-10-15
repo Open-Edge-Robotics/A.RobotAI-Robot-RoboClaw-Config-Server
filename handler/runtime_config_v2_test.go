@@ -16,7 +16,8 @@ func TestGetActiveRuntimeConfigV2ReturnsVersionedEnvelope(t *testing.T) {
 		Name: "active", RobotName: "butler", Environment: "office", IsActive: true,
 		LlmProvider: "ollama", LlmModel: "llama3.2", OpenaiApiKey: "secret",
 		CloidCleanupDemoEnabled: boolPtr(false), CloidCleanupDemoMotionIDsJson: "[22,60]",
-		CloidExpressionEnabled: boolPtr(true),
+		CloidExpressionEnabled:     boolPtr(true),
+		CloidNavigationPoseEnabled: boolPtr(true),
 	})
 
 	r := gin.New()
@@ -41,5 +42,8 @@ func TestGetActiveRuntimeConfigV2ReturnsVersionedEnvelope(t *testing.T) {
 	}
 	if config["cloid_expression_enabled"] != true {
 		t.Fatalf("runtime manifest omitted CLOi expression switch: %#v", config)
+	}
+	if config["cloid_navigation_pose_enabled"] != true {
+		t.Fatalf("runtime manifest omitted CLOi navigation pose switch: %#v", config)
 	}
 }
