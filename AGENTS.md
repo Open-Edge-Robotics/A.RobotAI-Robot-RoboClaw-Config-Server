@@ -122,10 +122,12 @@ HTTP(handler) → Service → Repository
    - `storage/token_store.dart`(인터페이스) + `storage/web_token_store.dart`(브라우저 구현).
    - `platform/file_picker.dart`/`file_downloader.dart`(인터페이스) + web 구현 분리.
    - `main.dart` 에서 운영 인스턴스 구성. `test/api_service_test.dart` 로 MockClient/Fake 검증.
-5. [~] **Controller 분리** — `BackupController`(features/backup) 분리·테스트·대시보드 연결 완료. `ScenarioController`(features/scenarios) 분리·테스트·CRUD 전체 이관 완료. `ConfigController`(features/configs) 분리·테스트·CRUD 이관 완료. `ConfigFormMapper` Ollama 옵션 이관 완료.
+   - 테마 영속화: `storage/theme_mode_store.dart`(인터페이스) + `storage/web_theme_mode_store.dart`(브라우저 구현), `features/theme/theme_controller.dart`, 앱 루트 `app.dart`. 기본 테마는 라이트.
+5. [~] **Controller 분리** — `BackupController`(features/backup) 분리·테스트·대시보드 연결 완료. `ScenarioController`(features/scenarios) 분리·테스트·CRUD 전체 이관 완료. `ConfigController`(features/configs) 분리·테스트·CRUD 이관 완료. `ConfigFormMapper` Ollama 옵션 이관 완료. `ThemeController`(features/theme) 추가.
    - 남은 작업: Widget 테스트 추가 확충 (에러/엣지 케이스).
-6. [x] **커버리지 강화** — 프론트엔드 테스트 186개 (80.2%), 백엔드 커버리지 80.7% (CI 게이트 80% 달성).
+6. [x] **커버리지 강화** — 프론트엔드 테스트 237개, 백엔드 커버리지 80.7% (CI 게이트 80% 달성).
 7. [x] **CLI 통합 및 Python 의존성 제거** — `scripts/` 파이썬 스크립트를 Go 내장 CLI(`aics contract [check|generate|update]`, `secret-scan`)로 통합 완료. CI/로컬 개발 환경의 Python 3 의존성 완전 제거.
+8. [ ] **언어 설정 영속화** — `LanguageManager` 는 아직 `localStorage` 에 언어 선택을 저장하지 않아 새로고침 시 한국어로 초기화된다. 테마와 동일한 Store 주입 패턴으로 개선 필요.
 
 ### 주의사항
 

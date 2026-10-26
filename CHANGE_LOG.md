@@ -17,6 +17,11 @@
   - `SYSTEM1_API_KEY`는 API 응답에서 마스킹하고, 편집 시 기존 키를 보존하며 백업의 secret 포함 옵션을 따르도록 했다.
   - timeout, option count, confidence threshold JSON 유효성 검증과 런타임 manifest field coverage 테스트를 추가했다.
 - **LangSmith workspace ID 설정**: 공통 runtime contract v2.3.0을 반영하고, 프로필 모델/API/백업/배포 `.env`와 Flutter 설정 폼에 `LANGSMITH_WORKSPACE_ID` 입력 및 round-trip 지원을 추가했다.
+- **대시보드 테마 기본값/영속화**: 프론트엔드 기본 테마를 라이트 모드로 변경하고, 사용자가 전환한 테마를 `localStorage`(`theme_mode`)에 저장해 새로고침 후에도 복원한다.
+  - `frontend/lib/storage/theme_mode_store.dart`(인터페이스 + `ThemeModeCodec`)와 `web_theme_mode_store.dart`(브라우저 구현) 추가.
+  - `frontend/lib/features/theme/theme_controller.dart`(`ChangeNotifier`)로 테마 상태·저장 관리.
+  - 앱 루트를 `frontend/lib/app.dart`(`App`)로 분리해 테스트에서 `ThemeController`를 주입할 수 있게 했다.
+  - `theme_controller_test.dart`, `app_theme_test.dart` 추가(기본 라이트/저장 값 복원/토글 영속화).
 
 ## [0.4.4] - 2026-09-23
 
