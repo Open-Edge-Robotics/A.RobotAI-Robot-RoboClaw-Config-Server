@@ -74,6 +74,19 @@ void main() {
     expect(expressionEnabled, isTrue);
   });
 
+  testWidgets('CLOi 섹션 설명에 장비 장애 관련 문구가 남아 있지 않다', (tester) async {
+    await tester.pumpWidget(
+      _host(
+        enabled: true,
+        onEnabledChanged: (_) {},
+        controller: TextEditingController(text: '[]'),
+      ),
+    );
+
+    expect(find.textContaining('오류'), findsNothing);
+    expect(find.textContaining('2호'), findsNothing);
+  });
+
   testWidgets('CLOi 주행 전 boxing 자세 스위치를 켜고 끌 수 있다', (tester) async {
     var navigationPoseEnabled = false;
 

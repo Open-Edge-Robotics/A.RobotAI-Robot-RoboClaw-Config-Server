@@ -65,7 +65,7 @@ class ConfigCleanupDemoSection extends StatelessWidget {
           dense: true,
           title: Text('상황별 표현 모션 자동 재생'.tr),
           subtitle: Text(
-            'CLOiD가 태스크를 마친 뒤 상황(인사·대화·탐색·실패)에 맞는 등록 모션을 한 번 재생합니다. 주행이 포함된 태스크에서는 재생하지 않습니다. 상체 구동 오류 개체(2호)는 끄세요.'
+            'CLOiD가 태스크를 마친 뒤 상황(인사·대화·탐색·실패)에 맞는 등록 모션을 한 번 재생합니다. 주행이 포함된 태스크에서는 재생하지 않습니다. 표현 모션이 부자연스러운 개체는 끄면 됩니다.'
                 .tr,
           ),
           value: expressionEnabled,
