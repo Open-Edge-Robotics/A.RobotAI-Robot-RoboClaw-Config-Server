@@ -509,6 +509,18 @@ func validateJSONShape(fieldName, raw string, wantArray bool) error {
 	return nil
 }
 
+// shadowLogToggles는 SYSTEM1_SHADOW_LOG 자리에 잘못 들어가는 켜기/끄기 값이다.
+// 이 값은 파일 경로가 아니므로 로봇이 작업 디렉터리에 동명의 파일을 만든다.
+var shadowLogToggles = map[string]bool{
+	"true": true, "false": true, "on": true, "off": true, "yes": true, "no": true,
+}
+
+// isShadowLogPath는 SYSTEM1_SHADOW_LOG 값이 켜기/끄기 토글이 아닌 절대 경로인지 판정한다.
+func isShadowLogPath(value string) bool {
+	trimmed := strings.TrimSpace(value)
+	return strings.HasPrefix(trimmed, "/") && !shadowLogToggles[strings.ToLower(trimmed)]
+}
+
 func validateRuntimeValues(cfg *models.RoboClawConfig) error {
 	providers := map[string]bool{"": true, "azure": true, "openai": true, "anthropic": true, "ollama": true}
 	if !providers[strings.ToLower(cfg.LlmProvider)] {
@@ -545,6 +557,16 @@ func validateRuntimeValues(cfg *models.RoboClawConfig) error {
 	system1Scopes := map[string]bool{"": true, "readonly": true, "navigation": true}
 	if !system1Scopes[strings.ToLower(cfg.System1Scope)] {
 		return fmt.Errorf("지원하지 않는 system1_scope입니다: %s", cfg.System1Scope)
+	}
+	system1StepRoutings := map[string]bool{"": true, "off": true, "shadow": true, "on": true}
+	if !system1StepRoutings[strings.ToLower(strings.TrimSpace(cfg.System1StepRouting))] {
+		return fmt.Errorf("지원하지 않는 system1_step_routing입니다: %s", cfg.System1StepRouting)
+	}
+	if shadowLog := strings.TrimSpace(cfg.System1ShadowLog); shadowLog != "" && !isShadowLogPath(shadowLog) {
+		if shadowLogToggles[strings.ToLower(shadowLog)] {
+			return fmt.Errorf("system1_shadow_log는 켜기/끄기 값이 아니라 파일 경로여야 합니다: %s", cfg.System1ShadowLog)
+		}
+		return fmt.Errorf("system1_shadow_log는 절대 경로여야 합니다: %s", cfg.System1ShadowLog)
 	}
 	if cfg.System1TimeoutMs > 0 && cfg.System1TimeoutMs < 1 {
 		return fmt.Errorf("system1_timeout_ms는 1 이상이어야 합니다")

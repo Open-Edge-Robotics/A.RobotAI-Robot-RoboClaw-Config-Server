@@ -179,6 +179,7 @@ class ConfigTabState extends State<ConfigTab> {
   String _system1Router = 'rule';
   bool _system1Shadow = false;
   final _system1ShadowLogCtrl = TextEditingController();
+  String _system1StepRouting = 'shadow';
   String _system1Scope = 'readonly';
   final _system1EndpointCtrl = TextEditingController();
   final _system1ProviderCtrl = TextEditingController();
@@ -544,6 +545,7 @@ class ConfigTabState extends State<ConfigTab> {
       system1Router: _system1Router,
       system1Shadow: _system1Shadow,
       system1ShadowLog: _system1ShadowLogCtrl.text,
+      system1StepRouting: _system1StepRouting,
       system1Scope: _system1Scope,
       system1Endpoint: _system1EndpointCtrl.text,
       system1Provider: _system1ProviderCtrl.text,
@@ -720,6 +722,9 @@ class ConfigTabState extends State<ConfigTab> {
         : config.system1Router;
     _system1Shadow = config.system1Shadow;
     _system1ShadowLogCtrl.text = config.system1ShadowLog;
+    _system1StepRouting = config.system1StepRouting.isEmpty
+        ? 'shadow'
+        : config.system1StepRouting;
     _system1Scope = config.system1Scope.isEmpty
         ? 'readonly'
         : config.system1Scope;
@@ -1351,6 +1356,9 @@ class ConfigTabState extends State<ConfigTab> {
                 scope: _system1Scope,
                 onScopeChanged: (value) =>
                     setState(() => _system1Scope = value ?? 'readonly'),
+                stepRouting: _system1StepRouting,
+                onStepRoutingChanged: (value) =>
+                    setState(() => _system1StepRouting = value ?? 'shadow'),
                 endpointCtrl: _system1EndpointCtrl,
                 providerCtrl: _system1ProviderCtrl,
                 timeoutMsCtrl: _system1TimeoutMsCtrl,

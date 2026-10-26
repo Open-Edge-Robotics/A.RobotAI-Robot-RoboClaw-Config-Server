@@ -185,7 +185,8 @@ func TestGetActiveRuntimeConfigV2IncludesFleetFields(t *testing.T) {
 		"fleet_heartbeat_sec", "fleet_command_journal_path", "skills_guide_file",
 		"fleet_control_tls", "fleet_control_ca_cert", "fleet_control_client_cert",
 		"fleet_control_client_key", "langsmith_workspace_id",
-		"system1_router", "system1_shadow", "system1_shadow_log", "system1_scope",
+		"system1_router", "system1_shadow", "system1_shadow_log", "system1_step_routing",
+		"system1_scope",
 		"system1_endpoint", "system1_provider", "system1_timeout_ms",
 		"system1_conf_thresholds_json", "system1_skills", "system1_max_options", "system1_api_key",
 	} {

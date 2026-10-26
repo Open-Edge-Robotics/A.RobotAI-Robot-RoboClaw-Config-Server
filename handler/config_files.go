@@ -384,8 +384,13 @@ func generateEnvContent(cfg *models.RoboClawConfig) string {
 	}
 	fmt.Fprintf(&sb, "SYSTEM1_ROUTER=%s\n", router)
 	fmt.Fprintf(&sb, "SYSTEM1_SHADOW=%t\n", cfg.System1Shadow)
-	if cfg.System1ShadowLog != "" {
-		fmt.Fprintf(&sb, "SYSTEM1_SHADOW_LOG=%s\n", cfg.System1ShadowLog)
+	if isShadowLogPath(cfg.System1ShadowLog) {
+		fmt.Fprintf(&sb, "SYSTEM1_SHADOW_LOG=%s\n", strings.TrimSpace(cfg.System1ShadowLog))
+	}
+	// 값이 비었거나 잘못되면 쓰지 않는다. 로봇 기본값(shadow)을 그대로 쓰게 한다.
+	switch stepRouting := strings.ToLower(strings.TrimSpace(cfg.System1StepRouting)); stepRouting {
+	case "off", "shadow", "on":
+		fmt.Fprintf(&sb, "SYSTEM1_STEP_ROUTING=%s\n", stepRouting)
 	}
 	scope := cfg.System1Scope
 	if scope == "" {

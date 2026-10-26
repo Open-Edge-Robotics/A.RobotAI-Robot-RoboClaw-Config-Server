@@ -533,6 +533,18 @@ class LanguageManager {
         'Shadow mode (SYSTEM1_SHADOW, optional, default: false)',
     'Shadow log path (SYSTEM1_SHADOW_LOG, 선택, 기본: 없음)':
         'Shadow log path (SYSTEM1_SHADOW_LOG, optional, default: none)',
+    'Shadow mode가 켜져 있을 때 비교 기록을 저장할 파일 경로입니다. 비우면 노드 로그에만 남습니다.':
+        'File path that stores the comparison records while Shadow mode is on. Leave it empty to keep them in the node log only.',
+    '선택되지 않은 라우터(rule ↔ laya)의 판단도 백그라운드로 실행해 비교 기록합니다. 실행에는 영향이 없습니다. rule 모드에서는 System 1 endpoint가 필요합니다.':
+        'Also runs the router that is not selected (rule ↔ laya) in the background and records both decisions for comparison. Does not affect execution. Requires the System 1 endpoint in rule mode.',
+    '파일 경로를 입력하세요 (켜기/끄기 값이 아닙니다)':
+        'Enter a file path (this is not an on/off value)',
+    '절대 경로를 입력하세요 (예: /ws/agent_workspace/system1_shadow.jsonl)':
+        'Enter an absolute path (e.g. /ws/agent_workspace/system1_shadow.jsonl)',
+    'Step routing (SYSTEM1_STEP_ROUTING, 선택, 기본: shadow)':
+        'Step routing (SYSTEM1_STEP_ROUTING, optional, default: shadow)',
+    '복합 명령을 분해한 하위 단계에도 사전 라우터를 적용합니다. off: 모든 단계 LLM, shadow: 판정만 기록, on: 혼자 완결되는 단계를 직접 처리.':
+        'Applies the pre-router to the sub-steps of a decomposed compound command. off: every step goes to the LLM, shadow: only records the decision, on: runs self-contained steps directly.',
     'System 1 scope (SYSTEM1_SCOPE, 선택, 기본: readonly)':
         'System 1 scope (SYSTEM1_SCOPE, optional, default: readonly)',
     'System 1 endpoint (SYSTEM1_ENDPOINT, 선택, 기본: 없음)':

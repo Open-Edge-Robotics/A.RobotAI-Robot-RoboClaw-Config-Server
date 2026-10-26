@@ -167,6 +167,7 @@ type ConfigTransfer struct {
 	System1Router             string  `json:"system1_router"`
 	System1Shadow             bool    `json:"system1_shadow"`
 	System1ShadowLog          string  `json:"system1_shadow_log"`
+	System1StepRouting        string  `json:"system1_step_routing"`
 	System1Scope              string  `json:"system1_scope"`
 	System1Endpoint           string  `json:"system1_endpoint"`
 	System1Provider           string  `json:"system1_provider"`
@@ -375,6 +376,7 @@ func configToTransfer(cfg *models.RoboClawConfig, includeSecrets bool) ConfigTra
 		System1Router:                     cfg.System1Router,
 		System1Shadow:                     cfg.System1Shadow,
 		System1ShadowLog:                  cfg.System1ShadowLog,
+		System1StepRouting:                cfg.System1StepRouting,
 		System1Scope:                      cfg.System1Scope,
 		System1Endpoint:                   cfg.System1Endpoint,
 		System1Provider:                   cfg.System1Provider,
@@ -562,6 +564,7 @@ func (t ConfigTransfer) toModel(existing *models.RoboClawConfig) models.RoboClaw
 		System1Router:                     t.System1Router,
 		System1Shadow:                     t.System1Shadow,
 		System1ShadowLog:                  t.System1ShadowLog,
+		System1StepRouting:                t.System1StepRouting,
 		System1Scope:                      t.System1Scope,
 		System1Endpoint:                   t.System1Endpoint,
 		System1Provider:                   t.System1Provider,

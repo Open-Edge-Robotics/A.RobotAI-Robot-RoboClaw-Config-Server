@@ -133,10 +133,11 @@ class RoboClawConfig {
   String langsmithEndpoint;
   String langsmithWorkspaceId;
 
-  // System 1 Fast Router (contract v2.4.0)
+  // System 1 Fast Router (contract v2.4.0+, step routing v2.9.0)
   String system1Router;
   bool system1Shadow;
   String system1ShadowLog;
+  String system1StepRouting;
   String system1Scope;
   String system1Endpoint;
   String system1Provider;
@@ -267,6 +268,7 @@ class RoboClawConfig {
     this.system1Router = 'rule',
     this.system1Shadow = false,
     this.system1ShadowLog = '',
+    this.system1StepRouting = 'shadow',
     this.system1Scope = 'readonly',
     this.system1Endpoint = '',
     this.system1Provider = 'laya',
@@ -401,6 +403,7 @@ class RoboClawConfig {
       system1Router: json['system1_router'] ?? 'rule',
       system1Shadow: json['system1_shadow'] ?? false,
       system1ShadowLog: json['system1_shadow_log'] ?? '',
+      system1StepRouting: json['system1_step_routing'] ?? 'shadow',
       system1Scope: json['system1_scope'] ?? 'readonly',
       system1Endpoint: json['system1_endpoint'] ?? '',
       system1Provider: json['system1_provider'] ?? 'laya',
@@ -535,6 +538,7 @@ class RoboClawConfig {
       'system1_router': system1Router,
       'system1_shadow': system1Shadow,
       'system1_shadow_log': system1ShadowLog,
+      'system1_step_routing': system1StepRouting,
       'system1_scope': system1Scope,
       'system1_endpoint': system1Endpoint,
       'system1_provider': system1Provider,

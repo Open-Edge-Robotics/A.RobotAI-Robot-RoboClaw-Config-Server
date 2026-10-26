@@ -157,10 +157,11 @@ type RoboClawConfig struct {
 	LangsmithEndpoint    string `json:"langsmith_endpoint"`                                // LANGSMITH_ENDPOINT (자체 호스팅/프록시 엔드포인트, 선택)
 	LangsmithWorkspaceId string `json:"langsmith_workspace_id"`                            // LANGSMITH_WORKSPACE_ID (workspace ID, 선택)
 
-	// ── System 1 Fast Router (contract v2.4.0) ──
+	// ── System 1 Fast Router (contract v2.4.0+, step routing v2.9.0) ──
 	System1Router             string  `gorm:"default:'rule'" json:"system1_router"`          // SYSTEM1_ROUTER
 	System1Shadow             bool    `gorm:"default:false" json:"system1_shadow"`           // SYSTEM1_SHADOW
 	System1ShadowLog          string  `json:"system1_shadow_log"`                            // SYSTEM1_SHADOW_LOG
+	System1StepRouting        string  `gorm:"default:'shadow'" json:"system1_step_routing"`  // SYSTEM1_STEP_ROUTING
 	System1Scope              string  `gorm:"default:'readonly'" json:"system1_scope"`       // SYSTEM1_SCOPE
 	System1Endpoint           string  `json:"system1_endpoint"`                              // SYSTEM1_ENDPOINT
 	System1Provider           string  `gorm:"default:'laya'" json:"system1_provider"`        // SYSTEM1_PROVIDER

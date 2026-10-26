@@ -102,6 +102,7 @@ void main() {
         system1Router: 'laya',
         system1Shadow: true,
         system1ShadowLog: '/tmp/system1.jsonl',
+        system1StepRouting: 'on',
         system1Scope: 'navigation',
         system1Endpoint: 'http://laya:8000',
         system1Provider: 'laya',
@@ -116,6 +117,7 @@ void main() {
       expect(json['system1_router'], 'laya');
       expect(json['system1_shadow'], isTrue);
       expect(json['system1_shadow_log'], '/tmp/system1.jsonl');
+      expect(json['system1_step_routing'], 'on');
       expect(json['system1_scope'], 'navigation');
       expect(json['system1_endpoint'], 'http://laya:8000');
       expect(json['system1_provider'], 'laya');
@@ -129,6 +131,7 @@ void main() {
       expect(decoded.system1Router, 'laya');
       expect(decoded.system1Shadow, isTrue);
       expect(decoded.system1ShadowLog, '/tmp/system1.jsonl');
+      expect(decoded.system1StepRouting, 'on');
       expect(decoded.system1Scope, 'navigation');
       expect(decoded.system1Endpoint, 'http://laya:8000');
       expect(decoded.system1Provider, 'laya');
@@ -150,6 +153,7 @@ void main() {
     expect(config.system1Router, 'rule');
     expect(config.system1Shadow, isFalse);
     expect(config.system1ShadowLog, '');
+    expect(config.system1StepRouting, 'shadow');
     expect(config.system1Scope, 'readonly');
     expect(config.system1Endpoint, '');
     expect(config.system1Provider, 'laya');

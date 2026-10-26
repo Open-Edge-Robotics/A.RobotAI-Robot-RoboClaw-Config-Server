@@ -16,6 +16,8 @@ class ConfigSystem1Section extends StatelessWidget {
   final TextEditingController shadowLogCtrl;
   final String scope;
   final ValueChanged<String?> onScopeChanged;
+  final String stepRouting;
+  final ValueChanged<String?> onStepRoutingChanged;
   final TextEditingController endpointCtrl;
   final TextEditingController providerCtrl;
   final TextEditingController timeoutMsCtrl;
@@ -34,6 +36,8 @@ class ConfigSystem1Section extends StatelessWidget {
     required this.shadowLogCtrl,
     required this.scope,
     required this.onScopeChanged,
+    required this.stepRouting,
+    required this.onStepRoutingChanged,
     required this.endpointCtrl,
     required this.providerCtrl,
     required this.timeoutMsCtrl,
@@ -45,11 +49,30 @@ class ConfigSystem1Section extends StatelessWidget {
 
   static const _routers = ['rule', 'laya'];
   static const _scopes = ['readonly', 'navigation'];
+  static const _stepRoutings = ['off', 'shadow', 'on'];
+
+  /// SYSTEM1_SHADOW_LOG 는 켜기/끄기 값이 아니라 파일 경로다.
+  /// 실수로 `true`를 넣으면 로봇이 작업 디렉터리에 `true` 파일을 만든다.
+  static String? validateShadowLogPath(String? value) {
+    final text = (value ?? '').trim();
+    if (text.isEmpty) return null;
+    const booleanish = ['true', 'false', 'on', 'off', 'yes', 'no'];
+    if (booleanish.contains(text.toLowerCase())) {
+      return '파일 경로를 입력하세요 (켜기/끄기 값이 아닙니다)'.tr;
+    }
+    if (!text.startsWith('/')) {
+      return '절대 경로를 입력하세요 (예: /ws/agent_workspace/system1_shadow.jsonl)'.tr;
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
     final selectedRouter = _routers.contains(router) ? router : 'rule';
     final selectedScope = _scopes.contains(scope) ? scope : 'readonly';
+    final selectedStepRouting = _stepRoutings.contains(stepRouting)
+        ? stepRouting
+        : 'shadow';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,14 +95,23 @@ class ConfigSystem1Section extends StatelessWidget {
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           title: Text('Shadow mode (SYSTEM1_SHADOW, 선택, 기본: false)'.tr),
+          subtitle: Text(
+            '선택되지 않은 라우터(rule ↔ laya)의 판단도 백그라운드로 실행해 비교 기록합니다. 실행에는 영향이 없습니다. rule 모드에서는 System 1 endpoint가 필요합니다.'
+                .tr,
+          ),
           value: shadow,
           onChanged: isEditing ? onShadowChanged : null,
         ),
         TextFormField(
           controller: shadowLogCtrl,
-          enabled: isEditing,
+          enabled: isEditing && shadow,
+          validator: validateShadowLogPath,
           decoration: InputDecoration(
             labelText: 'Shadow log path (SYSTEM1_SHADOW_LOG, 선택, 기본: 없음)'.tr,
+            hintText: '/ws/agent_workspace/system1_shadow.jsonl',
+            helperText:
+                'Shadow mode가 켜져 있을 때 비교 기록을 저장할 파일 경로입니다. 비우면 노드 로그에만 남습니다.'
+                    .tr,
           ),
         ),
         const SizedBox(height: 16),
@@ -94,6 +126,22 @@ class ConfigSystem1Section extends StatelessWidget {
               )
               .toList(),
           onChanged: isEditing ? onScopeChanged : null,
+        ),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<String>(
+          initialValue: selectedStepRouting,
+          decoration: InputDecoration(
+            labelText: 'Step routing (SYSTEM1_STEP_ROUTING, 선택, 기본: shadow)'.tr,
+            helperText:
+                '복합 명령을 분해한 하위 단계에도 사전 라우터를 적용합니다. off: 모든 단계 LLM, shadow: 판정만 기록, on: 혼자 완결되는 단계를 직접 처리.'
+                    .tr,
+          ),
+          items: _stepRoutings
+              .map(
+                (value) => DropdownMenuItem(value: value, child: Text(value)),
+              )
+              .toList(),
+          onChanged: isEditing ? onStepRoutingChanged : null,
         ),
         const SizedBox(height: 16),
         TextFormField(

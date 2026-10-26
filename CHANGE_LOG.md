@@ -3,6 +3,9 @@
 ## [Unreleased]
 
 ### 추가됨
+- **System 1 Step routing 설정**: 공통 runtime contract v2.9.0의 `system1.step_routing`(`SYSTEM1_STEP_ROUTING`)을 DB/API/백업/배포 `.env`/Flutter 모델·폼에 연결했습니다. `off`/`shadow`/`on` 드롭다운(기본 `shadow`)이며, 값이 비거나 잘못되면 배포 `.env`에 쓰지 않고 로봇 기본값을 따릅니다.
+- **System 1 shadow log 경로 검증 강화**: `system1_shadow_log`에 켜기/끄기 값(`true`/`false`/`on`/`off`/`yes`/`no`)이나 상대 경로를 저장하지 않고, 절대 경로만 허용합니다. Shadow mode가 꺼져 있으면 입력란을 비활성화하고, 도움말에 `SYSTEM1_SHADOW`와 `SYSTEM1_STEP_ROUTING=shadow`의 차이를 명시했습니다.
+- **공통 runtime contract v2.9.0 반영**: 생성 schema/Dart artifact와 lock을 갱신했습니다. 공식 contract release는 아직 발행하지 않았습니다.
 - **CLOiD 주행 전 boxing 자세 스위치**: 공통 runtime contract v2.8.0의 `cloid_navigation_pose_enabled`(`RC_CLOID_NAVIGATION_POSE_ENABLED`)을 DB/API/백업/배포 `.env`/Flutter 모델·폼에 연결했습니다. 기본값은 꺼짐이며, 켜면 로봇이 베이스를 움직이기 직전에 CLOiD를 최소 부피(boxing) 자세로 한 번 정렬하고 실패 시 이동을 거부합니다.
 - **공통 runtime contract v2.8.0 반영**: 생성 schema/Dart artifact와 lock을 갱신했습니다.
 - **CLOiD 상황별 표현 모션 스위치**: 공통 runtime contract v2.7.0의 `cloid_expression_enabled`(`RC_CLOID_EXPRESSION_ENABLED`)을 DB/API/백업/배포 `.env`/Flutter 모델·폼에 연결했습니다. 기본값은 꺼짐이며, 켜면 로봇이 태스크를 마친 뒤 상황에 맞는 등록 모션을 한 번 재생합니다(주행 태스크 제외).
