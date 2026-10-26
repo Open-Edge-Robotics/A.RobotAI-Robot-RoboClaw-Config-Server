@@ -11,6 +11,7 @@ class ConfigPathSection extends StatelessWidget {
   final TextEditingController configDirCtrl;
   final TextEditingController systemPromptFileCtrl;
   final TextEditingController robotDescriptionFileCtrl;
+  final TextEditingController cleanupRunLogPathCtrl;
 
   const ConfigPathSection({
     super.key,
@@ -21,6 +22,7 @@ class ConfigPathSection extends StatelessWidget {
     required this.configDirCtrl,
     required this.systemPromptFileCtrl,
     required this.robotDescriptionFileCtrl,
+    required this.cleanupRunLogPathCtrl,
   });
 
   @override
@@ -75,6 +77,19 @@ class ConfigPathSection extends StatelessWidget {
               enabled: isEditing,
               label: '로봇 URDF 설명 파일 경로 (RC_ROBOT_DESCRIPTION_FILE)',
             ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _FieldRow(
+          children: [
+            _TextField(
+              controller: cleanupRunLogPathCtrl,
+              enabled: isEditing,
+              label: '정리 태스크 실험 계측 run log 경로 (RC_CLEANUP_RUN_LOG_PATH)',
+              hint:
+                  '비우면 기록하지 않습니다. 예: /ros2_ws/agent_workspace/cleanup_runs.jsonl',
+            ),
+            const SizedBox.shrink(),
           ],
         ),
       ],

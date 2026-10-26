@@ -16,6 +16,34 @@ void main() {
     expect(config.toJson()['cloid_cleanup_demo_motion_ids_json'], '[22,60]');
   });
 
+  test('정리 태스크 run log 경로를 API JSON에서 보존한다', () {
+    final config = RoboClawConfig.fromJson({
+      'name': 'former-0047',
+      'robot_name': 'former',
+      'environment': 'kon47',
+      'cleanup_run_log_path': '/ros2_ws/agent_workspace/cleanup_runs.jsonl',
+    });
+
+    expect(
+      config.cleanupRunLogPath,
+      '/ros2_ws/agent_workspace/cleanup_runs.jsonl',
+    );
+    expect(
+      config.toJson()['cleanup_run_log_path'],
+      '/ros2_ws/agent_workspace/cleanup_runs.jsonl',
+    );
+  });
+
+  test('정리 태스크 run log 경로 기본값은 비어 있다', () {
+    final config = RoboClawConfig.fromJson({
+      'name': 'default',
+      'robot_name': 'former',
+      'environment': 'kon47',
+    });
+
+    expect(config.cleanupRunLogPath, '');
+  });
+
   test(
     'cleanup demo defaults match the contract and CLOi profile fallback',
     () {

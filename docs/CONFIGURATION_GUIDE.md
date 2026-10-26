@@ -217,6 +217,19 @@ connector 설정입니다. `maestro_ip`가 비어 있으면 connector가 비활�
 최소 부피(boxing) 자세로 만드는 실행(`cloid.move_boxing`)을 한 번 요청하고, 요청이 실패하면
 이동을 거부합니다. cloid 프로필 전용이며 주행 완료 후 상체 자세 복원은 자동으로 수행하지 않습니다.
 
+### 정리 태스크 실험 계측 run log (contract v2.10.0)
+
+`6. 로컬 환경 경로 및 리소스 설정` 섹션의 `cleanup_run_log_path`(배포 `.env`
+`RC_CLEANUP_RUN_LOG_PATH`)에 JSONL 경로를 지정합니다. 기본값은 비어 있고, 비어 있으면
+기록하지 않습니다. 값을 지정하면 RoboClaw가 `tidy_home` 실행 1회와 정리 위임 결정·결과를
+한 줄씩 남겨 성공률·동료 할당·위임 결과·구간별 소요를 측정할 수 있습니다.
+
+- 경로는 로봇 컨테이너가 쓸 수 있는 경로여야 합니다. 예: `/ros2_ws/agent_workspace/cleanup_runs.jsonl`
+  (호스트 저장소의 `agent_workspace/` 가 컨테이너에 쓰기 가능으로 마운트되어 있습니다).
+- 기록은 append 방식이라 에이전트를 재기동해도 이어집니다. 끄려면 값을 비우고 재배포합니다.
+- 집계는 RoboClaw 저장소의 `scripts/cleanup_run_report.py`, 3조건 반복 실행은
+  `validation/cleanup-experiment/` 를 사용합니다.
+
 ## 운영 확인
 
 서버 상태:

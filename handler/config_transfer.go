@@ -92,6 +92,7 @@ type ConfigTransfer struct {
 	CloidCleanupDemoMotionIDsJson string  `json:"cloid_cleanup_demo_motion_ids_json"`
 	CloidExpressionEnabled        *bool   `json:"cloid_expression_enabled,omitempty"`
 	CloidNavigationPoseEnabled    *bool   `json:"cloid_navigation_pose_enabled,omitempty"`
+	CleanupRunLogPath             string  `json:"cleanup_run_log_path"`
 	DiscordBotToken               *string `json:"discord_bot_token,omitempty"`
 	SlackAppToken                 *string `json:"slack_app_token,omitempty"`
 	SlackBotToken                 *string `json:"slack_bot_token,omitempty"`
@@ -323,6 +324,7 @@ func configToTransfer(cfg *models.RoboClawConfig, includeSecrets bool) ConfigTra
 		CloidCleanupDemoMotionIDsJson:     cfg.CloidCleanupDemoMotionIDsJson,
 		CloidExpressionEnabled:            boolPtr(cloidExpressionEnabled),
 		CloidNavigationPoseEnabled:        boolPtr(cloidNavigationPoseEnabled),
+		CleanupRunLogPath:                 cfg.CleanupRunLogPath,
 		SoulContent:                       cfg.SoulContent,
 		SkillsContent:                     cfg.SkillsContent,
 		TroubleshootingContent:            cfg.TroubleshootingContent,
@@ -502,6 +504,7 @@ func (t ConfigTransfer) toModel(existing *models.RoboClawConfig) models.RoboClaw
 		CloidCleanupDemoMotionIDsJson:     t.CloidCleanupDemoMotionIDsJson,
 		CloidExpressionEnabled:            boolPtr(cloidExpressionEnabled),
 		CloidNavigationPoseEnabled:        boolPtr(cloidNavigationPoseEnabled),
+		CleanupRunLogPath:                 t.CleanupRunLogPath,
 		DiscordBotToken:                   resolve(t.DiscordBotToken, curStr(func(c *models.RoboClawConfig) string { return c.DiscordBotToken })),
 		SlackAppToken:                     resolve(t.SlackAppToken, curStr(func(c *models.RoboClawConfig) string { return c.SlackAppToken })),
 		SlackBotToken:                     resolve(t.SlackBotToken, curStr(func(c *models.RoboClawConfig) string { return c.SlackBotToken })),

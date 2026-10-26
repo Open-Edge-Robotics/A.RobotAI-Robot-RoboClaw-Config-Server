@@ -1,5 +1,20 @@
 # CHANGE_LOG
 
+## 2026-10-26 — 정리 태스크 실험 계측 run log 경로 노출 (contract v2.10.0)
+
+- 공통 runtime contract v2.10.0의 `agent.cleanup_run_log_path`(`RC_CLEANUP_RUN_LOG_PATH`)를
+  백엔드와 프론트에 연결했습니다.
+- `contracts/`·lock·Dart artifact를 v2.10.0으로 갱신했습니다.
+- `database/models/roboclaw_config.go`: `CleanupRunLogPath` 필드 추가.
+- `handler/config_files.go`: 값이 있을 때만 `RC_CLEANUP_RUN_LOG_PATH`를 방출합니다(빈 값이면
+  기록하지 않는 런타임 기본 동작 유지).
+- `handler/config_transfer.go`: 백업 export/import 왕복에서 경로를 보존합니다.
+- `frontend`: `config_model.dart` 필드/JSON, `config_section` 경로 입력, `config_tab.dart`
+  상태·저장·로드, 섹션 위젯 테스트를 추가했습니다.
+- 테스트: Go `.env` 방출 2건, 백업 왕복 2건, Flutter 모델 2건, 경로 섹션 라벨 1건.
+- 검증: `task check` 전체 통과(fmt-check, vet, go test, flutter analyze, flutter test,
+  frontend-contract).
+
 ## [Unreleased]
 
 ### 추가됨

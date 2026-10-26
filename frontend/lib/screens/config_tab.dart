@@ -135,6 +135,7 @@ class ConfigTabState extends State<ConfigTab> {
   final _configDirCtrl = TextEditingController();
   final _systemPromptFileCtrl = TextEditingController();
   final _robotDescriptionFileCtrl = TextEditingController();
+  final _cleanupRunLogPathCtrl = TextEditingController();
 
   // 카메라 / 비전 설정 컨트롤러 및 변수
   final _cameraTopicCtrl = TextEditingController();
@@ -280,6 +281,7 @@ class ConfigTabState extends State<ConfigTab> {
     _configDirCtrl.dispose();
     _systemPromptFileCtrl.dispose();
     _robotDescriptionFileCtrl.dispose();
+    _cleanupRunLogPathCtrl.dispose();
     _cameraTopicCtrl.dispose();
     _visionModelPathCtrl.dispose();
     _gripperCameraTopicCtrl.dispose();
@@ -509,6 +511,7 @@ class ConfigTabState extends State<ConfigTab> {
       configDir: _configDirCtrl.text,
       systemPromptFile: _systemPromptFileCtrl.text,
       robotDescriptionFile: _robotDescriptionFileCtrl.text,
+      cleanupRunLogPath: _cleanupRunLogPathCtrl.text,
       cameraTopic: _cameraTopicCtrl.text,
       useVision: _useVision,
       visionModelPath: _visionModelPathCtrl.text,
@@ -682,6 +685,7 @@ class ConfigTabState extends State<ConfigTab> {
     _configDirCtrl.text = config.configDir;
     _systemPromptFileCtrl.text = config.systemPromptFile;
     _robotDescriptionFileCtrl.text = config.robotDescriptionFile;
+    _cleanupRunLogPathCtrl.text = config.cleanupRunLogPath;
     _cameraTopicCtrl.text = config.cameraTopic;
     _useVision = config.useVision;
     _visionModelPathCtrl.text = config.visionModelPath;
@@ -1268,6 +1272,7 @@ class ConfigTabState extends State<ConfigTab> {
                 configDirCtrl: _configDirCtrl,
                 systemPromptFileCtrl: _systemPromptFileCtrl,
                 robotDescriptionFileCtrl: _robotDescriptionFileCtrl,
+                cleanupRunLogPathCtrl: _cleanupRunLogPathCtrl,
               ),
               const SizedBox(height: 28),
               ConfigCameraSection(

@@ -361,6 +361,11 @@ func generateEnvContent(cfg *models.RoboClawConfig) string {
 	sb.WriteString("RC_TROUBLESHOOTING_GUIDE_FILE=config/TROUBLESHOOTING.md\n")
 	sb.WriteString("RC_ROBOT_LIMITS_FILE=config/ROBOT_LIMITS.json\n")
 
+	// 정리 태스크 실험 계측 run log. 값이 비어 있으면 런타임은 기록하지 않는다.
+	if cleanupRunLogPath := strings.TrimSpace(cfg.CleanupRunLogPath); cleanupRunLogPath != "" {
+		fmt.Fprintf(&sb, "RC_CLEANUP_RUN_LOG_PATH=%s\n", cleanupRunLogPath)
+	}
+
 	// LangSmith 트레이싱 / 모니터링 설정
 	sb.WriteString("\n# ── LangSmith 트레이싱 / 모니터링 (선택) ──\n")
 	fmt.Fprintf(&sb, "LANGSMITH_TRACING=%t\n", cfg.LangsmithTracing)

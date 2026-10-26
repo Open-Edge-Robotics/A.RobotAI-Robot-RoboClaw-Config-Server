@@ -47,9 +47,14 @@ void main() {
         configDirCtrl: TextEditingController(),
         systemPromptFileCtrl: TextEditingController(),
         robotDescriptionFileCtrl: TextEditingController(),
+        cleanupRunLogPathCtrl: TextEditingController(),
       ),
     );
     expect(find.text('6. 로컬 환경 경로 및 리소스 설정'), findsOneWidget);
+    expect(
+      find.text('정리 태스크 실험 계측 run log 경로 (RC_CLEANUP_RUN_LOG_PATH)'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('카메라 섹션 헤더가 표시된다', (tester) async {

@@ -615,3 +615,25 @@ func TestMaskSensitiveFieldsMasksEmbeddingApiKey(t *testing.T) {
 		t.Errorf("expected llm_embedding_api_key to be masked, got %q", cfg.LlmEmbeddingApiKey)
 	}
 }
+
+func TestConfigTransferRoundTripPreservesCleanupRunLogPath(t *testing.T) {
+	cfg := models.RoboClawConfig{CleanupRunLogPath: "/ros2_ws/agent_workspace/cleanup_runs.jsonl"}
+
+	tr := configToTransfer(&cfg, false)
+	if tr.CleanupRunLogPath != "/ros2_ws/agent_workspace/cleanup_runs.jsonl" {
+		t.Fatalf("expected run log path in export, got %q", tr.CleanupRunLogPath)
+	}
+
+	model := tr.toModel(nil)
+	if model.CleanupRunLogPath != "/ros2_ws/agent_workspace/cleanup_runs.jsonl" {
+		t.Fatalf("expected run log path preserved through import, got %q", model.CleanupRunLogPath)
+	}
+}
+
+func TestConfigTransferDefaultsCleanupRunLogPathToEmpty(t *testing.T) {
+	model := (ConfigTransfer{}).toModel(nil)
+
+	if model.CleanupRunLogPath != "" {
+		t.Fatalf("expected empty run log path for older backups, got %q", model.CleanupRunLogPath)
+	}
+}

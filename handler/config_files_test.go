@@ -207,3 +207,22 @@ func TestGeneratedEnvDefaultsNavigationPoseDisabled(t *testing.T) {
 		t.Fatalf("expected default-off navigation pose switch in generated dotenv, got %q", content)
 	}
 }
+
+func TestGeneratedEnvIncludesCleanupRunLogPath(t *testing.T) {
+	cfg := &models.RoboClawConfig{
+		CleanupRunLogPath: "  /ros2_ws/agent_workspace/cleanup_runs.jsonl  ",
+	}
+
+	content := string(generateEnvContent(cfg))
+	if !strings.Contains(content, "RC_CLEANUP_RUN_LOG_PATH=/ros2_ws/agent_workspace/cleanup_runs.jsonl") {
+		t.Fatalf("expected cleanup run log path in generated dotenv, got %q", content)
+	}
+}
+
+func TestGeneratedEnvOmitsCleanupRunLogPathWhenEmpty(t *testing.T) {
+	content := string(generateEnvContent(&models.RoboClawConfig{}))
+
+	if strings.Contains(content, "RC_CLEANUP_RUN_LOG_PATH") {
+		t.Fatalf("expected no cleanup run log path for empty value, got %q", content)
+	}
+}
