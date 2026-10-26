@@ -30,7 +30,7 @@ class ConfigCleanupDemoSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ConfigSectionHeader('CLOi 1호 정리 시연 설정'.tr),
+        ConfigSectionHeader('CLOi 정리 시연 설정'.tr),
         const SizedBox(height: 8),
         CheckboxListTile(
           key: const ValueKey('cloid_cleanup_demo_enabled'),
@@ -53,7 +53,7 @@ class ConfigCleanupDemoSection extends StatelessWidget {
             labelText: '정리 시연 허용 모션 ID (JSON 배열)'.tr,
             hintText: '예: [22,60]'.tr,
             helperText:
-                'CLOi 1호 전용입니다. 빈 값은 승인된 기본값 [22,60]을 사용합니다. []는 시연을 끕니다. catalog pre_id가 있는 모션은 실행하지 않습니다.'
+                '빈 값은 승인된 기본값 [22,60]을 사용합니다. 모션 ID는 개체마다 다르므로 해당 로봇 catalog에서 승인된 ID를 직접 지정하세요. []는 시연을 끕니다. catalog pre_id가 있는 모션은 실행하지 않습니다.'
                     .tr,
             isDense: true,
           ),

@@ -384,12 +384,12 @@ class LanguageManager {
     '예: https://example.com/mcp/sse': 'e.g. https://example.com/mcp/sse',
 
     // ===== CLOi Cleanup Demo Section =====
-    'CLOi 1호 정리 시연 설정': 'CLOi 1 Cleanup Demonstration Settings',
+    'CLOi 정리 시연 설정': 'CLOi Cleanup Demonstration Settings',
     '정리 시연 기능 사용': 'Enable cleanup demonstration',
     '정리 시연 허용 모션 ID (JSON 배열)': 'Allowed cleanup-demo motion IDs (JSON array)',
     '예: [22,60]': 'e.g. [22,60]',
-    'CLOi 1호 전용입니다. 빈 값은 승인된 기본값 [22,60]을 사용합니다. []는 시연을 끕니다. catalog pre_id가 있는 모션은 실행하지 않습니다.':
-        'CLOi 1 only. Empty uses the approved default [22,60]. [] disables the demo. Motions with catalog pre_id are never run.',
+    '빈 값은 승인된 기본값 [22,60]을 사용합니다. 모션 ID는 개체마다 다르므로 해당 로봇 catalog에서 승인된 ID를 직접 지정하세요. []는 시연을 끕니다. catalog pre_id가 있는 모션은 실행하지 않습니다.':
+        'Empty uses the approved default [22,60]. Motion IDs differ per robot, so specify IDs approved in that robot catalog. [] disables the demo. Motions with catalog pre_id are never run.',
 
     // ===== gRPC Peers Input Form =====
     '등록된 동료 로봇이 없습니다.': 'No peer robots registered.',

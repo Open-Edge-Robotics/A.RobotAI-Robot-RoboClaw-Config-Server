@@ -87,6 +87,19 @@ void main() {
     expect(find.textContaining('2호'), findsNothing);
   });
 
+  testWidgets('CLOi 정리 시연 섹션은 특정 호기를 전제하지 않는다', (tester) async {
+    await tester.pumpWidget(
+      _host(
+        enabled: true,
+        onEnabledChanged: (_) {},
+        controller: TextEditingController(text: '[]'),
+      ),
+    );
+
+    expect(find.text('CLOi 정리 시연 설정'), findsOneWidget);
+    expect(find.textContaining('1호'), findsNothing);
+  });
+
   testWidgets('CLOi 주행 전 boxing 자세 스위치를 켜고 끌 수 있다', (tester) async {
     var navigationPoseEnabled = false;
 
