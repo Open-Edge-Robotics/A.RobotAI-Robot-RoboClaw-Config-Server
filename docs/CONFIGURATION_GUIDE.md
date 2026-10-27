@@ -230,6 +230,14 @@ connector 설정입니다. `maestro_ip`가 비어 있으면 connector가 비활�
 - 집계는 RoboClaw 저장소의 `scripts/cleanup_run_report.py`, 3조건 반복 실행은
   `validation/cleanup-experiment/` 를 사용합니다.
 
+### Dashboard 웹 노드 실행 스위치 (contract v2.11.0)
+
+`Dashboard 웹 노드 설정` 섹션의 `use_dashboard`(배포 `.env` `RC_USE_DASHBOARD`)로 웹 노드
+실행 여부를 정합니다. 기본값은 꺼짐입니다. 꺼져 있으면 `dashboard_host`/`dashboard_port`를
+지정해도 RoboClaw가 `use_dashboard` launch 인자를 켜지 않아 `robo_claw_dashboard` 노드가
+기동하지 않습니다. `.env`에는 스위치가 항상 기록되므로, 노드를 쓰지 않는 프로필은 그대로
+꺼 두면 됩니다.
+
 ## 운영 확인
 
 서버 상태:

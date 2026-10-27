@@ -241,15 +241,18 @@ void main() {
       name: 'office-standard',
       robotName: 'butler',
       environment: 'office',
+      useDashboard: true,
       dashboardHost: '0.0.0.0',
       dashboardPort: 9091,
     );
 
     final json = config.toJson();
+    expect(json['use_dashboard'], true);
     expect(json['dashboard_host'], '0.0.0.0');
     expect(json['dashboard_port'], 9091);
 
     final decoded = RoboClawConfig.fromJson(json);
+    expect(decoded.useDashboard, true);
     expect(decoded.dashboardHost, '0.0.0.0');
     expect(decoded.dashboardPort, 9091);
   });
@@ -261,6 +264,7 @@ void main() {
       'environment': 'office',
     });
 
+    expect(decoded.useDashboard, false);
     expect(decoded.dashboardHost, '127.0.0.1');
     expect(decoded.dashboardPort, 9090);
   });

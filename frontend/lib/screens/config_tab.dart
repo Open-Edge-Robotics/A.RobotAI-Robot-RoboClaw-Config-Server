@@ -113,6 +113,7 @@ class ConfigTabState extends State<ConfigTab> {
   final _httpBlockedSkillsCtrl = TextEditingController();
 
   // Dashboard 웹 노드 설정 컨트롤러
+  bool _useDashboard = false;
   final _dashboardHostCtrl = TextEditingController();
   final _dashboardPortCtrl = TextEditingController();
 
@@ -495,6 +496,7 @@ class ConfigTabState extends State<ConfigTab> {
       httpRateLimitPerMinute: int.tryParse(_httpRateLimitCtrl.text) ?? 60,
       httpAllowedSkillsJson: _httpAllowedSkillsCtrl.text,
       httpBlockedSkillsJson: _httpBlockedSkillsCtrl.text,
+      useDashboard: _useDashboard,
       dashboardHost: _dashboardHostCtrl.text,
       dashboardPort: int.tryParse(_dashboardPortCtrl.text) ?? 9090,
       enableMcp: _enableMcp,
@@ -667,6 +669,7 @@ class ConfigTabState extends State<ConfigTab> {
     _httpRateLimitCtrl.text = config.httpRateLimitPerMinute.toString();
     _httpAllowedSkillsCtrl.text = config.httpAllowedSkillsJson;
     _httpBlockedSkillsCtrl.text = config.httpBlockedSkillsJson;
+    _useDashboard = config.useDashboard;
     _dashboardHostCtrl.text = config.dashboardHost;
     _dashboardPortCtrl.text = config.dashboardPort.toString();
 
@@ -1260,6 +1263,9 @@ class ConfigTabState extends State<ConfigTab> {
               const SizedBox(height: 28),
               ConfigDashboardSection(
                 isEditing: _isEditing,
+                useDashboard: _useDashboard,
+                onUseDashboardChanged: (value) =>
+                    setState(() => _useDashboard = value),
                 dashboardHostCtrl: _dashboardHostCtrl,
                 dashboardPortCtrl: _dashboardPortCtrl,
               ),

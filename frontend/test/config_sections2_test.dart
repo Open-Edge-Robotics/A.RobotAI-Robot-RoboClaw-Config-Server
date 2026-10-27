@@ -123,11 +123,14 @@ void main() {
       tester,
       ConfigDashboardSection(
         isEditing: true,
+        useDashboard: false,
+        onUseDashboardChanged: (_) {},
         dashboardHostCtrl: TextEditingController(),
         dashboardPortCtrl: TextEditingController(),
       ),
     );
     expect(find.text('Dashboard 웹 노드 설정'), findsOneWidget);
+    expect(find.text('대시보드 웹 노드 사용 (RC_USE_DASHBOARD)'), findsOneWidget);
     expect(
       find.text('Dashboard 바인딩 호스트 (RC_DASHBOARD_HOST, 기본: 127.0.0.1)'),
       findsOneWidget,
@@ -135,6 +138,47 @@ void main() {
     expect(
       find.text('Dashboard 포트 (RC_DASHBOARD_PORT, 기본: 9090)'),
       findsOneWidget,
+    );
+  });
+
+  testWidgets('Dashboard 사용 스위치를 끄더라도 host/port 는 계속 편집할 수 있다', (tester) async {
+    bool? changed;
+    await pump(
+      tester,
+      ConfigDashboardSection(
+        isEditing: true,
+        useDashboard: false,
+        onUseDashboardChanged: (value) => changed = value,
+        dashboardHostCtrl: TextEditingController(),
+        dashboardPortCtrl: TextEditingController(),
+      ),
+    );
+
+    await tester.tap(find.byType(SwitchListTile));
+    await tester.pumpAndSettle();
+    expect(changed, isTrue);
+
+    expect(
+      tester
+          .widget<TextFormField>(
+            find.widgetWithText(
+              TextFormField,
+              'Dashboard 바인딩 호스트 (RC_DASHBOARD_HOST, 기본: 127.0.0.1)',
+            ),
+          )
+          .enabled,
+      isTrue,
+    );
+    expect(
+      tester
+          .widget<TextFormField>(
+            find.widgetWithText(
+              TextFormField,
+              'Dashboard 포트 (RC_DASHBOARD_PORT, 기본: 9090)',
+            ),
+          )
+          .enabled,
+      isTrue,
     );
   });
 

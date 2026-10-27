@@ -69,20 +69,21 @@ func TestConfigToTransferIncludesSecrets(t *testing.T) {
 
 func TestConfigTransferRoundTripPreservesDashboardNode(t *testing.T) {
 	cfg := models.RoboClawConfig{
-		Name:          "test",
-		RobotName:     "butler",
-		Environment:   "office",
-		DashboardHost: "0.0.0.0",
-		DashboardPort: 9091,
+		Name:             "test",
+		RobotName:        "butler",
+		Environment:      "office",
+		DashboardEnabled: true,
+		DashboardHost:    "0.0.0.0",
+		DashboardPort:    9091,
 	}
 
 	tr := configToTransfer(&cfg, false)
-	if tr.DashboardHost != "0.0.0.0" || tr.DashboardPort != 9091 {
+	if !tr.DashboardEnabled || tr.DashboardHost != "0.0.0.0" || tr.DashboardPort != 9091 {
 		t.Fatalf("expected dashboard node preserved in export, got %+v", tr)
 	}
 
 	model := tr.toModel(nil)
-	if model.DashboardHost != "0.0.0.0" || model.DashboardPort != 9091 {
+	if !model.DashboardEnabled || model.DashboardHost != "0.0.0.0" || model.DashboardPort != 9091 {
 		t.Fatalf("expected dashboard node preserved on import, got %+v", model)
 	}
 }

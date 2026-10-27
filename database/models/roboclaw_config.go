@@ -81,8 +81,9 @@ type RoboClawConfig struct {
 	HttpBlockedSkillsJson  string `gorm:"type:text;default:'[]'" json:"http_blocked_skills_json"`
 
 	// ── Dashboard 웹 노드 설정 ──
-	DashboardHost string `gorm:"default:'127.0.0.1'" json:"dashboard_host"` // RC_DASHBOARD_HOST (Dashboard 웹 노드 바인딩 호스트)
-	DashboardPort int    `gorm:"default:9090" json:"dashboard_port"`        // RC_DASHBOARD_PORT (Dashboard 웹 노드 HTTP 포트, HTTP 채널 8080과 별개)
+	DashboardEnabled bool   `gorm:"default:false" json:"use_dashboard"`        // RC_USE_DASHBOARD (Dashboard 웹 노드 실행 여부, contract v2.11.0+)
+	DashboardHost    string `gorm:"default:'127.0.0.1'" json:"dashboard_host"` // RC_DASHBOARD_HOST (Dashboard 웹 노드 바인딩 호스트)
+	DashboardPort    int    `gorm:"default:9090" json:"dashboard_port"`        // RC_DASHBOARD_PORT (Dashboard 웹 노드 HTTP 포트, HTTP 채널 8080과 별개)
 
 	// ── Maestro FleetControl outbound connector (contract v2.2.0) ──
 	MaestroIp               string  `json:"maestro_ip"`                                                                        // MAESTRO_IP (빈 값이면 fleet outbound connector 비활성)

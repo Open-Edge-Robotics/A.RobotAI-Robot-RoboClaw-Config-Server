@@ -113,6 +113,23 @@ func TestGeneratedEnvIncludesDashboardNode(t *testing.T) {
 	}
 }
 
+// TestGeneratedEnvIncludesDashboardSwitch 는 .env에 Dashboard 웹 노드 실행 스위치
+// (RC_USE_DASHBOARD)가 항상 포함되는지 검증한다. host/port만 지정한 프로필은
+// 노드가 실행되지 않아야 하므로 기본값은 false로 방출된다.
+func TestGeneratedEnvIncludesDashboardSwitch(t *testing.T) {
+	enabled := string(generateEnvContent(&models.RoboClawConfig{
+		DashboardEnabled: true,
+	}))
+	if !strings.Contains(enabled, "RC_USE_DASHBOARD=true") {
+		t.Fatalf("expected RC_USE_DASHBOARD=true in generated dotenv, got %q", enabled)
+	}
+
+	disabled := string(generateEnvContent(&models.RoboClawConfig{}))
+	if !strings.Contains(disabled, "RC_USE_DASHBOARD=false") {
+		t.Fatalf("expected contract default RC_USE_DASHBOARD=false in generated dotenv, got %q", disabled)
+	}
+}
+
 func TestGeneratedEnvIncludesLangsmithWorkspaceID(t *testing.T) {
 	cfg := &models.RoboClawConfig{
 		LangsmithWorkspaceId: "workspace-123",

@@ -1,5 +1,21 @@
 # CHANGE_LOG
 
+## 2026-10-27 — Dashboard 웹 노드 실행 스위치 노출 (contract v2.11.0)
+
+- 공통 runtime contract v2.11.0의 `dashboard.enabled`(`RC_USE_DASHBOARD`)를 백엔드와
+  프론트에 연결했습니다.
+- `contracts/`·lock·Dart artifact를 v2.11.0으로 갱신했습니다.
+- `database/models/roboclaw_config.go`: `DashboardEnabled`(`use_dashboard`) 필드 추가.
+- `handler/config_files.go`: `RC_USE_DASHBOARD`를 항상 방출합니다(`RC_ENABLE_MCP`와 동일).
+  host/port는 기존처럼 값이 있을 때만 방출합니다.
+- `handler/config_transfer.go`: 백업 export/import 왕복에서 스위치를 보존합니다.
+- `frontend`: `config_model.dart` 필드/JSON, `config_dashboard_section.dart` 스위치,
+  `config_tab.dart` 상태·저장·로드 배선을 추가했습니다. host/port 입력은 스위치 상태와
+  무관하게 계속 편집할 수 있습니다.
+- 테스트: Go `.env` 방출 1건, 백업 왕복 1건, Flutter 모델 2건, Dashboard 섹션 2건.
+- 검증: `task check` 전체 통과(fmt-check, vet, go test, flutter analyze, flutter test,
+  frontend-contract).
+
 ## 2026-10-26 — 정리 태스크 실험 계측 run log 경로 노출 (contract v2.10.0)
 
 - 공통 runtime contract v2.10.0의 `agent.cleanup_run_log_path`(`RC_CLEANUP_RUN_LOG_PATH`)를

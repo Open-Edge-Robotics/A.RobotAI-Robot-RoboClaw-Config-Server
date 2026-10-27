@@ -242,6 +242,7 @@ func generateEnvContent(cfg *models.RoboClawConfig) string {
 	sb.WriteString("\n")
 
 	// Dashboard 웹 노드 설정 (HTTP 채널 포트 8080과 별개)
+	fmt.Fprintf(&sb, "RC_USE_DASHBOARD=%t\n", cfg.DashboardEnabled)
 	if cfg.DashboardHost != "" {
 		fmt.Fprintf(&sb, "RC_DASHBOARD_HOST=%s\n", cfg.DashboardHost)
 	}

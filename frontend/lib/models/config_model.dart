@@ -71,6 +71,7 @@ class RoboClawConfig {
   String httpBlockedSkillsJson;
 
   // Dashboard 웹 노드 설정 (HTTP 채널 포트 8080과 별개)
+  bool useDashboard;
   String dashboardHost;
   int dashboardPort;
 
@@ -225,6 +226,7 @@ class RoboClawConfig {
     this.httpRateLimitPerMinute = 60,
     this.httpAllowedSkillsJson = '[]',
     this.httpBlockedSkillsJson = '[]',
+    this.useDashboard = false,
     this.dashboardHost = '127.0.0.1',
     this.dashboardPort = 9090,
     this.enableMcp = false,
@@ -357,6 +359,7 @@ class RoboClawConfig {
       httpRateLimitPerMinute: json['http_rate_limit_per_minute'] ?? 60,
       httpAllowedSkillsJson: json['http_allowed_skills_json'] ?? '[]',
       httpBlockedSkillsJson: json['http_blocked_skills_json'] ?? '[]',
+      useDashboard: json['use_dashboard'] ?? false,
       dashboardHost: json['dashboard_host'] ?? '127.0.0.1',
       dashboardPort: json['dashboard_port'] ?? 9090,
       enableMcp: json['enable_mcp'] ?? false,
@@ -496,6 +499,7 @@ class RoboClawConfig {
       'http_rate_limit_per_minute': httpRateLimitPerMinute,
       'http_allowed_skills_json': httpAllowedSkillsJson,
       'http_blocked_skills_json': httpBlockedSkillsJson,
+      'use_dashboard': useDashboard,
       'dashboard_host': dashboardHost,
       'dashboard_port': dashboardPort,
       'enable_mcp': enableMcp,

@@ -112,8 +112,9 @@ type ConfigTransfer struct {
 	HttpAllowedSkillsJson  string  `json:"http_allowed_skills_json"`
 	HttpBlockedSkillsJson  string  `json:"http_blocked_skills_json"`
 
-	DashboardHost string `json:"dashboard_host"`
-	DashboardPort int    `json:"dashboard_port"`
+	DashboardEnabled bool   `json:"use_dashboard"`
+	DashboardHost    string `json:"dashboard_host"`
+	DashboardPort    int    `json:"dashboard_port"`
 
 	EnableMcp      bool    `json:"enable_mcp"`
 	McpServersJson *string `json:"mcp_servers_json,omitempty"`
@@ -335,6 +336,7 @@ func configToTransfer(cfg *models.RoboClawConfig, includeSecrets bool) ConfigTra
 		HttpRateLimitPerMinute:            cfg.HttpRateLimitPerMinute,
 		HttpAllowedSkillsJson:             cfg.HttpAllowedSkillsJson,
 		HttpBlockedSkillsJson:             cfg.HttpBlockedSkillsJson,
+		DashboardEnabled:                  cfg.DashboardEnabled,
 		DashboardHost:                     cfg.DashboardHost,
 		DashboardPort:                     cfg.DashboardPort,
 		EnableMcp:                         cfg.EnableMcp,
@@ -521,6 +523,7 @@ func (t ConfigTransfer) toModel(existing *models.RoboClawConfig) models.RoboClaw
 		HttpRateLimitPerMinute:            t.HttpRateLimitPerMinute,
 		HttpAllowedSkillsJson:             t.HttpAllowedSkillsJson,
 		HttpBlockedSkillsJson:             t.HttpBlockedSkillsJson,
+		DashboardEnabled:                  t.DashboardEnabled,
 		DashboardHost:                     t.DashboardHost,
 		DashboardPort:                     t.DashboardPort,
 		EnableMcp:                         t.EnableMcp,
