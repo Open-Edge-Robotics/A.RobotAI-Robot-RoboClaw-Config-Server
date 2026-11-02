@@ -22,6 +22,7 @@ class RoboClawConfig {
   // LLM 기본
   String llmProvider;
   String llmModel;
+  bool llmToolCalling;
 
   // 자격 증명
   String azureOpenaiEndpoint;
@@ -189,6 +190,7 @@ class RoboClawConfig {
     this.cloidNavigationPoseEnabled = false,
     this.llmProvider = 'azure',
     this.llmModel = 'gpt-4o',
+    this.llmToolCalling = true,
     this.azureOpenaiEndpoint = '',
     this.azureOpenaiApiKey = '',
     this.openaiApiKey = '',
@@ -322,6 +324,7 @@ class RoboClawConfig {
           json['cloid_navigation_pose_enabled'] ?? false,
       llmProvider: json['llm_provider'] ?? 'azure',
       llmModel: json['llm_model'] ?? 'gpt-4o',
+      llmToolCalling: json['llm_tool_calling'] ?? true,
       azureOpenaiEndpoint: json['azure_openai_endpoint'] ?? '',
       azureOpenaiApiKey: json['azure_openai_api_key'] ?? '',
       openaiApiKey: json['openai_api_key'] ?? '',
@@ -462,6 +465,7 @@ class RoboClawConfig {
       'cloid_navigation_pose_enabled': cloidNavigationPoseEnabled,
       'llm_provider': llmProvider,
       'llm_model': llmModel,
+      'llm_tool_calling': llmToolCalling,
       'azure_openai_endpoint': azureOpenaiEndpoint,
       'azure_openai_api_key': azureOpenaiApiKey,
       'openai_api_key': openaiApiKey,

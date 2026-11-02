@@ -8,6 +8,9 @@ class ConfigLlmSection extends StatelessWidget {
   final bool isEditing;
   final String llmProvider;
   final TextEditingController llmModelCtrl;
+  // 스킬 선택 방식: true=네이티브 도구 호출, false=JSON 응답 + 복합 명령 분해기
+  final bool llmToolCalling;
+  final ValueChanged<bool> onLlmToolCallingChanged;
   final TextEditingController azureEndpointCtrl;
   final TextEditingController azureApiKeyCtrl;
   final TextEditingController openaiApiKeyCtrl;
@@ -33,6 +36,8 @@ class ConfigLlmSection extends StatelessWidget {
     required this.isEditing,
     required this.llmProvider,
     required this.llmModelCtrl,
+    required this.llmToolCalling,
+    required this.onLlmToolCallingChanged,
     required this.azureEndpointCtrl,
     required this.azureApiKeyCtrl,
     required this.openaiApiKeyCtrl,
@@ -88,7 +93,19 @@ class ConfigLlmSection extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          value: llmToolCalling,
+          onChanged: isEditing ? (val) => onLlmToolCallingChanged(val) : null,
+          title: Text('스킬 선택에 네이티브 도구 호출 사용 (RC_LLM_TOOL_CALLING)'.tr),
+          subtitle: Text(
+            '켜면 복합 명령도 하나의 도구 대화에서 LLM이 단계를 이어갑니다. '
+            '끄면 JSON 응답을 강제하고 복합 명령을 명령 분해기가 처리합니다. '
+            'provider가 도구 호출을 지원하지 않으면 자동으로 JSON 경로를 씁니다.',
+          ),
+        ),
+        const SizedBox(height: 8),
         if (llmProvider == 'azure') ...[
           TextFormField(
             controller: azureEndpointCtrl,

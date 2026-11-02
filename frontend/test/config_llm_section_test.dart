@@ -5,7 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/widgets/config_llm_section.dart';
 
 void main() {
-  Widget buildSection({String provider = 'azure'}) {
+  Widget buildSection({
+    String provider = 'azure',
+    bool toolCalling = true,
+    ValueChanged<bool>? onToolCallingChanged,
+  }) {
     return MaterialApp(
       home: Scaffold(
         body: SingleChildScrollView(
@@ -13,6 +17,8 @@ void main() {
             isEditing: true,
             llmProvider: provider,
             llmModelCtrl: TextEditingController(),
+            llmToolCalling: toolCalling,
+            onLlmToolCallingChanged: onToolCallingChanged ?? (_) {},
             azureEndpointCtrl: TextEditingController(),
             azureApiKeyCtrl: TextEditingController(),
             openaiApiKeyCtrl: TextEditingController(),
@@ -57,5 +63,27 @@ void main() {
       find.text('Ollama Base URL (예: http://localhost:11434)'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('스킬 선택 도구 호출 스위치가 상태를 반영하고 변경을 전달한다', (tester) async {
+    tester.view.physicalSize = const Size(1200, 2000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    bool? changed;
+    await tester.pumpWidget(
+      buildSection(toolCalling: true, onToolCallingChanged: (v) => changed = v),
+    );
+
+    final title = '스킬 선택에 네이티브 도구 호출 사용 (RC_LLM_TOOL_CALLING)';
+    expect(find.text(title), findsOneWidget);
+    expect(
+      tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+      isTrue,
+    );
+
+    await tester.tap(find.text(title));
+    await tester.pump();
+    expect(changed, isFalse);
   });
 }

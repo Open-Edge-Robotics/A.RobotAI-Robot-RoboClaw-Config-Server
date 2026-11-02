@@ -373,6 +373,25 @@ func TestBuildEnvContentOmitsMcpServersWhenEmpty(t *testing.T) {
 	}
 }
 
+func TestBuildEnvContentIncludesLlmToolCalling(t *testing.T) {
+	onCfg := models.RoboClawConfig{
+		RobotName:      "former",
+		Environment:    "local",
+		LlmProvider:    "azure",
+		LlmModel:       "gpt-4o",
+		LlmToolCalling: true,
+	}
+	if env := generateEnvContent(&onCfg); !strings.Contains(env, "RC_LLM_TOOL_CALLING=true") {
+		t.Fatalf("expected env to contain RC_LLM_TOOL_CALLING=true\nactual:\n%s", env)
+	}
+
+	offCfg := onCfg
+	offCfg.LlmToolCalling = false
+	if env := generateEnvContent(&offCfg); !strings.Contains(env, "RC_LLM_TOOL_CALLING=false") {
+		t.Fatalf("expected env to contain RC_LLM_TOOL_CALLING=false\nactual:\n%s", env)
+	}
+}
+
 func TestBuildEnvContentIncludesTaskDecompositionSettings(t *testing.T) {
 	cfg := models.RoboClawConfig{
 		RobotName:                         "former",

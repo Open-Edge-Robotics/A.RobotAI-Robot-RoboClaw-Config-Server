@@ -161,6 +161,7 @@ class ConfigTabState extends State<ConfigTab> {
   // 태스크 큐 / 복합 명령 자동 분해 설정 컨트롤러 및 변수
   final _taskQueueMaxSizeCtrl = TextEditingController();
   bool _llmFailFast = false;
+  bool _llmToolCalling = true;
   bool _strictConfig = false;
   bool _enableTaskDecomposition = true;
   final _taskDecompositionMaxStepsCtrl = TextEditingController();
@@ -534,6 +535,7 @@ class ConfigTabState extends State<ConfigTab> {
           int.tryParse(_skillLearningReflectIntervalSecCtrl.text) ?? 1800,
       taskQueueMaxSize: int.tryParse(_taskQueueMaxSizeCtrl.text) ?? 8,
       llmFailFast: _llmFailFast,
+      llmToolCalling: _llmToolCalling,
       strictConfig: _strictConfig,
       enableTaskDecomposition: _enableTaskDecomposition,
       taskDecompositionMaxSteps:
@@ -711,6 +713,7 @@ class ConfigTabState extends State<ConfigTab> {
         .toString();
     _taskQueueMaxSizeCtrl.text = config.taskQueueMaxSize.toString();
     _llmFailFast = config.llmFailFast;
+    _llmToolCalling = config.llmToolCalling;
     _strictConfig = config.strictConfig;
     _enableTaskDecomposition = config.enableTaskDecomposition;
     _taskDecompositionMaxStepsCtrl.text = config.taskDecompositionMaxSteps
@@ -1153,6 +1156,9 @@ class ConfigTabState extends State<ConfigTab> {
                 isEditing: _isEditing,
                 llmProvider: _llmProvider,
                 llmModelCtrl: _llmModelCtrl,
+                llmToolCalling: _llmToolCalling,
+                onLlmToolCallingChanged: (val) =>
+                    setState(() => _llmToolCalling = val),
                 azureEndpointCtrl: _azureEndpointCtrl,
                 azureApiKeyCtrl: _azureApiKeyCtrl,
                 openaiApiKeyCtrl: _openaiApiKeyCtrl,

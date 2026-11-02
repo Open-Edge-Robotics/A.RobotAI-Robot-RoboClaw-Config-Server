@@ -47,6 +47,14 @@
           "x-scope": "runtime",
           "x-secret": false
         },
+        "llm_tool_calling": {
+          "type": "boolean",
+          "description": "Use provider-native tool calling for skill selection. When false the agent lists skills in the prompt, forces JSON responses, and decomposes compound instructions with the task decomposer instead of keeping one tool conversation.",
+          "default": true,
+          "x-canonical-name": "llm.tool_calling",
+          "x-scope": "runtime",
+          "x-secret": false
+        },
         "ros_domain_id": {
           "type": "integer",
           "description": "ROS 2 domain identifier.",
@@ -63,6 +71,46 @@
           "default": "robo_claw_agent",
           "x-canonical-name": "agent.id",
           "x-scope": "runtime",
+          "x-secret": false
+        },
+        "cloid_cleanup_demo_enabled": {
+          "type": "boolean",
+          "description": "CLOi cleanup-demo launch switch. RoboClaw forcibly disables the path for non-CLOi-1 agent profiles; an empty peer list or unsafe motion catalog still prevents execution.",
+          "default": true,
+          "x-canonical-name": "agent.cloid_cleanup_demo_enabled",
+          "x-scope": "robot_profile",
+          "x-secret": false
+        },
+        "cloid_cleanup_demo_motion_ids_json": {
+          "type": "string",
+          "description": "Optional JSON array allowlist of reviewed CLOi cleanup-demo motion IDs. An empty value uses the CLOi 1 profile default [22,60]; [] disables the demo. The runtime still rejects catalog entries with pre_id and never runs prerequisites automatically.",
+          "default": "",
+          "x-canonical-name": "agent.cloid_cleanup_demo_motion_ids_json",
+          "x-scope": "robot_profile",
+          "x-secret": false
+        },
+        "cloid_expression_enabled": {
+          "type": "boolean",
+          "description": "CLOiD situation-based expression motion switch. When enabled, the agent plays at most one registered CLOiD motion per task that matches the situation (greeting, talking, scanning, idle, success, fail). Motions are never played while the base is navigating. RoboClaw only registers the path for the cloid profile.",
+          "default": false,
+          "x-canonical-name": "agent.cloid_expression_enabled",
+          "x-scope": "robot_profile",
+          "x-secret": false
+        },
+        "cloid_navigation_pose_enabled": {
+          "type": "boolean",
+          "description": "CLOiD pre-navigation posture switch. When enabled, the runtime requests the compact boxing posture (tofu script_runner cloid.move_boxing) once before every base motion skill and rejects the motion when the request fails. Registered for the cloid profile only; the packing posture is not restored automatically.",
+          "default": false,
+          "x-canonical-name": "agent.cloid_navigation_pose_enabled",
+          "x-scope": "robot_profile",
+          "x-secret": false
+        },
+        "cleanup_run_log_path": {
+          "type": "string",
+          "description": "Optional JSONL path for the cleanup task run log. When set, the agent appends one record per tidy_home run and per cleanup handoff/delegation decision so success rate, peer allocation, delegation result and per-phase timing can be measured. An empty value disables the log and leaves cleanup behaviour unchanged.",
+          "default": "",
+          "x-canonical-name": "agent.cleanup_run_log_path",
+          "x-scope": "host",
           "x-secret": false
         },
         "enable_rag": {
@@ -127,6 +175,14 @@
           "x-scope": "secret",
           "x-secret": true,
           "writeOnly": true
+        },
+        "grpc_target_peers_json": {
+          "type": "string",
+          "description": "JSON array of gRPC peer records. Declare peer capabilities explicitly; role is descriptive and does not grant a capability. CLOi cleanup-demo peers use capabilities [\"cleanup_demo\"], not manipulation.",
+          "default": "[]",
+          "x-canonical-name": "messenger.target_peers_json",
+          "x-scope": "runtime",
+          "x-secret": false
         },
         "use_vision": {
           "type": "boolean",
@@ -305,6 +361,14 @@
           "x-secret": false,
           "minimum": 0
         },
+        "use_dashboard": {
+          "type": "boolean",
+          "description": "Enable the dashboard web node. When false the node is not launched even if dashboard.host and dashboard.port are set.",
+          "default": false,
+          "x-canonical-name": "dashboard.enabled",
+          "x-scope": "runtime",
+          "x-secret": false
+        },
         "dashboard_host": {
           "type": "string",
           "description": "Dashboard web node bind host.",
@@ -429,6 +493,15 @@
           "x-canonical-name": "system1.shadow_log",
           "x-scope": "runtime",
           "x-secret": false
+        },
+        "system1_step_routing": {
+          "type": "string",
+          "description": "Pre-router handling for sub-steps of a decomposed compound command. off sends every step to the LLM, shadow only records the routing decision, on lets eligible self-contained steps run without the LLM.",
+          "default": "shadow",
+          "x-canonical-name": "system1.step_routing",
+          "x-scope": "runtime",
+          "x-secret": false,
+          "enum": ["off","shadow","on"]
         },
         "system1_scope": {
           "type": "string",

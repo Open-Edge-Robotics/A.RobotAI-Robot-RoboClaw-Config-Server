@@ -67,6 +67,27 @@ func TestConfigToTransferIncludesSecrets(t *testing.T) {
 	}
 }
 
+func TestConfigTransferRoundTripPreservesLlmToolCalling(t *testing.T) {
+	cfg := models.RoboClawConfig{
+		Name:           "test",
+		RobotName:      "butler",
+		Environment:    "office",
+		LlmProvider:    "ollama",
+		LlmModel:       "qwen3",
+		LlmToolCalling: false,
+	}
+
+	tr := configToTransfer(&cfg, false)
+	if tr.LlmToolCalling {
+		t.Fatalf("expected llm_tool_calling preserved in export, got %+v", tr)
+	}
+
+	model := tr.toModel(nil)
+	if model.LlmToolCalling {
+		t.Fatalf("expected llm_tool_calling preserved on import, got %+v", model)
+	}
+}
+
 func TestConfigTransferRoundTripPreservesDashboardNode(t *testing.T) {
 	cfg := models.RoboClawConfig{
 		Name:             "test",

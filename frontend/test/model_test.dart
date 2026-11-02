@@ -220,6 +220,38 @@ void main() {
     expect(decoded.taskDecompositionWaitMarginCapSec, 900.0);
   });
 
+  test('RoboClawConfig 스킬 선택 방식(llm_tool_calling)이 JSON 직렬화에서 보존된다', () {
+    final off = RoboClawConfig(
+      name: 'x',
+      robotName: 'butler',
+      environment: 'office',
+      llmToolCalling: false,
+    );
+    expect(off.toJson()['llm_tool_calling'], isFalse);
+    expect(RoboClawConfig.fromJson(off.toJson()).llmToolCalling, isFalse);
+
+    final on = RoboClawConfig(
+      name: 'x',
+      robotName: 'butler',
+      environment: 'office',
+      llmToolCalling: true,
+    );
+    expect(RoboClawConfig.fromJson(on.toJson()).llmToolCalling, isTrue);
+  });
+
+  test('RoboClawConfig 스킬 선택 방식 기본값은 네이티브 도구 호출(true)이다', () {
+    final decoded = RoboClawConfig.fromJson({'name': 'x'});
+    expect(decoded.llmToolCalling, isTrue);
+    expect(
+      RoboClawConfig(
+        name: 'x',
+        robotName: 'butler',
+        environment: 'office',
+      ).llmToolCalling,
+      isTrue,
+    );
+  });
+
   test('RoboClawConfig 태스크 큐 / 복합 명령 분해 필드 기본값이 모델 생성자와 일치한다', () {
     final decoded = RoboClawConfig.fromJson({
       'name': 'x',

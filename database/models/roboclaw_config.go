@@ -24,8 +24,9 @@ type RoboClawConfig struct {
 	CleanupRunLogPath string `gorm:"type:text" json:"cleanup_run_log_path"` // RC_CLEANUP_RUN_LOG_PATH (빈 값이면 기록하지 않음)
 
 	// ── LLM 기본 설정 ──
-	LlmProvider string `gorm:"default:'azure'" json:"llm_provider"` // azure, openai, anthropic, ollama
-	LlmModel    string `gorm:"default:'gpt-4o'" json:"llm_model"`
+	LlmProvider    string `gorm:"default:'azure'" json:"llm_provider"` // azure, openai, anthropic, ollama
+	LlmModel       string `gorm:"default:'gpt-4o'" json:"llm_model"`
+	LlmToolCalling bool   `gorm:"default:true" json:"llm_tool_calling"` // true: 네이티브 도구 호출, false: JSON 응답 + 복합 명령 분해기
 
 	// ── Azure / API 자격 증명 ──
 	AzureOpenaiEndpoint string `json:"azure_openai_endpoint"`

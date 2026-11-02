@@ -1,5 +1,22 @@
 # CHANGE_LOG
 
+## 2026-11-02 — 스킬 선택 방식(네이티브 도구 호출) 노출 (contract v2.12.0)
+
+- 공통 runtime contract v2.12.0의 `llm.tool_calling`(`RC_LLM_TOOL_CALLING`)을 백엔드와
+  프론트에 연결했습니다. `true`(기본값)면 provider 네이티브 도구 호출을 쓰고 복합 명령도
+  하나의 도구 대화에서 처리하며, `false`면 JSON 응답을 강제하고 복합 명령을 명령 분해기가
+  처리합니다. 이 스위치는 그동안 `agent.yaml`에만 있어 프로필로 선택할 수 없었습니다.
+- `contracts/`·lock·Dart artifact를 v2.12.0으로 갱신했습니다.
+- `database/models/roboclaw_config.go`: `LlmToolCalling`(`llm_tool_calling`, 기본값 `true`)
+  필드를 추가했습니다. `handler/config_files.go`는 `RC_LLM_TOOL_CALLING`을 항상 방출합니다.
+- `handler/config_transfer.go`: 백업 export/import 왕복에서 스위치를 보존합니다.
+- `frontend`: `config_model.dart` 필드/JSON, `config_llm_section.dart` 스위치,
+  `config_tab.dart` 상태·저장·로드 배선을 추가했습니다.
+- `schemas/robo-claw-runtime-config-v2.schema.json`을 RoboClaw canonical 생성 스키마로
+  다시 동기화하고 `schemas/schema-lock.json` 체크섬을 갱신했습니다. 기존 사본은 v2.6 이후
+  필드(`cleanup_run_log_path`, `cloid_*` 등)가 누락된 상태였습니다.
+- 테스트: Go `.env` 방출 1건, 백업 왕복 1건, Flutter 모델 2건, LLM 섹션 스위치 1건.
+
 ## 2026-10-27 — Dashboard 웹 노드 실행 스위치 노출 (contract v2.11.0)
 
 - 공통 runtime contract v2.11.0의 `dashboard.enabled`(`RC_USE_DASHBOARD`)를 백엔드와

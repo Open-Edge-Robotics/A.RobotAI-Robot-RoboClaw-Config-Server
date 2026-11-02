@@ -59,8 +59,9 @@ type ConfigTransfer struct {
 	RosDomainId int    `json:"ros_domain_id"`
 	AgentId     string `json:"agent_id"`
 
-	LlmProvider string `json:"llm_provider"`
-	LlmModel    string `json:"llm_model"`
+	LlmProvider    string `json:"llm_provider"`
+	LlmModel       string `json:"llm_model"`
+	LlmToolCalling bool   `json:"llm_tool_calling"`
 
 	AzureOpenaiEndpoint string  `json:"azure_openai_endpoint"`
 	AzureOpenaiApiKey   *string `json:"azure_openai_api_key,omitempty"`
@@ -302,6 +303,7 @@ func configToTransfer(cfg *models.RoboClawConfig, includeSecrets bool) ConfigTra
 		AgentId:                           cfg.AgentId,
 		LlmProvider:                       cfg.LlmProvider,
 		LlmModel:                          cfg.LlmModel,
+		LlmToolCalling:                    cfg.LlmToolCalling,
 		AzureOpenaiEndpoint:               cfg.AzureOpenaiEndpoint,
 		OllamaBaseUrl:                     cfg.OllamaBaseUrl,
 		OllamaOptionsJson:                 cfg.OllamaOptionsJson,
@@ -479,6 +481,7 @@ func (t ConfigTransfer) toModel(existing *models.RoboClawConfig) models.RoboClaw
 		AgentId:                           t.AgentId,
 		LlmProvider:                       t.LlmProvider,
 		LlmModel:                          t.LlmModel,
+		LlmToolCalling:                    t.LlmToolCalling,
 		AzureOpenaiEndpoint:               t.AzureOpenaiEndpoint,
 		AzureOpenaiApiKey:                 resolve(t.AzureOpenaiApiKey, curStr(func(c *models.RoboClawConfig) string { return c.AzureOpenaiApiKey })),
 		OpenaiApiKey:                      resolve(t.OpenaiApiKey, curStr(func(c *models.RoboClawConfig) string { return c.OpenaiApiKey })),

@@ -95,7 +95,8 @@ func generateEnvContent(cfg *models.RoboClawConfig) string {
 	fmt.Fprintf(&sb, "RC_AGENT_ID=%s\n\n", cfg.AgentId)
 
 	fmt.Fprintf(&sb, "RC_LLM_PROVIDER=%s\n", cfg.LlmProvider)
-	fmt.Fprintf(&sb, "RC_LLM_MODEL=%s\n\n", cfg.LlmModel)
+	fmt.Fprintf(&sb, "RC_LLM_MODEL=%s\n", cfg.LlmModel)
+	fmt.Fprintf(&sb, "RC_LLM_TOOL_CALLING=%t\n\n", cfg.LlmToolCalling)
 
 	if cfg.AzureOpenaiEndpoint != "" {
 		fmt.Fprintf(&sb, "AZURE_OPENAI_ENDPOINT=%s\n", cfg.AzureOpenaiEndpoint)
