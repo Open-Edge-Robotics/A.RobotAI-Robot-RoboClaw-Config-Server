@@ -6,6 +6,7 @@ import 'grpc_peers_input_form.dart';
 
 class ConfigMessengerSection extends StatelessWidget {
   final bool isEditing;
+  final bool maestroEnabled;
   final bool enableDiscord;
   final bool enableSlack;
   final bool enableTelegram;
@@ -31,6 +32,7 @@ class ConfigMessengerSection extends StatelessWidget {
   const ConfigMessengerSection({
     super.key,
     required this.isEditing,
+    required this.maestroEnabled,
     required this.enableDiscord,
     required this.enableSlack,
     required this.enableTelegram,
@@ -56,10 +58,21 @@ class ConfigMessengerSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Maestro가 명령의 단일 경로이면 로봇 간 gRPC 협업 채널을 켤 수 없다.
+    final peerEnabled = isEditing && !maestroEnabled;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ConfigSectionHeader('4. 메신저 & 통신 데몬'),
+        if (maestroEnabled) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Maestro 사용 중에는 로봇 간 협업(gRPC 서버/클라이언트, peer 목록)이 '
+                    '비활성화됩니다. 동료 작업은 Maestro가 중계합니다.'
+                .tr,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
         const SizedBox(height: 8),
         Row(
           children: [
@@ -84,7 +97,7 @@ class ConfigMessengerSection extends StatelessWidget {
             _ToggleTile(
               title: 'gRPC Server',
               value: enableGrpc,
-              enabled: isEditing,
+              enabled: peerEnabled,
               onChanged: onGrpcChanged,
             ),
           ],
@@ -100,7 +113,7 @@ class ConfigMessengerSection extends StatelessWidget {
             _ToggleTile(
               title: 'gRPC Client (동료 로봇)',
               value: enableGrpcClient,
-              enabled: isEditing,
+              enabled: peerEnabled,
               onChanged: onGrpcClientChanged,
             ),
           ],
@@ -150,7 +163,7 @@ class ConfigMessengerSection extends StatelessWidget {
               Expanded(
                 child: _SecretField(
                   controller: grpcPeerTokenCtrl,
-                  enabled: isEditing,
+                  enabled: peerEnabled,
                   label: 'gRPC Peer Token (GRPC_PEER_TOKEN — 외부 접속 시 필수)',
                 ),
               ),
@@ -158,7 +171,7 @@ class ConfigMessengerSection extends StatelessWidget {
               Expanded(
                 child: TextFormField(
                   controller: grpcPortCtrl,
-                  enabled: isEditing,
+                  enabled: peerEnabled,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'gRPC Server Port (ROBO_CLAW_GRPC_PORT)',
@@ -173,7 +186,7 @@ class ConfigMessengerSection extends StatelessWidget {
         if (enableGrpcClient) ...[
           GrpcPeersInputForm(
             controller: grpcTargetPeersJsonCtrl,
-            isEditing: isEditing,
+            isEditing: peerEnabled,
           ),
           const SizedBox(height: 16),
         ],

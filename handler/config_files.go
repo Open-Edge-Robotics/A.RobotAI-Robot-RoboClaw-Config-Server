@@ -167,10 +167,19 @@ func generateEnvContent(cfg *models.RoboClawConfig) string {
 	fmt.Fprintf(&sb, "ENABLE_DISCORD=%t\n", cfg.EnableDiscord)
 	fmt.Fprintf(&sb, "ENABLE_TELEGRAM=%t\n", cfg.EnableTelegram)
 	fmt.Fprintf(&sb, "ENABLE_SLACK=%t\n", cfg.EnableSlack)
-	fmt.Fprintf(&sb, "ENABLE_GRPC=%t\n", cfg.EnableGrpc)
+	// Maestro 사용 중에는 로봇 간 협업 채널을 끈다(검증을 우회한 기존 프로필 백스톱).
+	enableGrpc := cfg.EnableGrpc
+	enableGrpcClient := cfg.EnableGrpcClient
+	targetPeersJSON := cfg.GrpcTargetPeersJson
+	if cfg.MaestroEnabled {
+		enableGrpc = false
+		enableGrpcClient = false
+		targetPeersJSON = "[]"
+	}
+	fmt.Fprintf(&sb, "ENABLE_GRPC=%t\n", enableGrpc)
 	fmt.Fprintf(&sb, "ROBO_CLAW_GRPC_PORT=%d\n", cfg.GrpcPort)
 	fmt.Fprintf(&sb, "USE_GRPC=%t\n", cfg.UseGrpc)
-	fmt.Fprintf(&sb, "ENABLE_GRPC_CLIENT=%t\n", cfg.EnableGrpcClient)
+	fmt.Fprintf(&sb, "ENABLE_GRPC_CLIENT=%t\n", enableGrpcClient)
 	if cfg.GrpcTargetHost != "" {
 		fmt.Fprintf(&sb, "GRPC_TARGET_HOST=%s\n", cfg.GrpcTargetHost)
 	} else {
@@ -181,7 +190,7 @@ func generateEnvContent(cfg *models.RoboClawConfig) string {
 	} else {
 		sb.WriteString("GRPC_TARGET_PORT=50052\n")
 	}
-	fmt.Fprintf(&sb, "GRPC_TARGET_PEERS_JSON=%s\n", cfg.GrpcTargetPeersJson)
+	fmt.Fprintf(&sb, "GRPC_TARGET_PEERS_JSON=%s\n", targetPeersJSON)
 	cleanupDemoEnabled := true
 	if cfg.CloidCleanupDemoEnabled != nil {
 		cleanupDemoEnabled = *cfg.CloidCleanupDemoEnabled
@@ -353,6 +362,11 @@ func generateEnvContent(cfg *models.RoboClawConfig) string {
 		}
 	}
 	fmt.Fprintf(&sb, "FLEET_CONTROL_TLS=%t\n", cfg.FleetControlTls)
+
+	if cfg.MaestroEnabled {
+		// Maestro 활성 시 로봇은 동료에게 직접 위탁하지 않고 Maestro에 보고한다.
+		sb.WriteString("RC_PEER_HANDOFF_MODE=report\n")
+	}
 
 	// 로컬 마크다운 파일들의 위치는 디비 바인딩 후 생성될 경로를 가리키도록 설정
 	sb.WriteString("RC_ROBOT_SOUL_FILE=config/ROBOT.md\n")

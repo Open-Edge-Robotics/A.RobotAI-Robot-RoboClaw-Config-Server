@@ -1219,6 +1219,7 @@ class ConfigTabState extends State<ConfigTab> {
               const SizedBox(height: 28),
               ConfigMessengerSection(
                 isEditing: _isEditing,
+                maestroEnabled: _maestroEnabled,
                 enableDiscord: _enableDiscord,
                 enableSlack: _enableSlack,
                 enableTelegram: _enableTelegram,

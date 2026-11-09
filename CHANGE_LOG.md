@@ -1,5 +1,22 @@
 # CHANGE_LOG
 
+## 2026-11-09 — Maestro 사용 시 로봇 간 협업 차단
+
+- Maestro는 여러 로봇의 계획·배정·기록을 단일 경로로 관리하므로, `maestro_enabled=true`
+  프로필에서는 로봇 간 협업 채널을 허용하지 않습니다.
+- `handler/roboclaw_config.go`: `maestro_enabled=true`이면 `enable_grpc`,
+  `enable_grpc_client`, 비어 있지 않은 `grpc_target_peers_json`을 400으로 거부합니다.
+- `handler/config_files.go`: 검증을 우회한 기존 프로필 백스톱으로 `.env`에서
+  `ENABLE_GRPC=false`, `ENABLE_GRPC_CLIENT=false`, `GRPC_TARGET_PEERS_JSON=[]`를
+  강제하고 `RC_PEER_HANDOFF_MODE=report`를 추가합니다. `USE_GRPC`(RosGrpc 텔레메트리)는
+  Maestro connector가 쓰므로 유지합니다.
+- `frontend`: Messenger 섹션에 `maestroEnabled`를 전달해 gRPC Server/Client와 peer
+  목록 입력을 잠그고 안내 문구를 표시합니다.
+- 테스트: 검증 4건(서버/클라이언트/peer 목록/빈 값 허용), `.env` 정규화 2건, Flutter
+  위젯 1건.
+- 로봇 쪽 강제(스킬 미등록·수신 거부·프롬프트 정리)는 RoboClaw 저장소에서 함께
+  적용했습니다.
+
 ## 2026-11-09 — Maestro 연동 실행 스위치 노출 (contract v2.13.0)
 
 - 공통 runtime contract v2.13.0의 `fleet.enabled`(`MAESTRO_ENABLED`, 기본값 `false`)을

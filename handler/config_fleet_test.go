@@ -102,6 +102,33 @@ func TestValidateRuntimeValuesMaestroEnabled(t *testing.T) {
 	if err := validateRuntimeValues(ptrConfig(grpcOff)); err == nil {
 		t.Error("expected maestro_enabled without use_grpc to be rejected")
 	}
+
+	// Maestro가 명령의 단일 경로이면 로봇 간 협업 채널은 함께 켤 수 없다.
+	grpcServerOn := enabled()
+	grpcServerOn.EnableGrpc = true
+	if err := validateRuntimeValues(ptrConfig(grpcServerOn)); err == nil {
+		t.Error("expected maestro_enabled with enable_grpc to be rejected")
+	}
+
+	grpcClientOn := enabled()
+	grpcClientOn.EnableGrpcClient = true
+	if err := validateRuntimeValues(ptrConfig(grpcClientOn)); err == nil {
+		t.Error("expected maestro_enabled with enable_grpc_client to be rejected")
+	}
+
+	peers := enabled()
+	peers.GrpcTargetPeersJson = `[{"host":"192.168.1.10","port":50052}]`
+	if err := validateRuntimeValues(ptrConfig(peers)); err == nil {
+		t.Error("expected maestro_enabled with configured peers to be rejected")
+	}
+
+	for _, empty := range []string{"", "[]", " null "} {
+		emptyPeers := enabled()
+		emptyPeers.GrpcTargetPeersJson = empty
+		if err := validateRuntimeValues(ptrConfig(emptyPeers)); err != nil {
+			t.Errorf("expected empty peers %q to be valid, got %v", empty, err)
+		}
+	}
 }
 
 func ptrConfig(c models.RoboClawConfig) *models.RoboClawConfig { return &c }
@@ -152,6 +179,59 @@ func TestGeneratedEnvIncludesFleetControl(t *testing.T) {
 		if !strings.Contains(body, want) {
 			t.Errorf("expected .env to contain %q for %s", want, field)
 		}
+	}
+}
+
+// TestGeneratedEnvDisablesPeerCollaborationUnderMaestro 는 Maestro 활성 시
+// peer 협업 채널 값이 .env에서 강제로 꺼지는지 확인한다.
+func TestGeneratedEnvDisablesPeerCollaborationUnderMaestro(t *testing.T) {
+	body := generateEnvContent(&models.RoboClawConfig{
+		RobotName:           "butler",
+		Environment:         "office",
+		MaestroEnabled:      true,
+		MaestroIp:           "10.0.0.5",
+		RobotId:             "butler-01",
+		UseGrpc:             true,
+		EnableGrpc:          true,
+		EnableGrpcClient:    true,
+		GrpcTargetPeersJson: `[{"host":"192.168.1.10","port":50052}]`,
+	})
+
+	for _, want := range []string{
+		"ENABLE_GRPC=false",
+		"ENABLE_GRPC_CLIENT=false",
+		"GRPC_TARGET_PEERS_JSON=[]",
+		"USE_GRPC=true",
+		"RC_PEER_HANDOFF_MODE=report",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("expected .env to contain %q, got %q", want, body)
+		}
+	}
+}
+
+// TestGeneratedEnvKeepsPeerCollaborationWithoutMaestro 는 Maestro 비활성
+// 프로필의 peer 설정을 건드리지 않는지 확인한다.
+func TestGeneratedEnvKeepsPeerCollaborationWithoutMaestro(t *testing.T) {
+	body := generateEnvContent(&models.RoboClawConfig{
+		RobotName:           "butler",
+		Environment:         "office",
+		EnableGrpc:          true,
+		EnableGrpcClient:    true,
+		GrpcTargetPeersJson: `[{"host":"192.168.1.10","port":50052}]`,
+	})
+
+	for _, want := range []string{
+		"ENABLE_GRPC=true",
+		"ENABLE_GRPC_CLIENT=true",
+		`GRPC_TARGET_PEERS_JSON=[{"host":"192.168.1.10","port":50052}]`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("expected .env to contain %q, got %q", want, body)
+		}
+	}
+	if strings.Contains(body, "RC_PEER_HANDOFF_MODE=") {
+		t.Errorf("expected no peer handoff override without Maestro, got %q", body)
 	}
 }
 

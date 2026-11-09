@@ -177,6 +177,7 @@ task frontend-contract
 - task/retry/timeout 음수 여부
 - vision 활성화 시 model path
 - Maestro FleetControl: `maestro_disconnect_policy` enum, `robot_port` 범위, `fleet_heartbeat_sec` 음수 여부, `maestro_ip` 설정 시 `robot_id` 필수, `maestro_enabled=true` 시 `maestro_ip`/`robot_id`/`use_grpc` 필수
+- Maestro 사용 시 로봇 간 협업 금지: `maestro_enabled=true`에서 `enable_grpc`, `enable_grpc_client`, 비어 있지 않은 `grpc_target_peers_json`은 거부
 - System 1: router/scope enum, timeout 및 max option 하한, confidence threshold JSON object와 값(0~1)
 - JSON top-level object/array shape
 
@@ -198,6 +199,14 @@ connector는 `robo_claw_grpc` 노드 안에서 생성되므로 Messenger 섹션�
 `FLEET_CONTROL_CLIENT_KEY`입니다. `MAESTRO_ENABLED`은 항상 기록되고, mTLS 인증서
 경로는 `FLEET_CONTROL_TLS=true`일 때만 기록됩니다. UI 스위치를 끄면 IP 등 하위
 입력은 잠기지만 값은 보존됩니다.
+
+Maestro는 여러 로봇의 계획·배정·기록을 단일 경로로 관리하므로, 사용 중에는
+로봇끼리 직접 협업하지 않습니다. `maestro_enabled=true`이면 Messenger 섹션의
+`gRPC Server`/`gRPC Client`/peer 목록 입력이 잠기고 저장이 거부됩니다. 배포되는
+`.env`도 `ENABLE_GRPC=false`, `ENABLE_GRPC_CLIENT=false`,
+`GRPC_TARGET_PEERS_JSON=[]`, `RC_PEER_HANDOFF_MODE=report`로 정규화됩니다.
+`gRPC Telemetry (RosGrpc)`(`USE_GRPC`)는 Maestro connector가 사용하므로 계속
+켜야 합니다.
 
 ### System 1 Fast Router (contract v2.4.0)
 

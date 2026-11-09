@@ -187,6 +187,7 @@ void main() {
       tester,
       ConfigMessengerSection(
         isEditing: true,
+        maestroEnabled: false,
         enableDiscord: false,
         enableSlack: false,
         enableTelegram: false,
@@ -226,5 +227,49 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('Maestro 사용 중에는 로봇 간 협업 채널을 켤 수 없다', (tester) async {
+    await pump(
+      tester,
+      ConfigMessengerSection(
+        isEditing: true,
+        maestroEnabled: true,
+        enableDiscord: false,
+        enableSlack: false,
+        enableTelegram: false,
+        enableGrpc: true,
+        useGrpc: true,
+        enableGrpcClient: true,
+        onDiscordChanged: (_) {},
+        onSlackChanged: (_) {},
+        onTelegramChanged: (_) {},
+        onGrpcChanged: (_) {},
+        onUseGrpcChanged: (_) {},
+        onGrpcClientChanged: (_) {},
+        discordTokenCtrl: TextEditingController(),
+        slackAppTokenCtrl: TextEditingController(),
+        slackBotTokenCtrl: TextEditingController(),
+        telegramTokenCtrl: TextEditingController(),
+        grpcTargetHostCtrl: TextEditingController(),
+        grpcTargetPortCtrl: TextEditingController(),
+        grpcTargetPeersJsonCtrl: TextEditingController(),
+        grpcPeerTokenCtrl: TextEditingController(text: 'test-token'),
+        grpcPortCtrl: TextEditingController(text: '50052'),
+      ),
+    );
+
+    final toggles = tester
+        .widgetList<CheckboxListTile>(find.byType(CheckboxListTile))
+        .where((tile) => tile.onChanged == null)
+        .length;
+    // gRPC Server + gRPC Client 두 토글이 잠긴다(Telemetry 토글은 유지).
+    expect(toggles, 2);
+
+    // RosGrpc 텔레메트리는 Maestro connector가 쓰므로 계속 켤 수 있어야 한다.
+    final telemetry = tester.widget<CheckboxListTile>(
+      find.widgetWithText(CheckboxListTile, 'gRPC Telemetry (RosGrpc)'),
+    );
+    expect(telemetry.onChanged, isNotNull);
   });
 }

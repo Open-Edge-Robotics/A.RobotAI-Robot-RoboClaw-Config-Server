@@ -615,6 +615,26 @@ func validateRuntimeValues(cfg *models.RoboClawConfig) error {
 		if !cfg.UseGrpc {
 			return fmt.Errorf("maestro_enabled=true이면 gRPC 노드 사용(use_grpc)도 켜야 합니다")
 		}
+		// Maestro가 명령의 단일 경로이므로 로봇 간 협업 채널은 함께 켤 수 없다.
+		if cfg.EnableGrpc {
+			return fmt.Errorf("maestro_enabled=true이면 gRPC 메신저 서버(enable_grpc)를 꺼야 합니다")
+		}
+		if cfg.EnableGrpcClient {
+			return fmt.Errorf("maestro_enabled=true이면 gRPC 클라이언트(enable_grpc_client)를 꺼야 합니다")
+		}
+		if !isEmptyPeersJSON(cfg.GrpcTargetPeersJson) {
+			return fmt.Errorf("maestro_enabled=true이면 grpc_target_peers_json을 비워야 합니다")
+		}
 	}
 	return nil
+}
+
+// isEmptyPeersJSON은 peer 목록 JSON이 사실상 빈 값인지 판정한다.
+func isEmptyPeersJSON(raw string) bool {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "", "[]", "null":
+		return true
+	default:
+		return false
+	}
 }
