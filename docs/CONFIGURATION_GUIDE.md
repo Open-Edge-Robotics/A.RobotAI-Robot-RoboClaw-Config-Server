@@ -176,23 +176,28 @@ task frontend-contract
 - RAG score range
 - task/retry/timeout 음수 여부
 - vision 활성화 시 model path
-- Maestro FleetControl: `maestro_disconnect_policy` enum, `robot_port` 범위, `fleet_heartbeat_sec` 음수 여부, `maestro_ip` 설정 시 `robot_id` 필수
+- Maestro FleetControl: `maestro_disconnect_policy` enum, `robot_port` 범위, `fleet_heartbeat_sec` 음수 여부, `maestro_ip` 설정 시 `robot_id` 필수, `maestro_enabled=true` 시 `maestro_ip`/`robot_id`/`use_grpc` 필수
 - System 1: router/scope enum, timeout 및 max option 하한, confidence threshold JSON object와 값(0~1)
 - JSON top-level object/array shape
 
 잘못된 설정은 HTTP `400`으로 반환됩니다.
 
-### Maestro FleetControl (contract v2.2.0)
+### Maestro FleetControl (contract v2.2.0, v2.13.0)
 
 `fleet.*` field는 로봇에서 Maestro FleetControl 서버로 연결하는 outbound
-connector 설정입니다. `maestro_ip`가 비어 있으면 connector가 비활성화되고,
-`maestro_ip`를 설정하면 `robot_id`가 필수입니다. `.env`로 배포되는 환경변수는
-`MAESTRO_IP`, `ROBOT_PORT`, `ROBOT_ID`, `ROBOT_SITE_ID`, `ROBOT_MAP_ID`,
-`ROBOT_MAP_VERSION`, `ROBOT_MAP_FRAME_ID`, `MAESTRO_DISCONNECT_POLICY`,
-`FLEET_HEARTBEAT_SEC`, `FLEET_COMMAND_JOURNAL_PATH`, `RC_SKILLS_GUIDE_FILE`,
-`FLEET_CONTROL_TLS`, `FLEET_CONTROL_CA_CERT`, `FLEET_CONTROL_CLIENT_CERT`,
-`FLEET_CONTROL_CLIENT_KEY`입니다. mTLS 인증서 경로는 `FLEET_CONTROL_TLS=true`
-일 때만 `.env`에 기록됩니다.
+connector 설정입니다. `maestro_enabled`(`MAESTRO_ENABLED`)가 `true`일 때만
+connector가 시작되며, 기본값 `false`에서는 `maestro_ip`가 남아 있어도 연결하지
+않습니다. `maestro_enabled=true`이면 `maestro_ip`와 `robot_id`가 필수이고,
+connector는 `robo_claw_grpc` 노드 안에서 생성되므로 Messenger 섹션의 gRPC 노드
+사용(`use_grpc`)도 함께 켜야 합니다. `.env`로 배포되는 환경변수는
+`MAESTRO_ENABLED`, `MAESTRO_IP`, `ROBOT_PORT`, `ROBOT_ID`, `ROBOT_SITE_ID`,
+`ROBOT_MAP_ID`, `ROBOT_MAP_VERSION`, `ROBOT_MAP_FRAME_ID`,
+`MAESTRO_DISCONNECT_POLICY`, `FLEET_HEARTBEAT_SEC`,
+`FLEET_COMMAND_JOURNAL_PATH`, `RC_SKILLS_GUIDE_FILE`, `FLEET_CONTROL_TLS`,
+`FLEET_CONTROL_CA_CERT`, `FLEET_CONTROL_CLIENT_CERT`,
+`FLEET_CONTROL_CLIENT_KEY`입니다. `MAESTRO_ENABLED`은 항상 기록되고, mTLS 인증서
+경로는 `FLEET_CONTROL_TLS=true`일 때만 기록됩니다. UI 스위치를 끄면 IP 등 하위
+입력은 잠기지만 값은 보존됩니다.
 
 ### System 1 Fast Router (contract v2.4.0)
 

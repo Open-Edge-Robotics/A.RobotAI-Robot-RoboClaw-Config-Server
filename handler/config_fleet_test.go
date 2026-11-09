@@ -58,6 +58,52 @@ func TestValidateRuntimeValuesFleetControl(t *testing.T) {
 	}
 }
 
+// TestValidateRuntimeValuesMaestroEnabled 는 Maestro 스위치 도입(v2.13.0) 후
+// 필수값과 gRPC 노드 의존성을 검증한다.
+func TestValidateRuntimeValuesMaestroEnabled(t *testing.T) {
+	enabled := func() models.RoboClawConfig {
+		return models.RoboClawConfig{
+			MaestroEnabled:          true,
+			MaestroIp:               "10.0.0.5",
+			RobotId:                 "butler-01",
+			RobotPort:               50053,
+			MaestroDisconnectPolicy: "complete",
+			FleetHeartbeatSec:       1.0,
+			UseGrpc:                 true,
+		}
+	}
+
+	if err := validateRuntimeValues(ptrConfig(enabled())); err != nil {
+		t.Fatalf("expected enabled Maestro config to be valid, got %v", err)
+	}
+
+	// 스위치를 끄면 IP/robot_id/gRPC 노드 없이도 저장할 수 있어야 한다.
+	disabled := enabled()
+	disabled.MaestroEnabled = false
+	disabled.UseGrpc = false
+	if err := validateRuntimeValues(ptrConfig(disabled)); err != nil {
+		t.Errorf("expected disabled Maestro config to be valid, got %v", err)
+	}
+
+	missingIp := enabled()
+	missingIp.MaestroIp = ""
+	if err := validateRuntimeValues(ptrConfig(missingIp)); err == nil {
+		t.Error("expected maestro_enabled without maestro_ip to be rejected")
+	}
+
+	missingRobotId := enabled()
+	missingRobotId.RobotId = ""
+	if err := validateRuntimeValues(ptrConfig(missingRobotId)); err == nil {
+		t.Error("expected maestro_enabled without robot_id to be rejected")
+	}
+
+	grpcOff := enabled()
+	grpcOff.UseGrpc = false
+	if err := validateRuntimeValues(ptrConfig(grpcOff)); err == nil {
+		t.Error("expected maestro_enabled without use_grpc to be rejected")
+	}
+}
+
 func ptrConfig(c models.RoboClawConfig) *models.RoboClawConfig { return &c }
 
 // TestGeneratedEnvIncludesFleetControl 은 .env에 contract v2.2.0의
@@ -66,6 +112,7 @@ func TestGeneratedEnvIncludesFleetControl(t *testing.T) {
 	cfg := &models.RoboClawConfig{
 		RobotName:               "butler",
 		Environment:             "office",
+		MaestroEnabled:          true,
 		MaestroIp:               "10.0.0.5",
 		RobotPort:               50053,
 		RobotId:                 "butler-01",
@@ -85,6 +132,7 @@ func TestGeneratedEnvIncludesFleetControl(t *testing.T) {
 
 	body := generateEnvContent(cfg)
 	for field, want := range map[string]string{
+		"MAESTRO_ENABLED":            "MAESTRO_ENABLED=true",
 		"MAESTRO_IP":                 "MAESTRO_IP=10.0.0.5",
 		"ROBOT_PORT":                 "ROBOT_PORT=50053",
 		"ROBOT_ID":                   "ROBOT_ID=butler-01",
@@ -107,6 +155,19 @@ func TestGeneratedEnvIncludesFleetControl(t *testing.T) {
 	}
 }
 
+// TestGeneratedEnvAlwaysWritesMaestroEnabled 는 스위치를 끈 프로필에서도
+// MAESTRO_ENABLED=false가 명시되는지 확인한다.
+func TestGeneratedEnvAlwaysWritesMaestroEnabled(t *testing.T) {
+	body := generateEnvContent(&models.RoboClawConfig{
+		RobotName:   "butler",
+		Environment: "office",
+		MaestroIp:   "10.0.0.5",
+	})
+	if !strings.Contains(body, "MAESTRO_ENABLED=false") {
+		t.Fatalf("expected MAESTRO_ENABLED=false to be written, got %q", body)
+	}
+}
+
 // TestGeneratedEnvSkillsGuideFileDefaults 는 skills_guide_file이 비어 있을 때
 // 기존 배포 경로(config/SKILLS.md)가 유지되는지 확인한다.
 func TestGeneratedEnvSkillsGuideFileDefaults(t *testing.T) {
@@ -126,6 +187,7 @@ func TestConfigTransferRoundTripPreservesFleetControl(t *testing.T) {
 		Name:                    "fleet",
 		RobotName:               "butler",
 		Environment:             "office",
+		MaestroEnabled:          true,
 		MaestroIp:               "10.0.0.5",
 		RobotPort:               50053,
 		RobotId:                 "butler-01",
@@ -148,6 +210,9 @@ func TestConfigTransferRoundTripPreservesFleetControl(t *testing.T) {
 
 	if got.MaestroIp != cfg.MaestroIp || got.RobotPort != cfg.RobotPort || got.RobotId != cfg.RobotId {
 		t.Fatalf("fleet identity not preserved: %#v", got)
+	}
+	if got.MaestroEnabled != cfg.MaestroEnabled {
+		t.Fatalf("fleet enable switch not preserved: %#v", got)
 	}
 	if got.MaestroDisconnectPolicy != cfg.MaestroDisconnectPolicy || got.FleetHeartbeatSec != cfg.FleetHeartbeatSec {
 		t.Fatalf("fleet policy not preserved: %#v", got)
@@ -180,7 +245,7 @@ func TestGetActiveRuntimeConfigV2IncludesFleetFields(t *testing.T) {
 	}
 	config := response["config"].(map[string]any)
 	for _, key := range []string{
-		"maestro_ip", "robot_port", "robot_id", "robot_site_id", "robot_map_id",
+		"maestro_enabled", "maestro_ip", "robot_port", "robot_id", "robot_site_id", "robot_map_id",
 		"robot_map_version", "robot_map_frame_id", "maestro_disconnect_policy",
 		"fleet_heartbeat_sec", "fleet_command_journal_path", "skills_guide_file",
 		"fleet_control_tls", "fleet_control_ca_cert", "fleet_control_client_cert",

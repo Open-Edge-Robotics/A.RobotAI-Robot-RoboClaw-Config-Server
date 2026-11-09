@@ -6,12 +6,19 @@ import 'package:frontend/models/config_model.dart';
 import 'package:frontend/widgets/config_fleet_section.dart';
 
 void main() {
-  Widget buildSection({bool isEditing = true, String policy = 'complete'}) {
+  Widget buildSection({
+    bool isEditing = true,
+    bool maestroEnabled = true,
+    String policy = 'complete',
+    ValueChanged<bool>? onMaestroEnabledChanged,
+  }) {
     return MaterialApp(
       home: Scaffold(
         body: SingleChildScrollView(
           child: ConfigFleetSection(
             isEditing: isEditing,
+            maestroEnabled: maestroEnabled,
+            onMaestroEnabledChanged: onMaestroEnabledChanged ?? (_) {},
             maestroIpCtrl: TextEditingController(text: '10.0.0.5'),
             robotPortCtrl: TextEditingController(text: '50053'),
             robotIdCtrl: TextEditingController(text: 'butler-01'),
@@ -53,6 +60,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Maestro FleetControl 연동'), findsOneWidget);
+    expect(find.text('Maestro 연동 사용 (MAESTRO_ENABLED)'), findsOneWidget);
     expect(find.text('Maestro 서버 IP (MAESTRO_IP)'), findsOneWidget);
     expect(find.text('로봇 ID (ROBOT_ID)'), findsOneWidget);
     expect(find.text('클라이언트 키 (FLEET_CONTROL_CLIENT_KEY)'), findsOneWidget);
@@ -69,11 +77,44 @@ void main() {
     expect(field.enabled, isFalse);
   });
 
+  testWidgets('스위치를 끄면 IP 등 하위 입력이 비활성화된다', (tester) async {
+    sizeView(tester);
+    await tester.pumpWidget(buildSection(maestroEnabled: false));
+    await tester.pumpAndSettle();
+
+    final field = tester.widget<TextFormField>(
+      find.widgetWithText(TextFormField, 'Maestro 서버 IP (MAESTRO_IP)'),
+    );
+    expect(field.enabled, isFalse);
+    final toggle = tester.widget<SwitchListTile>(
+      find.byKey(const ValueKey('maestro_enabled_switch')),
+    );
+    expect(toggle.value, isFalse);
+  });
+
+  testWidgets('Maestro 연동 스위치를 누르면 콜백이 호출된다', (tester) async {
+    sizeView(tester);
+    bool? changed;
+    await tester.pumpWidget(
+      buildSection(
+        maestroEnabled: false,
+        onMaestroEnabledChanged: (value) => changed = value,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('maestro_enabled_switch')));
+    await tester.pumpAndSettle();
+
+    expect(changed, isTrue);
+  });
+
   test('RoboClawConfig가 fleet contract 필드를 JSON 직렬화에서 보존한다', () {
     final config = RoboClawConfig(
       name: 'fleet',
       robotName: 'butler',
       environment: 'office',
+      maestroEnabled: true,
       maestroIp: '10.0.0.5',
       robotPort: 50053,
       robotId: 'butler-01',
@@ -93,6 +134,7 @@ void main() {
 
     final decoded = RoboClawConfig.fromJson(config.toJson());
 
+    expect(decoded.maestroEnabled, isTrue);
     expect(decoded.maestroIp, '10.0.0.5');
     expect(decoded.robotPort, 50053);
     expect(decoded.robotId, 'butler-01');
@@ -117,6 +159,7 @@ void main() {
       environment: 'e',
     );
 
+    expect(config.maestroEnabled, isFalse);
     expect(config.robotPort, 50053);
     expect(config.robotMapFrameId, 'map');
     expect(config.maestroDisconnectPolicy, 'complete');

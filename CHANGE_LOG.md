@@ -1,5 +1,26 @@
 # CHANGE_LOG
 
+## 2026-11-09 — Maestro 연동 실행 스위치 노출 (contract v2.13.0)
+
+- 공통 runtime contract v2.13.0의 `fleet.enabled`(`MAESTRO_ENABLED`, 기본값 `false`)을
+  백엔드와 프론트에 연결했습니다. `false`면 `maestro_ip`를 지정해도 로봇의 Maestro
+  outbound connector가 시작되지 않으며, IP를 보존한 채 연동만 끌 수 있습니다.
+- `contracts/`·lock·Dart artifact를 v2.13.0으로, `schemas/`와 `schema-lock.json`을
+  RoboClaw canonical 스키마로 재동기화했습니다.
+- `database/models/roboclaw_config.go`: `MaestroEnabled`(`maestro_enabled`, 기본값
+  `false`) 필드를 추가하고 `handler/config_files.go`가 `MAESTRO_ENABLED`를 항상
+  방출합니다.
+- `handler/roboclaw_config.go`: `maestro_enabled=true`이면 `maestro_ip`, `robot_id`,
+  `use_grpc`를 함께 검증합니다. `false`면 남아 있는 IP를 오류로 보지 않습니다.
+- `handler/config_transfer.go`: 백업 export/import 왕복에서 스위치를 보존합니다.
+- `database/db.go`: `maestro_enabled` 컬럼이 처음 추가되는 기동에서
+  `maestro_ip <> ''` 프로필을 1회 백필해 기존 동작을 보존합니다. 이후 재기동에서는
+  운영자가 끈 스위치를 되살리지 않습니다.
+- `frontend`: `config_model.dart` 필드/JSON, `config_fleet_section.dart` 상단
+  마스터 스위치(끄면 하위 입력 잠금), `config_tab.dart` 상태·저장·로드 배선.
+- 테스트: Go 검증 1건·.env 방출 2건·백업 왕복 1건·DB 백필 2건, Flutter 모델 왕복
+  1건·위젯 2건.
+
 ## 2026-11-02 — 스킬 선택 방식(네이티브 도구 호출) 노출 (contract v2.12.0)
 
 - 공통 runtime contract v2.12.0의 `llm.tool_calling`(`RC_LLM_TOOL_CALLING`)을 백엔드와

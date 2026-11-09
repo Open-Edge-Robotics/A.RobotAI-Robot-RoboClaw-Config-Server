@@ -6,6 +6,8 @@ import 'config_section_header.dart';
 /// Maestro FleetControl outbound connector 설정 섹션 (contract v2.2.0).
 class ConfigFleetSection extends StatelessWidget {
   final bool isEditing;
+  final bool maestroEnabled;
+  final ValueChanged<bool> onMaestroEnabledChanged;
   final TextEditingController maestroIpCtrl;
   final TextEditingController robotPortCtrl;
   final TextEditingController robotIdCtrl;
@@ -27,6 +29,8 @@ class ConfigFleetSection extends StatelessWidget {
   const ConfigFleetSection({
     super.key,
     required this.isEditing,
+    required this.maestroEnabled,
+    required this.onMaestroEnabledChanged,
     required this.maestroIpCtrl,
     required this.robotPortCtrl,
     required this.robotIdCtrl,
@@ -54,17 +58,30 @@ class ConfigFleetSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 스위치를 끄면 나머지 값은 보존한 채 입력만 잠근다.
+    final fieldEnabled = isEditing && maestroEnabled;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ConfigSectionHeader('Maestro FleetControl 연동'),
+        const SizedBox(height: 12),
+        SwitchListTile(
+          key: const ValueKey('maestro_enabled_switch'),
+          contentPadding: EdgeInsets.zero,
+          title: Text('Maestro 연동 사용 (MAESTRO_ENABLED)'.tr),
+          subtitle: Text(
+            '끄면 MAESTRO_IP를 지정해도 로봇의 outbound connector를 시작하지 않습니다.'.tr,
+          ),
+          value: maestroEnabled,
+          onChanged: isEditing ? onMaestroEnabledChanged : null,
+        ),
         const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
               child: TextFormField(
                 controller: maestroIpCtrl,
-                enabled: isEditing,
+                enabled: fieldEnabled,
                 decoration: InputDecoration(
                   labelText: 'Maestro 서버 IP (MAESTRO_IP)'.tr,
                   hintText: '10.0.0.5',
@@ -76,7 +93,7 @@ class ConfigFleetSection extends StatelessWidget {
             Expanded(
               child: TextFormField(
                 controller: robotPortCtrl,
-                enabled: isEditing,
+                enabled: fieldEnabled,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: 'Maestro 서버 포트 (ROBOT_PORT)'.tr,
@@ -92,7 +109,7 @@ class ConfigFleetSection extends StatelessWidget {
             Expanded(
               child: TextFormField(
                 controller: robotIdCtrl,
-                enabled: isEditing,
+                enabled: fieldEnabled,
                 decoration: InputDecoration(
                   labelText: '로봇 ID (ROBOT_ID)'.tr,
                   hintText: 'butler-01',
@@ -104,7 +121,7 @@ class ConfigFleetSection extends StatelessWidget {
             Expanded(
               child: TextFormField(
                 controller: robotSiteIdCtrl,
-                enabled: isEditing,
+                enabled: fieldEnabled,
                 decoration: InputDecoration(
                   labelText: '사이트 ID (ROBOT_SITE_ID)'.tr,
                   hintText: 'site-a',
@@ -119,7 +136,7 @@ class ConfigFleetSection extends StatelessWidget {
             Expanded(
               child: TextFormField(
                 controller: robotMapIdCtrl,
-                enabled: isEditing,
+                enabled: fieldEnabled,
                 decoration: InputDecoration(
                   labelText: '맵 ID (ROBOT_MAP_ID)'.tr,
                   hintText: '1f',
@@ -130,7 +147,7 @@ class ConfigFleetSection extends StatelessWidget {
             Expanded(
               child: TextFormField(
                 controller: robotMapVersionCtrl,
-                enabled: isEditing,
+                enabled: fieldEnabled,
                 decoration: InputDecoration(
                   labelText: '맵 버전 (ROBOT_MAP_VERSION)'.tr,
                   hintText: 'v3',
@@ -145,7 +162,7 @@ class ConfigFleetSection extends StatelessWidget {
             Expanded(
               child: TextFormField(
                 controller: robotMapFrameIdCtrl,
-                enabled: isEditing,
+                enabled: fieldEnabled,
                 decoration: InputDecoration(
                   labelText: '맵 TF frame (ROBOT_MAP_FRAME_ID)'.tr,
                   hintText: 'map',
@@ -168,7 +185,7 @@ class ConfigFleetSection extends StatelessWidget {
                           DropdownMenuItem(value: policy, child: Text(policy)),
                     )
                     .toList(),
-                onChanged: isEditing ? onDisconnectPolicyChanged : null,
+                onChanged: fieldEnabled ? onDisconnectPolicyChanged : null,
               ),
             ),
           ],
@@ -179,7 +196,7 @@ class ConfigFleetSection extends StatelessWidget {
             Expanded(
               child: TextFormField(
                 controller: heartbeatSecCtrl,
-                enabled: isEditing,
+                enabled: fieldEnabled,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
@@ -193,7 +210,7 @@ class ConfigFleetSection extends StatelessWidget {
             Expanded(
               child: TextFormField(
                 controller: commandJournalPathCtrl,
-                enabled: isEditing,
+                enabled: fieldEnabled,
                 decoration: InputDecoration(
                   labelText: '명령 저널 경로 (FLEET_COMMAND_JOURNAL_PATH)'.tr,
                   hintText: '/tmp/robo_claw_fleet_commands.sqlite3',
@@ -205,7 +222,7 @@ class ConfigFleetSection extends StatelessWidget {
         const SizedBox(height: 16),
         TextFormField(
           controller: skillsGuideFileCtrl,
-          enabled: isEditing,
+          enabled: fieldEnabled,
           decoration: InputDecoration(
             labelText: '스킬 가이드 파일 (RC_SKILLS_GUIDE_FILE)'.tr,
             hintText: '/etc/robo/skills.md',
@@ -217,7 +234,7 @@ class ConfigFleetSection extends StatelessWidget {
           children: [
             Switch(
               value: controlTls,
-              onChanged: isEditing ? onControlTlsChanged : null,
+              onChanged: fieldEnabled ? onControlTlsChanged : null,
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -231,7 +248,7 @@ class ConfigFleetSection extends StatelessWidget {
             Expanded(
               child: TextFormField(
                 controller: controlCaCertCtrl,
-                enabled: isEditing,
+                enabled: fieldEnabled,
                 decoration: InputDecoration(
                   labelText: 'CA 인증서 (FLEET_CONTROL_CA_CERT)'.tr,
                   hintText: '/etc/robo/ca.pem',
@@ -242,7 +259,7 @@ class ConfigFleetSection extends StatelessWidget {
             Expanded(
               child: TextFormField(
                 controller: controlClientCertCtrl,
-                enabled: isEditing,
+                enabled: fieldEnabled,
                 decoration: InputDecoration(
                   labelText: '클라이언트 인증서 (FLEET_CONTROL_CLIENT_CERT)'.tr,
                   hintText: '/etc/robo/client.pem',
@@ -254,7 +271,7 @@ class ConfigFleetSection extends StatelessWidget {
         const SizedBox(height: 16),
         TextFormField(
           controller: controlClientKeyCtrl,
-          enabled: isEditing,
+          enabled: fieldEnabled,
           decoration: InputDecoration(
             labelText: '클라이언트 키 (FLEET_CONTROL_CLIENT_KEY)'.tr,
             hintText: '/etc/robo/client.key',

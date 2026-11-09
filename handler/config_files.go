@@ -320,6 +320,7 @@ func generateEnvContent(cfg *models.RoboClawConfig) string {
 
 	// ── Maestro FleetControl outbound connector (contract v2.2.0) ──
 	sb.WriteString("\n# ── Maestro FleetControl outbound connector ──\n")
+	fmt.Fprintf(&sb, "MAESTRO_ENABLED=%t\n", cfg.MaestroEnabled)
 	if cfg.MaestroIp != "" {
 		fmt.Fprintf(&sb, "MAESTRO_IP=%s\n", cfg.MaestroIp)
 	}

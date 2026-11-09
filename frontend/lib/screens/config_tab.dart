@@ -200,6 +200,7 @@ class ConfigTabState extends State<ConfigTab> {
   final _robotMapIdCtrl = TextEditingController();
   final _robotMapVersionCtrl = TextEditingController();
   final _robotMapFrameIdCtrl = TextEditingController();
+  bool _maestroEnabled = false;
   String _maestroDisconnectPolicy = 'complete';
   final _fleetHeartbeatSecCtrl = TextEditingController();
   final _fleetCommandJournalPathCtrl = TextEditingController();
@@ -561,6 +562,7 @@ class ConfigTabState extends State<ConfigTab> {
       system1Skills: _system1SkillsCtrl.text,
       system1MaxOptions: int.tryParse(_system1MaxOptionsCtrl.text) ?? 12,
       system1ApiKey: _system1ApiKeyCtrl.text,
+      maestroEnabled: _maestroEnabled,
       maestroIp: _maestroIpCtrl.text,
       robotPort: int.tryParse(_robotPortCtrl.text) ?? 50053,
       robotId: _robotIdCtrl.text,
@@ -754,6 +756,7 @@ class ConfigTabState extends State<ConfigTab> {
         ? '12'
         : config.system1MaxOptions.toString();
     _system1ApiKeyCtrl.text = config.system1ApiKey;
+    _maestroEnabled = config.maestroEnabled;
     _maestroIpCtrl.text = config.maestroIp;
     _robotPortCtrl.text = config.robotPort.toString();
     _robotIdCtrl.text = config.robotId;
@@ -1387,6 +1390,9 @@ class ConfigTabState extends State<ConfigTab> {
               const SizedBox(height: 28),
               ConfigFleetSection(
                 isEditing: _isEditing,
+                maestroEnabled: _maestroEnabled,
+                onMaestroEnabledChanged: (val) =>
+                    setState(() => _maestroEnabled = val),
                 maestroIpCtrl: _maestroIpCtrl,
                 robotPortCtrl: _robotPortCtrl,
                 robotIdCtrl: _robotIdCtrl,

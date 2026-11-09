@@ -605,5 +605,16 @@ func validateRuntimeValues(cfg *models.RoboClawConfig) error {
 	if strings.TrimSpace(cfg.MaestroIp) != "" && strings.TrimSpace(cfg.RobotId) == "" {
 		return fmt.Errorf("maestro_ip가 설정되면 robot_id가 필요합니다")
 	}
+	if cfg.MaestroEnabled {
+		if strings.TrimSpace(cfg.MaestroIp) == "" {
+			return fmt.Errorf("maestro_enabled=true이면 maestro_ip가 필요합니다")
+		}
+		if strings.TrimSpace(cfg.RobotId) == "" {
+			return fmt.Errorf("maestro_enabled=true이면 robot_id가 필요합니다")
+		}
+		if !cfg.UseGrpc {
+			return fmt.Errorf("maestro_enabled=true이면 gRPC 노드 사용(use_grpc)도 켜야 합니다")
+		}
+	}
 	return nil
 }

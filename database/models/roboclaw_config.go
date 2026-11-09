@@ -87,9 +87,10 @@ type RoboClawConfig struct {
 	DashboardPort    int    `gorm:"default:9090" json:"dashboard_port"`        // RC_DASHBOARD_PORT (Dashboard 웹 노드 HTTP 포트, HTTP 채널 8080과 별개)
 
 	// ── Maestro FleetControl outbound connector (contract v2.2.0) ──
-	MaestroIp               string  `json:"maestro_ip"`                                                                        // MAESTRO_IP (빈 값이면 fleet outbound connector 비활성)
+	MaestroEnabled          bool    `gorm:"default:false" json:"maestro_enabled"`                                              // MAESTRO_ENABLED (false이면 MAESTRO_IP가 있어도 connector 비활성, contract v2.13.0+)
+	MaestroIp               string  `json:"maestro_ip"`                                                                        // MAESTRO_IP (maestro_enabled=true일 때 fleet outbound connector 대상)
 	RobotPort               int     `gorm:"default:50053" json:"robot_port"`                                                   // ROBOT_PORT (Maestro FleetControl 서버 포트)
-	RobotId                 string  `json:"robot_id"`                                                                          // ROBOT_ID (maestro_ip 설정 시 필수)
+	RobotId                 string  `json:"robot_id"`                                                                          // ROBOT_ID (maestro_enabled=true일 때 필수)
 	RobotSiteId             string  `json:"robot_site_id"`                                                                     // ROBOT_SITE_ID
 	RobotMapId              string  `json:"robot_map_id"`                                                                      // ROBOT_MAP_ID
 	RobotMapVersion         string  `json:"robot_map_version"`                                                                 // ROBOT_MAP_VERSION

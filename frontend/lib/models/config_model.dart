@@ -153,6 +153,7 @@ class RoboClawConfig {
   String cleanupRunLogPath;
 
   // Maestro FleetControl outbound connector (contract v2.2.0)
+  bool maestroEnabled;
   String maestroIp;
   int robotPort;
   String robotId;
@@ -285,6 +286,7 @@ class RoboClawConfig {
     this.system1MaxOptions = 12,
     this.system1ApiKey = '',
     this.cleanupRunLogPath = '',
+    this.maestroEnabled = false,
     this.maestroIp = '',
     this.robotPort = 50053,
     this.robotId = '',
@@ -425,6 +427,7 @@ class RoboClawConfig {
       system1MaxOptions: json['system1_max_options'] ?? 12,
       system1ApiKey: json['system1_api_key'] ?? '',
       cleanupRunLogPath: json['cleanup_run_log_path'] ?? '',
+      maestroEnabled: json['maestro_enabled'] ?? false,
       maestroIp: json['maestro_ip'] ?? '',
       robotPort: json['robot_port'] ?? 50053,
       robotId: json['robot_id'] ?? '',
@@ -561,6 +564,7 @@ class RoboClawConfig {
       'system1_max_options': system1MaxOptions,
       'cleanup_run_log_path': cleanupRunLogPath,
       'system1_api_key': system1ApiKey,
+      'maestro_enabled': maestroEnabled,
       'maestro_ip': maestroIp,
       'robot_port': robotPort,
       'robot_id': robotId,

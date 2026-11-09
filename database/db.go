@@ -40,8 +40,16 @@ func Init(dsn string) error {
 	// SQLite의 쓰기 락 충돌 방지를 위해 최대 커넥션을 1개로 한정
 	sqlDB.SetMaxOpenConns(1)
 
+	// maestro_enabled 컬럼이 이번에 추가된 경우에만 1회 백필한다. 매 기동 시
+	// 실행하면 운영자가 끄 둔 스위치를 다시 켜게 된다.
+	hadMaestroEnabled := db.Migrator().HasColumn(&models.RoboClawConfig{}, "maestro_enabled")
 	if err := db.AutoMigrate(&models.RoboClawConfig{}, &models.TestScenario{}); err != nil {
 		return fmt.Errorf("AutoMigrate 실패: %w", err)
+	}
+	if !hadMaestroEnabled {
+		if err := backfillMaestroEnabled(db); err != nil {
+			return fmt.Errorf("maestro_enabled 백필 실패: %w", err)
+		}
 	}
 
 	DB = db
@@ -49,6 +57,14 @@ func Init(dsn string) error {
 		return fmt.Errorf("초기 데이터 시드 실패: %w", err)
 	}
 	return nil
+}
+
+// backfillMaestroEnabled는 스위치 도입 이전 프로필의 동작(IP가 있으면 연결)을
+// 보존한다. 컬럼이 새로 추가된 기동에서 한 번만 호출한다.
+func backfillMaestroEnabled(db *gorm.DB) error {
+	return db.Model(&models.RoboClawConfig{}).
+		Where("maestro_ip <> ''").
+		Update("maestro_enabled", true).Error
 }
 
 func seedData(db *gorm.DB) error {

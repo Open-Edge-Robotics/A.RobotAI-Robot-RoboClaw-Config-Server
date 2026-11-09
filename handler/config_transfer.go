@@ -181,6 +181,7 @@ type ConfigTransfer struct {
 	System1ApiKey             *string `json:"system1_api_key,omitempty"`
 
 	// ── Maestro FleetControl outbound connector (contract v2.2.0) ──
+	MaestroEnabled          bool    `json:"maestro_enabled"`
 	MaestroIp               string  `json:"maestro_ip"`
 	RobotPort               int     `json:"robot_port"`
 	RobotId                 string  `json:"robot_id"`
@@ -390,6 +391,7 @@ func configToTransfer(cfg *models.RoboClawConfig, includeSecrets bool) ConfigTra
 		System1ConfThresholdsJson:         cfg.System1ConfThresholdsJson,
 		System1Skills:                     cfg.System1Skills,
 		System1MaxOptions:                 cfg.System1MaxOptions,
+		MaestroEnabled:                    cfg.MaestroEnabled,
 		MaestroIp:                         cfg.MaestroIp,
 		RobotPort:                         cfg.RobotPort,
 		RobotId:                           cfg.RobotId,
@@ -582,6 +584,7 @@ func (t ConfigTransfer) toModel(existing *models.RoboClawConfig) models.RoboClaw
 		System1Skills:                     t.System1Skills,
 		System1MaxOptions:                 t.System1MaxOptions,
 		System1ApiKey:                     resolve(t.System1ApiKey, curStr(func(c *models.RoboClawConfig) string { return c.System1ApiKey })),
+		MaestroEnabled:                    t.MaestroEnabled,
 		MaestroIp:                         t.MaestroIp,
 		RobotPort:                         t.RobotPort,
 		RobotId:                           t.RobotId,
