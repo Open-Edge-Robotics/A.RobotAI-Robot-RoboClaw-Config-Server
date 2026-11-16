@@ -76,8 +76,7 @@ class ConfigTabState extends State<ConfigTab> {
     );
     if (!mounted) return;
     if (_configController.unauthorized) {
-      _showError('인증 오류: 올바르지 않거나 만료된 관리자 토큰입니다.'.tr);
-      if (widget.onUnauthorized != null) widget.onUnauthorized!();
+      _notifyUnauthorized();
     } else if (_configController.error != null) {
       _showError('${'서버 오류: '.tr}${_configController.error}');
     }
@@ -100,7 +99,11 @@ class ConfigTabState extends State<ConfigTab> {
         }
       });
     } on ApiException catch (e) {
-      _showError('${'활성화 실패: '.tr}${e.message}');
+      if (e.statusCode == 401) {
+        _notifyUnauthorized();
+      } else {
+        _showError('${'활성화 실패: '.tr}${e.message}');
+      }
     } catch (e) {
       _showError('${'활성화 처리 중 에러 발생: '.tr}$e');
     }
@@ -141,7 +144,11 @@ class ConfigTabState extends State<ConfigTab> {
         }
       });
     } on ApiException catch (e) {
-      _showError('${'삭제 실패: '.tr}${e.message}');
+      if (e.statusCode == 401) {
+        _notifyUnauthorized();
+      } else {
+        _showError('${'삭제 실패: '.tr}${e.message}');
+      }
     } catch (e) {
       _showError('${'삭제 처리 중 에러 발생: '.tr}$e');
     }
@@ -160,9 +167,8 @@ class ConfigTabState extends State<ConfigTab> {
         _populateForm(cloned);
       });
     } on ApiException catch (e) {
-      if (_configController.unauthorized) {
-        _showError('인증 오류: 올바르지 않거나 만료된 관리자 토큰입니다.'.tr);
-        if (widget.onUnauthorized != null) widget.onUnauthorized!();
+      if (e.statusCode == 401) {
+        _notifyUnauthorized();
       } else {
         _showError('${'복제 실패: '.tr}${e.message}\n${'상세내용: '.tr}${e.body}');
       }
@@ -194,7 +200,11 @@ class ConfigTabState extends State<ConfigTab> {
         _isCreatingNew = false;
       });
     } on ApiException catch (e) {
-      _showError('${'저장 실패: '.tr}${e.message}\n${'상세내용: '.tr}${e.body}');
+      if (e.statusCode == 401) {
+        _notifyUnauthorized();
+      } else {
+        _showError('${'저장 실패: '.tr}${e.message}\n${'상세내용: '.tr}${e.body}');
+      }
     } catch (e) {
       _showError('${'저장 처리 중 에러 발생: '.tr}$e');
     }
@@ -288,6 +298,13 @@ class ConfigTabState extends State<ConfigTab> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.green));
+  }
+
+  /// 401 은 목록 조회/변이 모두 같은 안내를 보여주고 토큰 재입력 경로로
+  /// 정확히 한 번 넘긴다(같은 실패에 콜백이 중복 호출되지 않는다).
+  void _notifyUnauthorized() {
+    _showError('인증 오류: 올바르지 않거나 만료된 관리자 토큰입니다.'.tr);
+    widget.onUnauthorized?.call();
   }
 
   // --- Layout Builders (Configs) ---
