@@ -1,51 +1,41 @@
 // frontend/test/dashboard_widget_test.dart
 //
-// 대시보드 Widget 테스트. 전역 인스턴스(HttpAdminApi/FilePicker/Downloader)를
-// Fake 로 주입해 브라우저/네트워크 없이 UI 흐름을 검증한다.
+// 대시보드 Widget 테스트. AppDependencies(API/TokenStore/FilePicker/Downloader)를
+// 주입해 브라우저/네트워크 없이 UI 흐름을 검증한다.
 
-import 'package:flutter/material.dart';
+import 'dart:async';
+
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
 
-import 'package:frontend/api/http_admin_api.dart';
-import 'package:frontend/platform/file_downloader.dart';
-import 'package:frontend/platform/file_picker.dart';
+import 'package:frontend/features/language/language_controller.dart';
 import 'package:frontend/screens/dashboard_screen.dart';
-import 'package:frontend/services/download_helper.dart';
-import 'package:frontend/services/file_picker_helper.dart';
-import 'package:frontend/storage/token_store.dart';
+import 'package:frontend/storage/language_store.dart';
 
-class FakeTokenStore implements TokenStore {
+import 'support/app_dependencies.dart';
+
+/// 대시보드 검증은 한국어를 기본값으로 쓴다. 언어 영속화는 별도 테스트에서 다룬다.
+class FakeLanguageStore implements LanguageStore {
   String? value;
+
   @override
   String? read() => value;
+
   @override
-  void write(String token) => value = token;
+  void write(String code) => value = code;
+
   @override
   void clear() => value = null;
 }
 
-class FakeFilePicker implements BackupFilePicker {
-  @override
-  Future<PickedBackupFile?> pickJson() async => null;
-}
-
-class FakeDownloader implements FileDownloader {
-  @override
-  void downloadText(String content, String filename) {}
-  @override
-  void downloadZip(Map<String, String> files, String zipFilename) {}
-}
-
 void main() {
+  late TestDependencies deps;
+
   setUp(() {
-    HttpAdminApi.instance = HttpAdminApi(
-      client: MockClient((request) async => http.Response('[]', 200)),
-      tokenStore: FakeTokenStore(),
+    deps = buildTestDependencies(
+      respond: (request) async => http.Response('[]', 200),
     );
-    FilePickerHelper.instance = FakeFilePicker();
-    DownloadHelper.instance = FakeDownloader();
   });
 
   Future<void> pumpDashboard(WidgetTester tester) async {
@@ -59,6 +49,8 @@ void main() {
         home: DashboardScreen(
           themeMode: ThemeMode.dark,
           onThemeModeChanged: () {},
+          languageController: LanguageController(store: FakeLanguageStore()),
+          dependencies: deps.dependencies,
         ),
       ),
     );
@@ -129,14 +121,13 @@ void main() {
 
   testWidgets('초기 401 인증 실패 시 토큰 다이얼로그가 하나만 열리고 토큰 저장 후 닫힌다', (tester) async {
     bool hasToken = false;
-    HttpAdminApi.instance = HttpAdminApi(
-      client: MockClient((request) async {
+    deps = buildTestDependencies(
+      respond: (request) async {
         if (!hasToken) {
           return http.Response('{"error":"unauthorized"}', 401);
         }
         return http.Response('[]', 200);
-      }),
-      tokenStore: FakeTokenStore(),
+      },
     );
 
     await pumpDashboard(tester);
@@ -178,11 +169,7 @@ void main() {
   });
 
   testWidgets('토큰 다이얼로그에서 토큰 소거를 누르면 토큰이 제거되고 닫힌다', (tester) async {
-    final tokenStore = FakeTokenStore()..write('existing-token');
-    HttpAdminApi.instance = HttpAdminApi(
-      client: MockClient((request) async => http.Response('[]', 200)),
-      tokenStore: tokenStore,
-    );
+    deps.tokenStore.value = 'existing-token';
 
     await pumpDashboard(tester);
 
@@ -193,6 +180,38 @@ void main() {
     await tester.tap(find.text('토큰 소거'));
     await tester.pumpAndSettle();
     expect(find.text('관리자 인증 토큰 입력'), findsNothing);
-    expect(tokenStore.read(), isNull);
+    expect(deps.tokenStore.value, isNull);
+  });
+
+  testWidgets('내보내기 응답 대기 중 다이얼로그를 닫아도 늦은 응답에 위젯 오류가 없다', (tester) async {
+    final exportGate = Completer<void>();
+    deps = buildTestDependencies(
+      respond: (request) async {
+        if (request.url.path.endsWith('/transfer/export')) {
+          await exportGate.future;
+          return http.Response('{"version":1}', 200);
+        }
+        return http.Response('[]', 200);
+      },
+    );
+
+    await pumpDashboard(tester);
+    await tester.tap(find.byIcon(Icons.save_alt));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('전체 설정 내보내기'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('내보내기'));
+    await tester.pump();
+
+    // 응답을 기다리는 동안 다이얼로그를 닫는다(barrier tap).
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+    expect(find.text('전체 설정 내보내기'), findsNothing);
+
+    exportGate.complete();
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
   });
 }

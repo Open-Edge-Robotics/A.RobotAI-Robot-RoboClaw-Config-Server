@@ -1,6 +1,6 @@
 // frontend/lib/widgets/config_card.dart
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../models/config_model.dart';
 import '../utils/localization.dart';
 

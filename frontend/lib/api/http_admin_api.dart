@@ -2,6 +2,10 @@
 //
 // AdminApi 의 HTTP 구현. http.Client 와 TokenStore 를 주입받는다.
 // 테스트에서는 MockClient(http/testing) 로 교체할 수 있다.
+//
+// 모든 HTTP 호출에는 requestTimeout(기본 20초) 상한을 둔다. 초과 시
+// TimeoutException 이 그대로 전파되며, 이 계층에서는 로깅하지 않는다.
+// 오류 기록은 Controller 경계에서 한 번만 수행한다.
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -11,40 +15,37 @@ import '../models/scenario_model.dart';
 import '../services/logger.dart';
 import '../storage/token_store.dart';
 import 'admin_api.dart';
+import 'api_exception.dart';
 
-class ApiException implements Exception {
-  final String message;
-  final int? statusCode;
-  final String? body;
-
-  ApiException(this.message, {this.statusCode, this.body});
-
-  @override
-  String toString() => 'ApiException: $message (Status: $statusCode)';
-}
+// 기존 경로(package:frontend/api/http_admin_api.dart)로 ApiException 을 계속
+// 사용할 수 있도록 중립 타입을 다시 내보낸다.
+export 'api_exception.dart';
 
 class HttpAdminApi implements AdminApi {
   final http.Client _client;
   final TokenStore _tokenStore;
   final String _basePath;
+  final Duration _requestTimeout;
 
   HttpAdminApi({
     required http.Client client,
     required TokenStore tokenStore,
     String basePath = '/api/v1/admin',
-  }) : this._(client, tokenStore, basePath);
+    Duration requestTimeout = const Duration(seconds: 20),
+  }) : this._(client, tokenStore, basePath, requestTimeout);
 
-  HttpAdminApi._(this._client, this._tokenStore, this._basePath);
+  HttpAdminApi._(
+    this._client,
+    this._tokenStore,
+    this._basePath,
+    this._requestTimeout,
+  );
 
   /// 전역 기본 인스턴스. main() 에서 구성한다.
   static HttpAdminApi instance = HttpAdminApi(
     client: http.Client(),
     tokenStore: _NoopTokenStore(),
   );
-
-  static void _logError(String operation, dynamic error, [StackTrace? stack]) {
-    AppLogger.error('API Error during [$operation]', error, stack);
-  }
 
   // ===== 토큰 접근 =====
 
@@ -80,22 +81,18 @@ class HttpAdminApi implements AdminApi {
     ).replace(queryParameters: queryParams);
     AppLogger.info('GET: $uri');
 
-    try {
-      final response = await _client.get(uri, headers: _getHeaders());
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) => RoboClawConfig.fromJson(json)).toList();
-      } else {
-        throw ApiException(
-          '설정 목록 조회 실패',
-          statusCode: response.statusCode,
-          body: response.body,
-        );
-      }
-    } catch (e, stack) {
-      _logError('fetchConfigs', e, stack);
-      rethrow;
+    final response = await _client
+        .get(uri, headers: _getHeaders())
+        .timeout(_requestTimeout);
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => RoboClawConfig.fromJson(json)).toList();
     }
+    throw ApiException(
+      '설정 목록 조회 실패',
+      statusCode: response.statusCode,
+      body: response.body,
+    );
   }
 
   @override
@@ -106,108 +103,92 @@ class HttpAdminApi implements AdminApi {
     final body = jsonEncode(config.toJson());
     AppLogger.info('${isNew ? "POST" : "PUT"}: $url');
 
-    try {
-      final response = isNew
-          ? await _client.post(url, headers: _getHeaders(), body: body)
-          : await _client.put(url, headers: _getHeaders(), body: body);
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        AppLogger.info('Save successful. ID: ${config.id ?? "NEW"}');
-        return RoboClawConfig.fromJson(jsonDecode(response.body));
-      } else {
-        throw ApiException(
-          '설정 저장 실패',
-          statusCode: response.statusCode,
-          body: response.body,
-        );
-      }
-    } catch (e, stack) {
-      _logError('saveConfig', e, stack);
-      rethrow;
+    final response = isNew
+        ? await _client
+              .post(url, headers: _getHeaders(), body: body)
+              .timeout(_requestTimeout)
+        : await _client
+              .put(url, headers: _getHeaders(), body: body)
+              .timeout(_requestTimeout);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      AppLogger.info('Save successful. ID: ${config.id ?? "NEW"}');
+      return RoboClawConfig.fromJson(jsonDecode(response.body));
     }
+    throw ApiException(
+      '설정 저장 실패',
+      statusCode: response.statusCode,
+      body: response.body,
+    );
   }
 
   @override
   Future<void> deleteConfig(int id) async {
     final url = Uri.parse('$_basePath/configs/$id');
     AppLogger.info('DELETE: $url');
-    try {
-      final response = await _client.delete(url, headers: _getHeaders());
-      if (response.statusCode != 200) {
-        throw ApiException(
-          '설정 삭제 실패',
-          statusCode: response.statusCode,
-          body: response.body,
-        );
-      }
-      AppLogger.info('Deleted config ID: $id');
-    } catch (e, stack) {
-      _logError('deleteConfig', e, stack);
-      rethrow;
+    final response = await _client
+        .delete(url, headers: _getHeaders())
+        .timeout(_requestTimeout);
+    if (response.statusCode != 200) {
+      throw ApiException(
+        '설정 삭제 실패',
+        statusCode: response.statusCode,
+        body: response.body,
+      );
     }
+    AppLogger.info('Deleted config ID: $id');
   }
 
   @override
   Future<void> activateConfig(int id) async {
     final url = Uri.parse('$_basePath/configs/$id/activate');
     AppLogger.info('POST (activate): $url');
-    try {
-      final response = await _client.post(url, headers: _getHeaders());
-      if (response.statusCode != 200) {
-        throw ApiException(
-          '설정 활성화 실패',
-          statusCode: response.statusCode,
-          body: response.body,
-        );
-      }
-      AppLogger.info('Activated config ID: $id');
-    } catch (e, stack) {
-      _logError('activateConfig', e, stack);
-      rethrow;
+    final response = await _client
+        .post(url, headers: _getHeaders())
+        .timeout(_requestTimeout);
+    if (response.statusCode != 200) {
+      throw ApiException(
+        '설정 활성화 실패',
+        statusCode: response.statusCode,
+        body: response.body,
+      );
     }
+    AppLogger.info('Activated config ID: $id');
   }
 
   @override
   Future<String> fetchConfigFile(int id, String filename) async {
     final url = Uri.parse('$_basePath/configs/$id/files/$filename');
     AppLogger.info('GET (file): $url');
-    try {
-      final response = await _client.get(url, headers: _getHeaders());
-      if (response.statusCode == 200) {
-        return response.body;
-      } else {
-        throw ApiException(
-          '설정 파일 조회 실패',
-          statusCode: response.statusCode,
-          body: response.body,
-        );
-      }
-    } catch (e, stack) {
-      _logError('fetchConfigFile', e, stack);
-      rethrow;
+    final response = await _client
+        .get(url, headers: _getHeaders())
+        .timeout(_requestTimeout);
+    if (response.statusCode == 200) {
+      return response.body;
     }
+    throw ApiException(
+      '설정 파일 조회 실패',
+      statusCode: response.statusCode,
+      body: response.body,
+    );
   }
 
   @override
   Future<RoboClawConfig> cloneConfig(int id) async {
     final url = Uri.parse('$_basePath/configs/$id/clone');
     AppLogger.info('POST (clone): $url');
-    try {
-      final response = await _client.post(url, headers: _getHeaders());
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        final cloned = RoboClawConfig.fromJson(jsonDecode(response.body));
-        AppLogger.info('Cloned config ID: $id -> ${cloned.id}');
-        return cloned;
-      } else {
-        throw ApiException(
-          '설정 복제 실패',
-          statusCode: response.statusCode,
-          body: response.body,
-        );
-      }
-    } catch (e, stack) {
-      _logError('cloneConfig', e, stack);
-      rethrow;
+    final response = await _client
+        .post(url, headers: _getHeaders())
+        .timeout(_requestTimeout);
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      final cloned = RoboClawConfig.fromJson(jsonDecode(response.body));
+      AppLogger.info('Cloned config ID: $id -> ${cloned.id}');
+      return cloned;
     }
+    throw ApiException(
+      '설정 복제 실패',
+      statusCode: response.statusCode,
+      body: response.body,
+    );
   }
 
   @override
@@ -220,25 +201,21 @@ class HttpAdminApi implements AdminApi {
       '$_basePath/mcp/catalog',
     ).replace(queryParameters: queryParams.isEmpty ? null : queryParams);
     AppLogger.info('GET: $uri');
-    try {
-      final response = await _client.get(uri, headers: _getHeaders());
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body);
-        final List<dynamic> servers = data['servers'] as List<dynamic>? ?? [];
-        return servers
-            .map((e) => McpCatalogEntry.fromJson(e as Map<String, dynamic>))
-            .toList();
-      } else {
-        throw ApiException(
-          'MCP 카탈로그 조회 실패',
-          statusCode: response.statusCode,
-          body: response.body,
-        );
-      }
-    } catch (e, stack) {
-      _logError('fetchMcpCatalog', e, stack);
-      rethrow;
+    final response = await _client
+        .get(uri, headers: _getHeaders())
+        .timeout(_requestTimeout);
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      final List<dynamic> servers = data['servers'] as List<dynamic>? ?? [];
+      return servers
+          .map((e) => McpCatalogEntry.fromJson(e as Map<String, dynamic>))
+          .toList();
     }
+    throw ApiException(
+      'MCP 카탈로그 조회 실패',
+      statusCode: response.statusCode,
+      body: response.body,
+    );
   }
 
   @override
@@ -257,22 +234,18 @@ class HttpAdminApi implements AdminApi {
       '$_basePath/scenarios',
     ).replace(queryParameters: queryParams);
     AppLogger.info('GET: $uri');
-    try {
-      final response = await _client.get(uri, headers: _getHeaders());
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) => TestScenario.fromJson(json)).toList();
-      } else {
-        throw ApiException(
-          '테스트 시나리오 목록 조회 실패',
-          statusCode: response.statusCode,
-          body: response.body,
-        );
-      }
-    } catch (e, stack) {
-      _logError('fetchScenarios', e, stack);
-      rethrow;
+    final response = await _client
+        .get(uri, headers: _getHeaders())
+        .timeout(_requestTimeout);
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => TestScenario.fromJson(json)).toList();
     }
+    throw ApiException(
+      '테스트 시나리오 목록 조회 실패',
+      statusCode: response.statusCode,
+      body: response.body,
+    );
   }
 
   @override
@@ -282,87 +255,75 @@ class HttpAdminApi implements AdminApi {
         : Uri.parse('$_basePath/scenarios/${scenario.id}');
     final body = jsonEncode(scenario.toJson());
     AppLogger.info('${isNew ? "POST" : "PUT"}: $url');
-    try {
-      final response = isNew
-          ? await _client.post(url, headers: _getHeaders(), body: body)
-          : await _client.put(url, headers: _getHeaders(), body: body);
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        AppLogger.info('Save successful. ID: ${scenario.id ?? "NEW"}');
-        return TestScenario.fromJson(jsonDecode(response.body));
-      } else {
-        throw ApiException(
-          '테스트 시나리오 저장 실패',
-          statusCode: response.statusCode,
-          body: response.body,
-        );
-      }
-    } catch (e, stack) {
-      _logError('saveScenario', e, stack);
-      rethrow;
+    final response = isNew
+        ? await _client
+              .post(url, headers: _getHeaders(), body: body)
+              .timeout(_requestTimeout)
+        : await _client
+              .put(url, headers: _getHeaders(), body: body)
+              .timeout(_requestTimeout);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      AppLogger.info('Save successful. ID: ${scenario.id ?? "NEW"}');
+      return TestScenario.fromJson(jsonDecode(response.body));
     }
+    throw ApiException(
+      '테스트 시나리오 저장 실패',
+      statusCode: response.statusCode,
+      body: response.body,
+    );
   }
 
   @override
   Future<void> deleteScenario(int id) async {
     final url = Uri.parse('$_basePath/scenarios/$id');
     AppLogger.info('DELETE: $url');
-    try {
-      final response = await _client.delete(url, headers: _getHeaders());
-      if (response.statusCode != 200) {
-        throw ApiException(
-          '테스트 시나리오 삭제 실패',
-          statusCode: response.statusCode,
-          body: response.body,
-        );
-      }
-      AppLogger.info('Deleted scenario ID: $id');
-    } catch (e, stack) {
-      _logError('deleteScenario', e, stack);
-      rethrow;
+    final response = await _client
+        .delete(url, headers: _getHeaders())
+        .timeout(_requestTimeout);
+    if (response.statusCode != 200) {
+      throw ApiException(
+        '테스트 시나리오 삭제 실패',
+        statusCode: response.statusCode,
+        body: response.body,
+      );
     }
+    AppLogger.info('Deleted scenario ID: $id');
   }
 
   @override
   Future<void> activateScenario(int id) async {
     final url = Uri.parse('$_basePath/scenarios/$id/activate');
     AppLogger.info('POST (activate): $url');
-    try {
-      final response = await _client.post(url, headers: _getHeaders());
-      if (response.statusCode != 200) {
-        throw ApiException(
-          '테스트 시나리오 활성화 실패',
-          statusCode: response.statusCode,
-          body: response.body,
-        );
-      }
-      AppLogger.info('Activated scenario ID: $id');
-    } catch (e, stack) {
-      _logError('activateScenario', e, stack);
-      rethrow;
+    final response = await _client
+        .post(url, headers: _getHeaders())
+        .timeout(_requestTimeout);
+    if (response.statusCode != 200) {
+      throw ApiException(
+        '테스트 시나리오 활성화 실패',
+        statusCode: response.statusCode,
+        body: response.body,
+      );
     }
+    AppLogger.info('Activated scenario ID: $id');
   }
 
   @override
   Future<TestScenario> cloneScenario(int id) async {
     final url = Uri.parse('$_basePath/scenarios/$id/clone');
     AppLogger.info('POST (clone): $url');
-    try {
-      final response = await _client.post(url, headers: _getHeaders());
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        final cloned = TestScenario.fromJson(jsonDecode(response.body));
-        AppLogger.info('Cloned scenario ID: $id -> ${cloned.id}');
-        return cloned;
-      } else {
-        throw ApiException(
-          '테스트 시나리오 복제 실패',
-          statusCode: response.statusCode,
-          body: response.body,
-        );
-      }
-    } catch (e, stack) {
-      _logError('cloneScenario', e, stack);
-      rethrow;
+    final response = await _client
+        .post(url, headers: _getHeaders())
+        .timeout(_requestTimeout);
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      final cloned = TestScenario.fromJson(jsonDecode(response.body));
+      AppLogger.info('Cloned scenario ID: $id -> ${cloned.id}');
+      return cloned;
     }
+    throw ApiException(
+      '테스트 시나리오 복제 실패',
+      statusCode: response.statusCode,
+      body: response.body,
+    );
   }
 
   @override
@@ -378,25 +339,17 @@ class HttpAdminApi implements AdminApi {
       'include_scenarios': includeScenarios,
     });
     AppLogger.info('POST (export): $url');
-    try {
-      final response = await _client.post(
-        url,
-        headers: _getHeaders(),
-        body: body,
-      );
-      if (response.statusCode == 200) {
-        return response.body;
-      } else {
-        throw ApiException(
-          '백업 내보내기 실패',
-          statusCode: response.statusCode,
-          body: response.body,
-        );
-      }
-    } catch (e, stack) {
-      _logError('exportBackup', e, stack);
-      rethrow;
+    final response = await _client
+        .post(url, headers: _getHeaders(), body: body)
+        .timeout(_requestTimeout);
+    if (response.statusCode == 200) {
+      return response.body;
     }
+    throw ApiException(
+      '백업 내보내기 실패',
+      statusCode: response.statusCode,
+      body: response.body,
+    );
   }
 
   @override
@@ -406,25 +359,17 @@ class HttpAdminApi implements AdminApi {
     final url = Uri.parse('$_basePath/transfer/import/validate');
     final body = jsonEncode({'document': document});
     AppLogger.info('POST (validate): $url');
-    try {
-      final response = await _client.post(
-        url,
-        headers: _getHeaders(),
-        body: body,
-      );
-      if (response.statusCode == 200) {
-        return Map<String, dynamic>.from(jsonDecode(response.body));
-      } else {
-        throw ApiException(
-          '백업 검증 실패',
-          statusCode: response.statusCode,
-          body: response.body,
-        );
-      }
-    } catch (e, stack) {
-      _logError('validateImport', e, stack);
-      rethrow;
+    final response = await _client
+        .post(url, headers: _getHeaders(), body: body)
+        .timeout(_requestTimeout);
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
     }
+    throw ApiException(
+      '백업 검증 실패',
+      statusCode: response.statusCode,
+      body: response.body,
+    );
   }
 
   @override
@@ -442,25 +387,17 @@ class HttpAdminApi implements AdminApi {
       },
     });
     AppLogger.info('POST (import): $url');
-    try {
-      final response = await _client.post(
-        url,
-        headers: _getHeaders(),
-        body: body,
-      );
-      if (response.statusCode == 200) {
-        return Map<String, dynamic>.from(jsonDecode(response.body));
-      } else {
-        throw ApiException(
-          '백업 가져오기 실패',
-          statusCode: response.statusCode,
-          body: response.body,
-        );
-      }
-    } catch (e, stack) {
-      _logError('importBackup', e, stack);
-      rethrow;
+    final response = await _client
+        .post(url, headers: _getHeaders(), body: body)
+        .timeout(_requestTimeout);
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
     }
+    throw ApiException(
+      '백업 가져오기 실패',
+      statusCode: response.statusCode,
+      body: response.body,
+    );
   }
 }
 

@@ -1,6 +1,6 @@
 // frontend/test/config_sections2_test.dart
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/widgets/config_camera_section.dart';
 import 'package:frontend/widgets/config_dashboard_section.dart';
@@ -9,8 +9,19 @@ import 'package:frontend/widgets/config_mcp_section.dart';
 import 'package:frontend/widgets/config_messenger_section.dart';
 import 'package:frontend/widgets/config_path_section.dart';
 import 'package:frontend/widgets/config_task_queue_section.dart';
+import 'package:http/http.dart' as http;
+
+import 'support/app_dependencies.dart';
 
 void main() {
+  late TestDependencies deps;
+
+  setUp(() {
+    deps = buildTestDependencies(
+      respond: (request) async => http.Response('[]', 200),
+    );
+  });
+
   Future<void> pump(WidgetTester tester, Widget child) async {
     tester.view.physicalSize = const Size(1200, 900);
     tester.view.devicePixelRatio = 1.0;
@@ -27,6 +38,7 @@ void main() {
     await pump(
       tester,
       ConfigMcpSection(
+        api: deps.dependencies.api,
         isEditing: true,
         enableMcp: true,
         onEnableMcpChanged: (_) {},

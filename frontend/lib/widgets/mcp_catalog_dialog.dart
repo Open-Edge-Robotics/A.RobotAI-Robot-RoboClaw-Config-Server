@@ -1,26 +1,31 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
+import '../api/admin_api.dart';
 import '../models/mcp_catalog_entry.dart';
-import '../services/api_service.dart';
 import '../utils/localization.dart';
 
 /// MCP 서버를 검색해 목록으로 보여주고, 선택하면 해당 항목을 반환하는 다이얼로그.
 ///
 /// 사용법:
 /// ```dart
-/// final entry = await showMcpCatalogDialog(context);
+/// final entry = await showMcpCatalogDialog(context, api: api);
 /// if (entry != null) { /* entry.toServerConfig() 로 추가 */ }
 /// ```
-Future<McpCatalogEntry?> showMcpCatalogDialog(BuildContext context) {
+Future<McpCatalogEntry?> showMcpCatalogDialog(
+  BuildContext context, {
+  required AdminApi api,
+}) {
   return showDialog<McpCatalogEntry>(
     context: context,
-    builder: (_) => const _McpCatalogDialog(),
+    builder: (_) => _McpCatalogDialog(api: api),
   );
 }
 
 class _McpCatalogDialog extends StatefulWidget {
-  const _McpCatalogDialog();
+  final AdminApi api;
+
+  const _McpCatalogDialog({required this.api});
 
   @override
   State<_McpCatalogDialog> createState() => _McpCatalogDialogState();
@@ -59,7 +64,7 @@ class _McpCatalogDialogState extends State<_McpCatalogDialog> {
       _error = null;
     });
     try {
-      final results = await ApiService.fetchMcpCatalog(query: _searchCtrl.text);
+      final results = await widget.api.fetchMcpCatalog(query: _searchCtrl.text);
       if (!mounted) return;
       setState(() {
         _entries = results;

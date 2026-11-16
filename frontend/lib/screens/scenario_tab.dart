@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
-import '../api/http_admin_api.dart';
+import 'package:material_ui/material_ui.dart';
+import '../api/admin_api.dart';
+import '../api/api_exception.dart';
 import '../features/scenarios/scenario_controller.dart';
 import '../models/scenario_model.dart';
 import '../services/logger.dart';
@@ -9,9 +10,10 @@ import '../widgets/scenario_detail_panel.dart';
 import '../widgets/scenario_list_panel.dart';
 
 class ScenarioTab extends StatefulWidget {
+  final AdminApi api;
   final VoidCallback? onUnauthorized;
 
-  const ScenarioTab({super.key, this.onUnauthorized});
+  const ScenarioTab({super.key, required this.api, this.onUnauthorized});
 
   @override
   State<ScenarioTab> createState() => ScenarioTabState();
@@ -19,10 +21,12 @@ class ScenarioTab extends StatefulWidget {
 
 class ScenarioTabState extends State<ScenarioTab> {
   // --- Scenarios State ---
-  final _scenarioController = ScenarioController(api: HttpAdminApi.instance);
+  late final ScenarioController _scenarioController;
 
-  List<TestScenario> _scenarios = [];
-  bool _isLoadingScenarios = true;
+  // 목록/로딩 상태의 single source 는 Controller 이다.
+  List<TestScenario> get _scenarios => _scenarioController.scenarios;
+  bool get _isLoadingScenarios => _scenarioController.loading;
+
   String _searchScenarioRobot = '';
   String _searchScenarioEnv = '';
 
@@ -45,11 +49,13 @@ class ScenarioTabState extends State<ScenarioTab> {
   @override
   void initState() {
     super.initState();
+    _scenarioController = ScenarioController(api: widget.api);
     _loadScenarios();
   }
 
   @override
   void dispose() {
+    _scenarioController.dispose();
     _scenarioNameCtrl.dispose();
     _scenarioRobotCtrl.dispose();
     _scenarioEnvCtrl.dispose();
@@ -70,10 +76,6 @@ class ScenarioTabState extends State<ScenarioTab> {
       environment: _searchScenarioEnv,
     );
     if (!mounted) return;
-    setState(() {
-      _scenarios = _scenarioController.scenarios;
-      _isLoadingScenarios = _scenarioController.loading;
-    });
     if (_scenarioController.unauthorized) {
       _showError('인증 오류: 올바르지 않거나 만료된 관리자 토큰입니다.'.tr);
       if (widget.onUnauthorized != null) widget.onUnauthorized!();
@@ -85,9 +87,9 @@ class ScenarioTabState extends State<ScenarioTab> {
   Future<void> _activateScenario(int id) async {
     try {
       await _scenarioController.activate(id);
+      if (!mounted) return;
       _showSuccess('시나리오가 성공적으로 활성화되었습니다.'.tr);
       setState(() {
-        _scenarios = _scenarioController.scenarios;
         if (_selectedScenario?.id == id) {
           _selectedScenario = _scenarios.firstWhere((s) => s.id == id);
         }
@@ -102,9 +104,9 @@ class ScenarioTabState extends State<ScenarioTab> {
   Future<void> _cloneScenario(int id) async {
     try {
       final cloned = await _scenarioController.clone(id);
+      if (!mounted) return;
       _showSuccess('${"시나리오 복제 완료: ".tr}${cloned.name}');
       setState(() {
-        _scenarios = _scenarioController.scenarios;
         _selectedScenario = cloned;
         _isEditingScenario = false;
         _isCreatingNewScenario = false;
@@ -143,12 +145,13 @@ class ScenarioTabState extends State<ScenarioTab> {
     );
 
     if (confirm != true) return;
+    if (!mounted) return;
 
     try {
       await _scenarioController.delete(id);
+      if (!mounted) return;
       _showSuccess('시나리오 삭제 완료'.tr);
       setState(() {
-        _scenarios = _scenarioController.scenarios;
         if (_selectedScenario?.id == id) {
           _selectedScenario = null;
           _isEditingScenario = false;
@@ -197,9 +200,9 @@ class ScenarioTabState extends State<ScenarioTab> {
         scenario,
         _isCreatingNewScenario,
       );
+      if (!mounted) return;
       _showSuccess('시나리오 저장'.tr);
       setState(() {
-        _scenarios = _scenarioController.scenarios;
         _selectedScenario = saved;
         _isEditingScenario = false;
         _isCreatingNewScenario = false;
@@ -334,12 +337,14 @@ class ScenarioTabState extends State<ScenarioTab> {
   // --- Helper Methods ---
 
   void _showError(String msg) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg), backgroundColor: Colors.redAccent),
     );
   }
 
   void _showSuccess(String msg) {
+    if (!mounted) return;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.green));
@@ -349,12 +354,17 @@ class ScenarioTabState extends State<ScenarioTab> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final isDesktop = width > 900;
+    return ListenableBuilder(
+      listenable: _scenarioController,
+      builder: (context, _) {
+        final width = MediaQuery.of(context).size.width;
+        final isDesktop = width > 900;
 
-    return isDesktop
-        ? _buildDesktopScenarioLayout()
-        : _buildMobileScenarioLayout();
+        return isDesktop
+            ? _buildDesktopScenarioLayout()
+            : _buildMobileScenarioLayout();
+      },
+    );
   }
 
   Widget _buildDesktopScenarioLayout() {

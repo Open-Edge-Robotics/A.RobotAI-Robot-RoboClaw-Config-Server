@@ -8,6 +8,7 @@ import '../../api/admin_api.dart';
 import '../../platform/file_downloader.dart';
 import '../../platform/file_picker.dart';
 import '../../services/file_picker_helper.dart';
+import '../../services/logger.dart';
 
 enum BackupStatus {
   idle,
@@ -30,11 +31,25 @@ class BackupController extends ChangeNotifier {
   Map<String, dynamic>? importResult;
   String? error;
 
+  bool _disposed = false;
+
   BackupController({
     required this.api,
     required this.picker,
     required this.downloader,
   });
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  /// dispose 이후 도착한 in-flight 응답은 상태만 갱신하고 알림은 보내지 않는다.
+  void _notifyIfActive() {
+    if (_disposed) return;
+    notifyListeners();
+  }
 
   bool get isValid => validation?['valid'] == true;
 
@@ -46,7 +61,7 @@ class BackupController extends ChangeNotifier {
   }) async {
     status = BackupStatus.importing;
     error = null;
-    notifyListeners();
+    _notifyIfActive();
     try {
       final content = await api.exportBackup(
         includeSecrets: includeSecrets,
@@ -64,11 +79,12 @@ class BackupController extends ChangeNotifier {
           : 'ai-config-backup-$ts.json';
       downloader.downloadText(content, filename);
       status = BackupStatus.success;
-    } catch (e) {
+    } catch (e, stack) {
       error = e.toString();
       status = BackupStatus.error;
+      AppLogger.error('BackupController.exportBackup', e, stack);
     }
-    notifyListeners();
+    _notifyIfActive();
   }
 
   /// 파일을 선택하고 서버 검증까지 수행한다.
@@ -77,12 +93,12 @@ class BackupController extends ChangeNotifier {
     error = null;
     document = null;
     validation = null;
-    notifyListeners();
+    _notifyIfActive();
 
     final picked = await picker.pickJson();
     if (picked == null) {
       status = BackupStatus.idle;
-      notifyListeners();
+      _notifyIfActive();
       return;
     }
 
@@ -90,22 +106,23 @@ class BackupController extends ChangeNotifier {
     if (doc == null) {
       error = 'invalid_json';
       status = BackupStatus.error;
-      notifyListeners();
+      _notifyIfActive();
       return;
     }
 
     document = doc;
     status = BackupStatus.validating;
-    notifyListeners();
+    _notifyIfActive();
 
     try {
       validation = await api.validateImport(doc);
       status = BackupStatus.ready;
-    } catch (e) {
+    } catch (e, stack) {
       error = e.toString();
       status = BackupStatus.error;
+      AppLogger.error('BackupController.pickAndValidate', e, stack);
     }
-    notifyListeners();
+    _notifyIfActive();
   }
 
   /// 검증된 문서를 가져온다.
@@ -116,7 +133,7 @@ class BackupController extends ChangeNotifier {
     if (document == null) return;
     status = BackupStatus.importing;
     error = null;
-    notifyListeners();
+    _notifyIfActive();
     try {
       importResult = await api.importBackup(
         document: document!,
@@ -124,10 +141,11 @@ class BackupController extends ChangeNotifier {
         activationPolicy: activationPolicy,
       );
       status = BackupStatus.success;
-    } catch (e) {
+    } catch (e, stack) {
       error = e.toString();
       status = BackupStatus.error;
+      AppLogger.error('BackupController.import', e, stack);
     }
-    notifyListeners();
+    _notifyIfActive();
   }
 }

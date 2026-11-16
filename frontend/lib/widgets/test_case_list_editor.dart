@@ -1,6 +1,6 @@
 // frontend/lib/widgets/test_case_list_editor.dart
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import '../models/scenario_model.dart';
 import '../utils/localization.dart';

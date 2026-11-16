@@ -2,29 +2,24 @@
 //
 // 설정 탭 Widget 테스트. HttpAdminApi 를 Fake 로 주입해 목록 렌더링을 검증한다.
 
-import 'package:flutter/material.dart';
+import 'dart:convert';
+
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
 
-import 'package:frontend/api/http_admin_api.dart';
+import 'package:frontend/features/configs/config_form_mapper.dart';
+import 'package:frontend/models/config_model.dart';
 import 'package:frontend/screens/config_tab.dart';
-import 'package:frontend/storage/token_store.dart';
 
-class FakeTokenStore implements TokenStore {
-  String? value;
-  @override
-  String? read() => value;
-  @override
-  void write(String token) => value = token;
-  @override
-  void clear() => value = null;
-}
+import 'support/app_dependencies.dart';
 
 void main() {
+  late TestDependencies deps;
+
   setUp(() {
-    HttpAdminApi.instance = HttpAdminApi(
-      client: MockClient((request) async {
+    deps = buildTestDependencies(
+      respond: (request) async {
         if (request.method == 'POST' && request.url.path.endsWith('/configs')) {
           return http.Response(
             '{"ID":10,"name":"new-cfg","robot_name":"butler","environment":"office"}',
@@ -45,8 +40,7 @@ void main() {
           );
         }
         return http.Response('[]', 200);
-      }),
-      tokenStore: FakeTokenStore(),
+      },
     );
   });
 
@@ -56,7 +50,14 @@ void main() {
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: ConfigTab())),
+      MaterialApp(
+        home: Scaffold(
+          body: ConfigTab(
+            api: deps.dependencies.api,
+            downloader: deps.dependencies.downloader,
+          ),
+        ),
+      ),
     );
     await tester.pumpAndSettle();
   }
@@ -284,4 +285,131 @@ void main() {
 
     expect(find.text('7. 카메라 / 비전 / 센서 설정'), findsOneWidget);
   });
+
+  // characterization: 프로필을 선택해 아무것도 수정하지 않고 저장해도
+  // 순수 매핑과 동일한 payload 가 전송되어야 한다. 문서화된 정규화
+  // (agent_id trim, System1 기본값, Ollama known 옵션 재직렬화) 외에는
+  // 어떤 필드도 기본값으로 덮이지 않는다.
+  testWidgets('설정을 선택해 편집 없이 저장해도 payload 가 보존된다', (tester) async {
+    final originalJson = _sentinelConfigJson();
+    deps = buildTestDependencies(
+      respond: (request) async {
+        if (request.method == 'PUT') {
+          return http.Response(jsonEncode(originalJson), 200);
+        }
+        return http.Response(jsonEncode([originalJson]), 200);
+      },
+    );
+    await pumpConfigTab(tester);
+
+    await tester.tap(find.text('roundtrip-cfg'));
+    await tester.pumpAndSettle();
+
+    // 키 오타/오배선이면 이 표본 값이 렌더링되지 않는다.
+    expect(find.text('sentinel_skills_guide_file'), findsOneWidget);
+    expect(find.text('sentinel_http_control_token'), findsOneWidget);
+    expect(find.text('sentinel_system1_api_key'), findsOneWidget);
+
+    await tester.tap(find.text('편집'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ElevatedButton, '저장'));
+    await tester.pumpAndSettle();
+
+    final put = deps.requests.lastWhere((request) => request.method == 'PUT');
+    final original = RoboClawConfig.fromJson(originalJson);
+    final expected = ConfigFormMapper.toConfig(
+      ConfigFormMapper.fromConfig(original),
+      id: original.id,
+      isActive: original.isActive,
+    );
+    expect(jsonDecode(put.body), expected.toJson());
+  });
+
+  // 유효한 설정을 렌더링하면 16개 섹션이 모두 만들어져야 한다.
+  // 섹션/필드 키 오타는 ConfigFormFields 접근자에서 ArgumentError 로 드러난다.
+  testWidgets('유효한 설정에서 16개 섹션이 모두 렌더링된다', (tester) async {
+    final originalJson = _sentinelConfigJson();
+    deps = buildTestDependencies(
+      respond: (request) async {
+        return http.Response(jsonEncode([originalJson]), 200);
+      },
+    );
+    await pumpConfigTab(tester);
+
+    await tester.tap(find.text('roundtrip-cfg'));
+    await tester.pumpAndSettle();
+
+    for (final title in _sectionTitles) {
+      expect(find.text(title), findsOneWidget, reason: title);
+    }
+  });
+}
+
+const _sectionTitles = [
+  '1. 기본 정보',
+  '2. LLM 및 클라우드 API 자격 증명',
+  '3. RAG 및 벡터 DB 설정',
+  '4. 메신저 & 통신 데몬',
+  'CLOi 정리 시연 설정',
+  '5. HTTP API 보안 설정',
+  'Dashboard 웹 노드 설정',
+  '6. 로컬 환경 경로 및 리소스 설정',
+  '7. 카메라 / 비전 / 센서 설정',
+  '8. 스킬 자가학습 설정 (RAG)',
+  '9. 에이전트 마크다운 & 한계 스펙 정의',
+  '10. MCP(Model Context Protocol) 서버 연동',
+  '11. 태스크 큐 / 복합 명령 자동 분해 설정',
+  'LangSmith 트레이싱 / 모니터링',
+  'System 1 Fast Router',
+  'Maestro FleetControl 연동',
+];
+
+/// 모든 모델 필드에 서로 다른 sentinel 값을 채우고, contract 제약(enum/min/max,
+/// JSON 문자열)을 만족하도록 조정한 설정 JSON.
+Map<String, dynamic> _sentinelConfigJson() {
+  final defaults = RoboClawConfig(
+    name: '',
+    robotName: '',
+    environment: '',
+  ).toJson();
+  final json = <String, dynamic>{};
+  for (final entry in defaults.entries) {
+    if (entry.key == 'is_active' || entry.key == 'ollama_options_json') {
+      continue;
+    }
+    json[entry.key] = switch (entry.value) {
+      bool value => !value,
+      int _ => 7,
+      double _ => 0.25,
+      String _ => 'sentinel_${entry.key}',
+      final other => other,
+    };
+  }
+  json['ID'] = 7;
+  json['name'] = 'roundtrip-cfg';
+  json['robot_name'] = 'butler';
+  json['environment'] = 'office';
+  json['is_active'] = true;
+  json['agent_id'] = '  Former0047  ';
+  json['system1_shadow_log'] = '/tmp/sentinel-shadow.jsonl';
+  json['ros_domain_id'] = 12;
+  json['http_port'] = 18080;
+  json['grpc_port'] = 15052;
+  json['grpc_target_port'] = 15051;
+  json['dashboard_port'] = 19090;
+  json['robot_port'] = 15053;
+  json['system1_timeout_ms'] = 250.0;
+  json['system1_max_options'] = 5;
+  json['llm_provider'] = 'ollama';
+  json['rag_vector_backend'] = 'qdrant';
+  json['system1_router'] = 'laya';
+  json['system1_step_routing'] = 'off';
+  json['system1_scope'] = 'navigation';
+  json['maestro_disconnect_policy'] = 'stop';
+  json['http_allowed_cidrs_json'] = '["10.0.0.0/8"]';
+  json['mcp_servers_json'] = '[]';
+  json['system1_conf_thresholds_json'] = '{"skill":0.8}';
+  json['ollama_options_json'] =
+      '{"num_ctx":2048,"temperature":0.2,"think":"low","stop":["User:"]}';
+  return json;
 }

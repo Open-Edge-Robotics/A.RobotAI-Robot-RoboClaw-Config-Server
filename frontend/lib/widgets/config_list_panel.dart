@@ -1,6 +1,6 @@
 // frontend/lib/widgets/config_list_panel.dart
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../models/config_model.dart';
 import '../utils/localization.dart';
 import 'config_card.dart';

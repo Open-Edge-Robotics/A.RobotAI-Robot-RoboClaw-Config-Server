@@ -1,6 +1,6 @@
 // frontend/test/scenario_detail_panel_test.dart
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/models/scenario_model.dart';
 import 'package:frontend/widgets/scenario_detail_panel.dart';

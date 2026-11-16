@@ -1,5 +1,6 @@
 // frontend/test/config_controller_test.dart
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/api/admin_api.dart';
 import 'package:frontend/api/http_admin_api.dart';
@@ -132,6 +133,26 @@ void main() {
       api.fetchError = Exception('down');
       await controller.load();
       expect(controller.error, isNotNull);
+    });
+
+    test('네트워크 오류는 컨트롤러 경계에서 1회만 기록한다', () async {
+      final logs = <String>[];
+      final original = debugPrint;
+      debugPrint = (String? message, {int? wrapWidth}) {
+        if (message != null) logs.add(message);
+      };
+      addTearDown(() => debugPrint = original);
+
+      final before = controller.configs;
+      api.fetchError = Exception('down');
+      await controller.load();
+
+      expect(controller.error, isNotNull);
+      expect(controller.loading, isFalse);
+      expect(controller.configs, same(before));
+      final errorLines = logs.where((line) => line.contains('[ERROR]'));
+      expect(errorLines, hasLength(1), reason: 'API 계층 로그 없이 컨트롤러에서 한 번만 남긴다');
+      expect(errorLines.single, contains('ConfigController.load'));
     });
   });
 

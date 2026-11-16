@@ -4,7 +4,7 @@
 // ThemeModeStore 를 주입받아 새로고침(앱 재시작) 후에도 사용자의 테마 선택을 복원한다.
 // 기본 테마는 라이트 모드다.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../../storage/theme_mode_store.dart';
 
 class ThemeController extends ChangeNotifier {

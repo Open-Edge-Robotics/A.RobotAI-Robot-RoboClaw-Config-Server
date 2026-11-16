@@ -14,7 +14,7 @@ import '../models/config_model.dart';
 import '../models/mcp_catalog_entry.dart';
 import '../models/scenario_model.dart';
 
-export '../api/http_admin_api.dart' show ApiException;
+export '../api/api_exception.dart' show ApiException;
 
 class ApiService {
   static HttpAdminApi get _api => HttpAdminApi.instance;

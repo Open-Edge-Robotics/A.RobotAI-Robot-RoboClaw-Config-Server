@@ -1,10 +1,21 @@
 // frontend/test/mcp_servers_input_form_test.dart
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 import 'package:frontend/widgets/mcp_servers_input_form.dart';
 
+import 'support/app_dependencies.dart';
+
 void main() {
+  late TestDependencies deps;
+
+  setUp(() {
+    deps = buildTestDependencies(
+      respond: (request) async => http.Response('[]', 200),
+    );
+  });
+
   Future<void> pumpForm(
     WidgetTester tester,
     TextEditingController controller,
@@ -16,7 +27,11 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: McpServersInputForm(controller: controller, isEditing: true),
+          body: McpServersInputForm(
+            api: deps.dependencies.api,
+            controller: controller,
+            isEditing: true,
+          ),
         ),
       ),
     );

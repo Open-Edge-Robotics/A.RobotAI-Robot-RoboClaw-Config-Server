@@ -1,14 +1,17 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+import '../api/admin_api.dart';
 import '../models/mcp_server_config.dart';
 import '../utils/localization.dart';
 import 'mcp_catalog_dialog.dart';
 
 class McpServersInputForm extends StatefulWidget {
+  final AdminApi api;
   final TextEditingController controller;
   final bool isEditing;
 
   const McpServersInputForm({
     super.key,
+    required this.api,
     required this.controller,
     required this.isEditing,
   });
@@ -91,7 +94,7 @@ class _McpServersInputFormState extends State<McpServersInputForm> {
 
   // 카탈로그에서 MCP 서버를 검색·선택해 목록에 추가한다.
   Future<void> _browseCatalog() async {
-    final entry = await showMcpCatalogDialog(context);
+    final entry = await showMcpCatalogDialog(context, api: widget.api);
     if (entry == null || !mounted) return;
     setState(() {
       _servers.add(entry.toServerConfig(nameOverride: _uniqueName(entry.name)));

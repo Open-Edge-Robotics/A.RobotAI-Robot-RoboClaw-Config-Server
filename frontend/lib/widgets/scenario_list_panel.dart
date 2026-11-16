@@ -1,6 +1,6 @@
 // frontend/lib/widgets/scenario_list_panel.dart
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../models/scenario_model.dart';
 import '../utils/localization.dart';
 import 'scenario_card.dart';

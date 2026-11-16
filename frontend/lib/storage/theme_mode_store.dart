@@ -3,7 +3,7 @@
 // 사용자가 선택한 테마(라이트/다크) 저장소 추상화.
 // 브라우저 LocalStorage(WebThemeModeStore)와 테스트용 Fake 를 교체 주입할 수 있게 한다.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// 테마 선택 값을 문자열로 저장/복원하는 저장소.
 abstract interface class ThemeModeStore {

@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
+import '../api/admin_api.dart';
 import '../utils/localization.dart';
 import 'config_section_header.dart';
 import 'mcp_servers_input_form.dart';
 
 class ConfigMcpSection extends StatelessWidget {
+  final AdminApi api;
   final bool isEditing;
   final bool enableMcp;
   final ValueChanged<bool> onEnableMcpChanged;
@@ -12,6 +14,7 @@ class ConfigMcpSection extends StatelessWidget {
 
   const ConfigMcpSection({
     super.key,
+    required this.api,
     required this.isEditing,
     required this.enableMcp,
     required this.onEnableMcpChanged,
@@ -38,6 +41,7 @@ class ConfigMcpSection extends StatelessWidget {
         const SizedBox(height: 8),
         if (enableMcp) ...[
           McpServersInputForm(
+            api: api,
             controller: mcpServersJsonCtrl,
             isEditing: isEditing,
           ),

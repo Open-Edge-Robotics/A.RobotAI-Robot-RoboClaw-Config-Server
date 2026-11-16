@@ -3,7 +3,7 @@
 // ThemeController 가 ThemeModeStore 를 통해 사용자 테마 선택을 기억하는지 검증한다.
 // 브라우저(LocalStorage) 대신 FakeThemeModeStore 를 주입한다.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:frontend/features/theme/theme_controller.dart';

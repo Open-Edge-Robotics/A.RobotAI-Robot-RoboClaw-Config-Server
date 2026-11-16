@@ -2,29 +2,20 @@
 //
 // 시나리오 탭 Widget 테스트. HttpAdminApi 를 Fake 로 주입해 목록 렌더링을 검증한다.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
 
-import 'package:frontend/api/http_admin_api.dart';
 import 'package:frontend/screens/scenario_tab.dart';
-import 'package:frontend/storage/token_store.dart';
 
-class FakeTokenStore implements TokenStore {
-  String? value;
-  @override
-  String? read() => value;
-  @override
-  void write(String token) => value = token;
-  @override
-  void clear() => value = null;
-}
+import 'support/app_dependencies.dart';
 
 void main() {
+  late TestDependencies deps;
+
   setUp(() {
-    HttpAdminApi.instance = HttpAdminApi(
-      client: MockClient((request) async {
+    deps = buildTestDependencies(
+      respond: (request) async {
         if (request.method == 'POST' &&
             request.url.path.endsWith('/scenarios')) {
           return http.Response(
@@ -46,8 +37,7 @@ void main() {
           );
         }
         return http.Response('[]', 200);
-      }),
-      tokenStore: FakeTokenStore(),
+      },
     );
   });
 
@@ -57,7 +47,9 @@ void main() {
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: ScenarioTab())),
+      MaterialApp(
+        home: Scaffold(body: ScenarioTab(api: deps.dependencies.api)),
+      ),
     );
     await tester.pumpAndSettle();
   }

@@ -2,17 +2,27 @@
 //
 // 앱 루트 위젯. 라이트/다크 테마 정의와 라우팅 진입점을 담당한다.
 // 브라우저(LocalStorage) 구현은 main.dart 에서 주입하므로, 이 파일은
-// ThemeController 만 주입받아 VM 테스트에서도 그대로 사용할 수 있다.
+// ThemeController/LanguageController 와 AppDependencies 만 주입받아
+// VM 테스트에서도 그대로 사용할 수 있다.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+import 'app_dependencies.dart';
+import 'features/language/language_controller.dart';
 import 'features/theme/theme_controller.dart';
 import 'screens/dashboard_screen.dart';
 import 'utils/localization.dart';
 
 class App extends StatelessWidget {
   final ThemeController themeController;
+  final LanguageController languageController;
+  final AppDependencies dependencies;
 
-  const App({super.key, required this.themeController});
+  const App({
+    super.key,
+    required this.themeController,
+    required this.languageController,
+    required this.dependencies,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -128,9 +138,9 @@ class App extends StatelessWidget {
     return ListenableBuilder(
       listenable: themeController,
       builder: (context, _) {
-        return ValueListenableBuilder<String>(
-          valueListenable: LanguageManager.languageCodeNotifier,
-          builder: (context, currentLang, _) {
+        return ListenableBuilder(
+          listenable: languageController,
+          builder: (context, _) {
             return MaterialApp(
               title: 'AI Robot Config Dashboard'.tr,
               debugShowCheckedModeBanner: false,
@@ -149,6 +159,8 @@ class App extends StatelessWidget {
               home: DashboardScreen(
                 themeMode: themeController.mode,
                 onThemeModeChanged: themeController.toggle,
+                languageController: languageController,
+                dependencies: dependencies,
               ),
             );
           },

@@ -1,28 +1,19 @@
 // frontend/test/mcp_catalog_dialog_test.dart
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
 
-import 'package:frontend/api/http_admin_api.dart';
-import 'package:frontend/storage/token_store.dart';
 import 'package:frontend/widgets/mcp_catalog_dialog.dart';
 
-class FakeTokenStore implements TokenStore {
-  String? value;
-  @override
-  String? read() => value;
-  @override
-  void write(String token) => value = token;
-  @override
-  void clear() => value = null;
-}
+import 'support/app_dependencies.dart';
 
 void main() {
+  late TestDependencies deps;
+
   setUp(() {
-    HttpAdminApi.instance = HttpAdminApi(
-      client: MockClient((request) async {
+    deps = buildTestDependencies(
+      respond: (request) async {
         if (request.url.path.endsWith('/mcp/catalog')) {
           return http.Response(
             '{"servers":[{"name":"fs","display_name":"Filesystem","transport":"stdio","command":"npx"}]}',
@@ -30,8 +21,7 @@ void main() {
           );
         }
         return http.Response('[]', 200);
-      }),
-      tokenStore: FakeTokenStore(),
+      },
     );
   });
 
@@ -45,7 +35,8 @@ void main() {
         home: Scaffold(
           body: Builder(
             builder: (context) => ElevatedButton(
-              onPressed: () => showMcpCatalogDialog(context),
+              onPressed: () =>
+                  showMcpCatalogDialog(context, api: deps.dependencies.api),
               child: const Text('open'),
             ),
           ),
@@ -70,7 +61,8 @@ void main() {
         home: Scaffold(
           body: Builder(
             builder: (context) => ElevatedButton(
-              onPressed: () => showMcpCatalogDialog(context),
+              onPressed: () =>
+                  showMcpCatalogDialog(context, api: deps.dependencies.api),
               child: const Text('open'),
             ),
           ),

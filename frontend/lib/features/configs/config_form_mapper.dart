@@ -1,40 +1,149 @@
 // frontend/lib/features/configs/config_form_mapper.dart
 //
-// 설정 폼 ↔ 모델 변환 로직. 특히 Ollama 옵션 JSON 의 생성/파싱을 담당한다.
-// 순수 로직이므로 Widget 없이 단위 테스트할 수 있다.
+// 설정 모델 ↔ 폼 raw 입력(ConfigDraft) 순수 변환 로직.
+// 특히 Ollama 옵션 JSON 의 생성/파싱을 담당한다.
+// Flutter Widget 에 의존하지 않으므로 단위 테스트할 수 있다.
 
 import 'dart:convert';
 
-/// Ollama 옵션 폼 값 (TextEditingController 텍스트 형태).
-class OllamaFormValues {
-  final String numCtx;
-  final String temperature;
-  final String repeatPenalty;
-  final String repeatLastN;
-  final String seed;
-  final String numPredict;
-  final String topK;
-  final String topP;
-  final String minP;
-  final String think;
-  final Map<String, dynamic> extraOptions;
+import '../../models/config_model.dart';
+import 'config_draft.dart';
+import 'config_form_values.dart';
 
-  const OllamaFormValues({
-    required this.numCtx,
-    required this.temperature,
-    required this.repeatPenalty,
-    required this.repeatLastN,
-    required this.seed,
-    required this.numPredict,
-    required this.topK,
-    required this.topP,
-    required this.minP,
-    required this.think,
-    this.extraOptions = const {},
-  });
-}
+// 기존 import 경로(`config_form_mapper.dart`)로 OllamaFormValues 를 계속
+// 사용할 수 있도록 중립 값 타입을 다시 내보낸다.
+export 'config_form_values.dart' show OllamaFormValues;
 
 class ConfigFormMapper {
+  /// 기존 `_populateForm`/`_saveConfig` 규칙: 이 두 필드만 저장 시 trim 한다.
+  static const _trimmedTextKeys = {
+    'agent_id',
+    'cloid_cleanup_demo_motion_ids_json',
+  };
+
+  static final Map<String, dynamic> _modelDefaults = RoboClawConfig(
+    name: '',
+    robotName: '',
+    environment: '',
+  ).toJson();
+
+  /// 모델 인스턴스를 폼 raw 입력 스냅샷으로 바꾼다.
+  ///
+  /// 값 나열 없이 [RoboClawConfig.toJson] 을 순회하므로 모델 필드가 추가되어도
+  /// 폼 스냅샷에서 조용히 빠지지 않는다. System1 기본값 정규화는 기존
+  /// `_populateForm` 동작을 그대로 옮긴 것이다.
+  static ConfigDraft fromConfig(RoboClawConfig config) {
+    final json = config.toJson();
+    final texts = <String, String>{};
+    final flags = <String, bool>{};
+
+    for (final entry in json.entries) {
+      final key = entry.key;
+      if (ConfigDraft.reservedKeys.contains(key) ||
+          key == ConfigDraft.ollamaOptionsKey) {
+        continue;
+      }
+      final value = entry.value;
+      if (value is bool) {
+        flags[key] = value;
+      } else {
+        texts[key] = value.toString();
+      }
+    }
+
+    texts['system1_router'] = config.system1Router.isEmpty
+        ? 'rule'
+        : config.system1Router;
+    texts['system1_step_routing'] = config.system1StepRouting.isEmpty
+        ? 'shadow'
+        : config.system1StepRouting;
+    texts['system1_scope'] = config.system1Scope.isEmpty
+        ? 'readonly'
+        : config.system1Scope;
+    texts['system1_provider'] = config.system1Provider.isEmpty
+        ? 'laya'
+        : config.system1Provider;
+    texts['system1_timeout_ms'] = config.system1TimeoutMs <= 0
+        ? '300'
+        : config.system1TimeoutMs.toString();
+    texts['system1_conf_thresholds_json'] =
+        config.system1ConfThresholdsJson.isEmpty
+        ? RoboClawConfig.defaultSystem1ConfThresholdsJson
+        : config.system1ConfThresholdsJson;
+    texts['system1_max_options'] = config.system1MaxOptions < 2
+        ? '12'
+        : config.system1MaxOptions.toString();
+
+    return ConfigDraft(
+      texts: texts,
+      flags: flags,
+      options: parseOllamaOptions(config.ollamaOptionsJson),
+    );
+  }
+
+  /// 폼 raw 입력 스냅샷을 저장 가능한 모델로 되돌린다.
+  ///
+  /// `id`/`isActive` 는 서버 상태이므로 폼 입력이 아니라 명시 인자로만 정한다.
+  /// 숫자 텍스트 파싱 실패 fallback 은 모델 기본값을 사용한다(기존
+  /// `_saveConfig` 의 `int.tryParse(...) ?? <기본값>` 과 동일).
+  static RoboClawConfig toConfig(
+    ConfigDraft draft, {
+    required int? id,
+    required bool isActive,
+  }) {
+    final json = <String, dynamic>{};
+    final schema = ConfigDraft.schema;
+
+    for (final entry in _modelDefaults.entries) {
+      final key = entry.key;
+      final defaultValue = entry.value;
+      if (ConfigDraft.reservedKeys.contains(key)) continue;
+
+      if (key == ConfigDraft.ollamaOptionsKey) {
+        json[key] = jsonEncode(_buildOptions(draft.options));
+        continue;
+      }
+
+      switch (schema[key]!) {
+        case ConfigDraftFieldType.flag:
+          json[key] = draft.flags[key] ?? defaultValue;
+        case ConfigDraftFieldType.integer:
+          final raw = draft.texts[key];
+          json[key] = raw == null
+              ? defaultValue
+              : int.tryParse(raw) ?? defaultValue;
+        case ConfigDraftFieldType.decimal:
+          final raw = draft.texts[key];
+          json[key] = raw == null
+              ? defaultValue
+              : double.tryParse(raw) ?? defaultValue;
+        case ConfigDraftFieldType.text:
+          final raw = draft.texts[key] ?? defaultValue as String;
+          json[key] = _trimmedTextKeys.contains(key) ? raw.trim() : raw;
+      }
+    }
+
+    json['is_active'] = isActive;
+    if (id != null) json['ID'] = id;
+    return RoboClawConfig.fromJson(json);
+  }
+
+  static Map<String, dynamic> _buildOptions(OllamaFormValues values) {
+    return buildOllamaOptions(
+      numCtx: values.numCtx,
+      temperature: values.temperature,
+      repeatPenalty: values.repeatPenalty,
+      repeatLastN: values.repeatLastN,
+      seed: values.seed,
+      numPredict: values.numPredict,
+      topK: values.topK,
+      topP: values.topP,
+      minP: values.minP,
+      think: values.think,
+      extraOptions: values.extraOptions,
+    );
+  }
+
   /// 폼 텍스트 값들로 Ollama options JSON 객체를 만든다.
   /// think 가 'unset' 이면 키를 출력하지 않아 모델 기본값을 존중한다.
   static Map<String, dynamic> buildOllamaOptions({

@@ -1,6 +1,10 @@
 // frontend/lib/utils/localization.dart
+//
+// 위젯이 번역 문구를 읽는 전역 파사드.
+// 언어 선택의 소유자는 LanguageController 이며, 이 클래스는 현재 코드 값을
+// 노출하고 번역을 제공하는 얇은 어댑터로만 동작한다.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class LanguageManager {
   static final ValueNotifier<String> languageCodeNotifier =

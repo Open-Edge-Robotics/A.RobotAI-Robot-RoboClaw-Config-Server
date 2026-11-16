@@ -1,5 +1,6 @@
 // frontend/test/backup_controller_test.dart
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/api/admin_api.dart';
 import 'package:frontend/features/backup/backup_controller.dart';
@@ -151,6 +152,25 @@ void main() {
       expect(controller.status, BackupStatus.error);
       expect(controller.error, isNotNull);
       expect(downloader.downloads, isEmpty);
+    });
+
+    test('실패는 컨트롤러 경계에서 1회만 기록한다', () async {
+      final logs = <String>[];
+      final original = debugPrint;
+      debugPrint = (String? message, {int? wrapWidth}) {
+        if (message != null) logs.add(message);
+      };
+      addTearDown(() => debugPrint = original);
+
+      api.exportError = Exception('boom');
+      await controller.exportBackup(includeSecrets: false);
+
+      expect(controller.status, BackupStatus.error);
+      expect(controller.error, contains('boom'));
+      expect(downloader.downloads, isEmpty);
+      final errorLines = logs.where((line) => line.contains('[ERROR]'));
+      expect(errorLines, hasLength(1), reason: 'API 계층 로그 없이 컨트롤러에서 한 번만 남긴다');
+      expect(errorLines.single, contains('BackupController.exportBackup'));
     });
   });
 

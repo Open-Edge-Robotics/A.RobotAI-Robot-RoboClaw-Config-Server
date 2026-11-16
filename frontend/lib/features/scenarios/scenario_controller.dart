@@ -5,8 +5,9 @@
 
 import 'package:flutter/foundation.dart';
 import '../../api/admin_api.dart';
-import '../../api/http_admin_api.dart' show ApiException;
+import '../../api/api_exception.dart';
 import '../../models/scenario_model.dart';
+import '../../services/logger.dart';
 import '../activation.dart';
 
 class ScenarioController extends ChangeNotifier {
@@ -17,27 +18,43 @@ class ScenarioController extends ChangeNotifier {
   String? error;
   bool unauthorized = false;
 
+  bool _disposed = false;
+
   ScenarioController({required this.api});
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  /// dispose 이후 도착한 in-flight 응답은 상태만 갱신하고 알림은 보내지 않는다.
+  void _notifyIfActive() {
+    if (_disposed) return;
+    notifyListeners();
+  }
 
   /// 목록을 조회한다. [robotName]/[environment] 로 필터링할 수 있다.
   Future<void> load({String? robotName, String? environment}) async {
     loading = true;
     error = null;
     unauthorized = false;
-    notifyListeners();
+    _notifyIfActive();
     try {
       scenarios = await api.fetchScenarios(
         robotName: robotName,
         environment: environment,
       );
-    } on ApiException catch (e) {
+    } on ApiException catch (e, stack) {
       if (e.statusCode == 401) unauthorized = true;
       error = e.message;
-    } catch (e) {
+      AppLogger.error('ScenarioController.load', e, stack);
+    } catch (e, stack) {
       error = e.toString();
+      AppLogger.error('ScenarioController.load', e, stack);
     } finally {
       loading = false;
-      notifyListeners();
+      _notifyIfActive();
     }
   }
 
@@ -54,14 +71,14 @@ class ScenarioController extends ChangeNotifier {
       environmentOf: (scenario) => scenario.environment,
       setActive: (scenario, isActive) => scenario.isActive = isActive,
     );
-    notifyListeners();
+    _notifyIfActive();
   }
 
   /// 시나리오를 복제하고 목록에 추가한다.
   Future<TestScenario> clone(int id) async {
     final cloned = await api.cloneScenario(id);
     scenarios.add(cloned);
-    notifyListeners();
+    _notifyIfActive();
     return cloned;
   }
 
@@ -69,7 +86,7 @@ class ScenarioController extends ChangeNotifier {
   Future<void> delete(int id) async {
     await api.deleteScenario(id);
     scenarios.removeWhere((s) => s.id == id);
-    notifyListeners();
+    _notifyIfActive();
   }
 
   /// 시나리오를 저장(생성/수정)하고 목록을 갱신한다.
@@ -83,7 +100,7 @@ class ScenarioController extends ChangeNotifier {
         scenarios[idx] = saved;
       }
     }
-    notifyListeners();
+    _notifyIfActive();
     return saved;
   }
 }

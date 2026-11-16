@@ -1,11 +1,9 @@
 // frontend/lib/screens/dashboard_screen.dart
 
-import 'package:flutter/material.dart';
-import '../api/http_admin_api.dart';
+import 'package:material_ui/material_ui.dart';
+import '../app_dependencies.dart';
 import '../features/backup/backup_controller.dart';
-import '../services/api_service.dart';
-import '../services/download_helper.dart';
-import '../services/file_picker_helper.dart';
+import '../features/language/language_controller.dart';
 import 'config_tab.dart';
 import 'scenario_tab.dart';
 import '../utils/localization.dart';
@@ -13,11 +11,15 @@ import '../utils/localization.dart';
 class DashboardScreen extends StatefulWidget {
   final ThemeMode themeMode;
   final VoidCallback onThemeModeChanged;
+  final LanguageController languageController;
+  final AppDependencies dependencies;
 
   const DashboardScreen({
     super.key,
     required this.themeMode,
     required this.onThemeModeChanged,
+    required this.languageController,
+    required this.dependencies,
   });
 
   @override
@@ -30,16 +32,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final _configTabKey = GlobalKey<ConfigTabState>();
   final _scenarioTabKey = GlobalKey<ScenarioTabState>();
 
-  final _backupController = BackupController(
-    api: HttpAdminApi.instance,
-    picker: FilePickerHelper.instance,
-    downloader: DownloadHelper.instance,
-  );
+  late final BackupController _backupController;
 
   @override
   void initState() {
     super.initState();
-    ApiService.loadAdminTokenFromStorage();
+    _backupController = BackupController(
+      api: widget.dependencies.api,
+      picker: widget.dependencies.picker,
+      downloader: widget.dependencies.downloader,
+    );
+  }
+
+  @override
+  void dispose() {
+    _backupController.dispose();
+    super.dispose();
   }
 
   @override
@@ -89,7 +97,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         actions: [
-          const _LanguageToggle(),
+          _LanguageToggle(controller: widget.languageController),
           PopupMenuButton<String>(
             icon: Icon(
               Icons.save_alt,
@@ -185,9 +193,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: IndexedStack(
               index: _currentTabIndex,
               children: [
-                ConfigTab(key: _configTabKey, onUnauthorized: _showTokenDialog),
+                ConfigTab(
+                  key: _configTabKey,
+                  api: widget.dependencies.api,
+                  downloader: widget.dependencies.downloader,
+                  onUnauthorized: _showTokenDialog,
+                ),
                 ScenarioTab(
                   key: _scenarioTabKey,
+                  api: widget.dependencies.api,
                   onUnauthorized: _showTokenDialog,
                 ),
               ],
@@ -290,7 +304,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         includeConfigs: includeConfigs,
                         includeScenarios: includeScenarios,
                       );
-                      if (!mounted) return;
+                      if (!context.mounted) return;
                       if (_backupController.status == BackupStatus.success) {
                         messenger.showSnackBar(
                           SnackBar(content: Text('백업 파일이 다운로드되었습니다.'.tr)),
@@ -466,7 +480,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         conflictPolicy: conflictPolicy,
                         activationPolicy: activationPolicy,
                       );
-                      if (!mounted) return;
+                      if (!context.mounted) return;
                       if (_backupController.status == BackupStatus.success) {
                         final result = _backupController.importResult ?? {};
                         final cfg =
@@ -514,6 +528,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _showSnack(String msg) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
@@ -522,7 +537,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _showTokenDialog() async {
     if (_isTokenDialogOpen) return;
     _isTokenDialogOpen = true;
-    final tokenCtrl = TextEditingController(text: ApiService.adminToken ?? '');
+    final tokenCtrl = TextEditingController(
+      text: widget.dependencies.tokenStore.read() ?? '',
+    );
     try {
       final bool? isSaved = await showDialog<bool>(
         context: context,
@@ -573,7 +590,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                ApiService.clearAdminToken();
+                widget.dependencies.tokenStore.clear();
                 Navigator.pop(context, false);
               },
               child: Text(
@@ -587,7 +604,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                ApiService.saveAdminTokenToStorage(tokenCtrl.text.trim());
+                widget.dependencies.tokenStore.write(tokenCtrl.text.trim());
                 Navigator.pop(context, true);
               },
               style: ElevatedButton.styleFrom(
@@ -605,6 +622,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       );
 
+      if (!mounted) return;
       if (isSaved == true) {
         _configTabKey.currentState?.refresh();
         _scenarioTabKey.currentState?.refresh();
@@ -616,14 +634,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
 class _LanguageToggle extends StatelessWidget {
-  const _LanguageToggle();
+  const _LanguageToggle({required this.controller});
+
+  final LanguageController controller;
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<String>(
-      valueListenable: LanguageManager.languageCodeNotifier,
-      builder: (context, currentLang, _) {
-        final isKo = currentLang == 'ko';
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        final isKo = controller.isKo;
         final isDark = Theme.of(context).brightness == Brightness.dark;
 
         return Container(
@@ -641,10 +661,10 @@ class _LanguageToggle extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildButton(context, 'KO', isKo, () {
-                if (!isKo) LanguageManager.languageCode = 'ko';
+                if (!isKo) controller.setCode('ko');
               }),
               _buildButton(context, 'EN', !isKo, () {
-                if (isKo) LanguageManager.languageCode = 'en';
+                if (isKo) controller.setCode('en');
               }),
             ],
           ),

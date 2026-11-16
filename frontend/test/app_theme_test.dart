@@ -3,17 +3,18 @@
 // 앱 루트(App)가 라이트 테마를 기본값으로 사용하고, 사용자가 고른 테마를
 // 저장소에서 복원하는지 검증한다.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
 
-import 'package:frontend/api/http_admin_api.dart';
 import 'package:frontend/app.dart';
+import 'package:frontend/features/language/language_controller.dart';
 import 'package:frontend/features/theme/theme_controller.dart';
+import 'package:frontend/storage/language_store.dart';
 import 'package:frontend/storage/theme_mode_store.dart';
-import 'package:frontend/storage/token_store.dart';
 import 'package:frontend/utils/localization.dart';
+
+import 'support/app_dependencies.dart';
 
 class FakeThemeModeStore implements ThemeModeStore {
   FakeThemeModeStore([this.value]);
@@ -30,28 +31,30 @@ class FakeThemeModeStore implements ThemeModeStore {
   void clear() => value = null;
 }
 
-class FakeTokenStore implements TokenStore {
+/// 테마 검증만 하므로 언어는 기본값(한국어)을 유지한다.
+class FakeLanguageStore implements LanguageStore {
   String? value;
+
   @override
   String? read() => value;
+
   @override
-  void write(String token) => value = token;
+  void write(String code) => value = code;
+
   @override
   void clear() => value = null;
 }
 
-Widget buildApp(ThemeModeStore store) =>
-    App(themeController: ThemeController(store: store));
+Widget buildApp(ThemeModeStore store) => App(
+  themeController: ThemeController(store: store),
+  languageController: LanguageController(store: FakeLanguageStore()),
+  // 대시보드 탭이 초기 로딩에서 네트워크를 호출하지 않도록 막는다.
+  dependencies: buildTestDependencies(
+    respond: (request) async => http.Response('[]', 200),
+  ).dependencies,
+);
 
 void main() {
-  setUp(() {
-    // 대시보드 탭이 초기 로딩에서 네트워크를 호출하지 않도록 막는다.
-    HttpAdminApi.instance = HttpAdminApi(
-      client: MockClient((request) async => http.Response('[]', 200)),
-      tokenStore: FakeTokenStore(),
-    );
-  });
-
   Future<void> pumpApp(WidgetTester tester, ThemeModeStore store) async {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1.0;

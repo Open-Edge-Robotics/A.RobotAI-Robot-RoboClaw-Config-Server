@@ -1,6 +1,6 @@
 // frontend/lib/widgets/ollama_guide.dart
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../utils/localization.dart';
 
 class OllamaGuidePanel extends StatelessWidget {
