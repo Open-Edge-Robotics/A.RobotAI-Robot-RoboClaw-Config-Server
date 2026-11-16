@@ -119,11 +119,12 @@ HTTP(handler) → Service → Repository
    - `database.Init(dsn) (*gorm.DB, error)`와 `handler.NewRouter(cfg, db)`로 운영·테스트 조립을 명시한다.
    - 서버별 배포 캐시·rate limiter를 사용한다. 캐시 무효화 세대로 오래된 조회의 재삽입을 차단한다.
    - `serve`는 SIGINT/SIGTERM에 graceful shutdown하고, 종료 타임아웃·리스너 오류를 테스트로 고정한다.
-   - 남은 자원 작업: Handler 쿼리 외 외부 I/O(GitLab release 조회 등)의 deadline 정리.
+   - GitLab release 조회·asset 다운로드는 30초 timeout 을 사용한다(`internal/contract`).
 2. [x] **Router Factory** — `handler.NewRouter(cfg, db)`로 라우트 중앙화(통합 테스트 가능).
-3. [~] **Service 계층 분리** — `service/runtime_validation.go`(runtime 검증)·`service/butler_path_defaults.go`(배포 경로 기본값)·`service/transfer/`(백업 DTO·변환·검증·적용·트랜잭션)로 이동했다. Handler의 기존 타입·함수는 호환 래퍼로 유지한다.
+3. [x] **Service 계층 분리** — `service/runtime_validation.go`(runtime 검증)·`service/butler_path_defaults.go`(배포 경로 기본값)·`service/profile/`(secret 마스킹/복원·패치 병합·활성 배타성·복제 이름)·`service/transfer/`(백업 DTO·변환·검증·적용·트랜잭션)로 이동했다. Handler의 기존 타입·함수는 호환 래퍼로 유지한다.
    - `handler/config_transfer.go`는 HTTP 파싱/응답·문서 타입·오류 문구 분기만 담당한다.
-   - 남은 작업: Config/Scenario CRUD 규칙(활성 배타성·병합·복제)의 Service 이동.
+   - secret 필드 목록은 `service/profile` 의 표 한 곳에서 관리한다(마스킹·복원 집합 일치 테스트).
+   - 선택 작업: 실제 두 번째 구현이 생길 때만 repository 인터페이스를 도입한다.
 4. [x] **프론트엔드 API 주입 가능화** — `AdminApi` 인터페이스 + `HttpAdminApi`(http.Client/TokenStore/요청 timeout 주입) 분리 완료.
    - `api/admin_api.dart`, `api/http_admin_api.dart` 추가. `ApiService` 는 얇은 파사드로 전환.
    - `storage/token_store.dart`(인터페이스) + `storage/web_token_store.dart`(브라우저 구현).
@@ -133,11 +134,13 @@ HTTP(handler) → Service → Repository
 5. [~] **Controller 분리** — `BackupController`(features/backup) 분리·테스트·대시보드 연결 완료. `ScenarioController`(features/scenarios) 분리·테스트·CRUD 전체 이관 완료. `ConfigController`(features/configs) 분리·테스트·CRUD 이관 완료. `ThemeController`(features/theme) 추가.
    - 폼 분리: 순수 변환 `ConfigDraft`/`ConfigFormMapper`, controller 소유권 `ConfigFormFields`, 섹션 렌더링 `ConfigEditorForm`으로 나눠 `config_tab.dart`는 선택·편집 흐름만 담당한다.
    - 목록·loading 상태는 Controller 단일 소스이며 `ListenableBuilder`로 렌더린다. dispose 이후 응답은 알림/`setState`하지 않는다.
+   - 변이 상태: 모든 변이에서 401 을 `unauthorized` 로 통일 기록하고, `busy` 로 중복 제출을 막으며, 화면은 `busy` 로 버튼을 비활성화한다. `load` 는 요청 세대로 늦은 응답을 버린다.
    - 남은 작업: Widget 테스트 추가 확충 (에러/엣지 케이스).
 6. [x] **커버리지 강화** — Go·Flutter 전체 커버리지 80% 게이트를 로컬 `task check`와 CI에 적용한다. 실제 수치는 실행한 보고서로 확인한다.
 7. [x] **CLI 통합 및 Python 의존성 제거** — `scripts/` 파이썬 스크립트를 Go 내장 CLI(`aics contract [check|generate|update]`, `secret-scan`)로 통합 완료. CI/로컬 개발 환경의 Python 3 의존성 완전 제거.
 8. [x] **언어 설정 영속화** — `LanguageStore`(인터페이스) + `WebLanguageStore`(localStorage) + `LanguageController`를 테마와 동일한 주입 패턴으로 추가해 새로고침 후에도 선택이 유지된다. 기존 `LanguageManager`/`String.tr`는 전역 어댑터로 호환 유지.
-   - 남은 작업: 영어 레이아웃(고정폭 패널) 오버플로 점검, 지원 로케일 확장.
+   - 긴 번역에서도 목록 패널·앱바 제목이 버튼을 밀지 않도록 ellipsis 처리(테스트 우회 코드 제거).
+   - 남은 작업: 지원 로케일 확장.
 
 ### 주의사항
 

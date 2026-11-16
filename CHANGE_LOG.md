@@ -14,6 +14,10 @@
 - 목록·loading 상태를 Controller 단일 소스로 만들고 `ListenableBuilder`로 렌더하며, dispose 이후 응답은 알림/`setState`하지 않습니다.
 - API 계층에 20초 요청 timeout을 두고, 로깅을 controller 경계 1회로 옮깁니다.
 - 언어 선택을 `LanguageStore`/`LanguageController`로 영속화하고 기존 `LanguageManager`/`String.tr`는 어댑터로 유지합니다.
+- 프로필 패치 병합·활성 배타성·복제 이름·secret 마스킹/복원을 `service/profile`로 분리하고 secret 필드 표를 단일 소스로 통합합니다.
+- 프론트 변이는 401 을 `unauthorized` 로 통일 기록하고 `busy` 로 중복 제출을 막으며, `load` 는 요청 세대로 늦은 응답을 버립니다.
+- 예상된 4xx 응답 로그를 INFO 로 낮추고(401·403·429 는 WARN), 5xx 만 ERROR 로 남깁니다.
+- GitLab release 조회·asset 다운로드에 30초 timeout 을 적용합니다.
 
 ### Fixed
 - Go 포맷 위반을 실제 실패로 처리하고 `testutil/`도 검사합니다.
