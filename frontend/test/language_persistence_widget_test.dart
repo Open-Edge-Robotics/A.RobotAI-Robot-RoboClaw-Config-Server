@@ -53,14 +53,6 @@ Widget buildApp(LanguageStore languageStore) => App(
   ).dependencies,
 );
 
-/// 테스트 폰트는 모든 글리프를 정사각형(fontSize 폭)으로 그려 영어 라벨이 실제 폰트보다
-/// 두 배 가까이 넓다. 그래서 영어 렌더에서는 고정폭(380) 설정 목록 패널 헤더가
-/// RenderFlex overflow 를 기록한다(레이아웃 자체는 실제 폰트에서 넘치지 않는다).
-/// 이 테스트는 언어 렌더링/영속화만 검증하므로 그 레이아웃 예외는 소비한다.
-void drainTestFontOverflow(WidgetTester tester) {
-  while (tester.takeException() != null) {}
-}
-
 void main() {
   // 전역 어댑터(LanguageManager)는 테스트 간에 남으므로 매 테스트 후 되돌린다.
   tearDown(() => LanguageManager.languageCode = 'ko');
@@ -83,8 +75,6 @@ void main() {
 
   testWidgets('저장된 영어 선택을 복원해 영어 문구로 렌더한다', (tester) async {
     await pumpApp(tester, FakeLanguageStore('en'));
-    drainTestFontOverflow(tester);
-
     expect(find.text('AI Agent Config Dashboard'), findsOneWidget);
     expect(find.text('AI 에이전트 설정 대시보드'), findsNothing);
   });
@@ -97,8 +87,6 @@ void main() {
 
     await tester.tap(find.text('EN'));
     await tester.pumpAndSettle();
-    drainTestFontOverflow(tester);
-
     expect(store.value, 'en');
     expect(find.text('AI Agent Config Dashboard'), findsOneWidget);
     expect(find.text('AI 에이전트 설정 대시보드'), findsNothing);
@@ -116,15 +104,12 @@ void main() {
     await pumpApp(tester, store);
     await tester.tap(find.text('EN'));
     await tester.pumpAndSettle();
-    drainTestFontOverflow(tester);
     expect(store.value, 'en');
 
     // 새로고침(앱 재시작) 재현: 같은 저장소로 앱을 다시 조립한다.
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
     await pumpApp(tester, store);
-    drainTestFontOverflow(tester);
-
     expect(find.text('AI Agent Config Dashboard'), findsOneWidget);
     expect(LanguageManager.languageCode, 'en');
     expect('설정 관리'.tr, 'Configs');

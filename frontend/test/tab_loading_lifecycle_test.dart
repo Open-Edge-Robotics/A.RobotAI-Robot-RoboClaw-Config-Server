@@ -220,4 +220,85 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('ConfigTab 은 저장 요청 중 저장 버튼을 비활성화한다', (tester) async {
+    final saveGate = Completer<void>();
+    final deps = buildTestDependencies(
+      respond: (request) async {
+        if (request.method == 'POST' && request.url.path.endsWith('/configs')) {
+          await saveGate.future;
+          return http.Response(
+            '{"ID":10,"name":"new-cfg","robot_name":"butler",'
+            '"environment":"office"}',
+            201,
+          );
+        }
+        if (request.url.path.endsWith('/configs')) {
+          return http.Response('[$_cfg1Json]', 200);
+        }
+        return http.Response('[]', 200);
+      },
+    );
+
+    await _pumpConfigTab(tester, deps);
+    await tester.tap(find.text('추가'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).at(0), 'new-cfg');
+    await tester.enterText(find.byType(TextFormField).at(1), 'butler');
+    await tester.enterText(find.byType(TextFormField).at(2), 'office');
+
+    await tester.tap(find.widgetWithText(ElevatedButton, '저장'));
+    await tester.pump();
+
+    final saveFinder = find.widgetWithText(ElevatedButton, '저장');
+    expect(
+      tester.widget<ElevatedButton>(saveFinder).onPressed,
+      isNull,
+      reason: '저장 요청이 끝날 때까지 중복 제출을 막는다',
+    );
+
+    await tester.tap(saveFinder, warnIfMissed: false);
+    await tester.pump();
+    expect(
+      deps.requests.where(
+        (r) => r.method == 'POST' && r.url.path.endsWith('/configs'),
+      ),
+      hasLength(1),
+      reason: '비활성 버튼은 API 를 다시 호출하지 않는다',
+    );
+
+    saveGate.complete();
+    await tester.pumpAndSettle();
+    expect(find.text('성공적으로 저장되었습니다.'), findsOneWidget);
+  });
+
+  testWidgets('ScenarioTab 은 활성화 요청 중 재호출로 API 를 중복 호출하지 않는다', (tester) async {
+    final activateGate = Completer<void>();
+    var activateCalls = 0;
+    final deps = buildTestDependencies(
+      respond: (request) async {
+        if (request.url.path.endsWith('/activate')) {
+          activateCalls++;
+          await activateGate.future;
+          return http.Response('', 200);
+        }
+        if (request.url.path.endsWith('/scenarios')) {
+          return http.Response('[$_sc1Json,$_sc2Json]', 200);
+        }
+        return http.Response('[]', 200);
+      },
+    );
+
+    await _pumpScenarioTab(tester, deps);
+    await tester.tap(find.text('활성화').first);
+    await tester.pump();
+    await tester.tap(find.text('활성화').first);
+    await tester.pump();
+
+    expect(activateCalls, 1, reason: '변이 중 재호출은 무시된다');
+
+    activateGate.complete();
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
 }

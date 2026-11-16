@@ -85,6 +85,8 @@ class ScenarioTabState extends State<ScenarioTab> {
   }
 
   Future<void> _activateScenario(int id) async {
+    // 변이 진행 중(busy) 재호출은 중복 API 호출이므로 무시한다.
+    if (_scenarioController.busy) return;
     try {
       await _scenarioController.activate(id);
       if (!mounted) return;
@@ -102,6 +104,7 @@ class ScenarioTabState extends State<ScenarioTab> {
   }
 
   Future<void> _cloneScenario(int id) async {
+    if (_scenarioController.busy) return;
     try {
       final cloned = await _scenarioController.clone(id);
       if (!mounted) return;
@@ -113,7 +116,7 @@ class ScenarioTabState extends State<ScenarioTab> {
         _populateScenarioForm(cloned);
       });
     } on ApiException catch (e) {
-      if (e.statusCode == 401) {
+      if (_scenarioController.unauthorized) {
         _showError('인증 오류: 올바르지 않거나 만료된 관리자 토큰입니다.'.tr);
         if (widget.onUnauthorized != null) widget.onUnauthorized!();
       } else {
@@ -125,6 +128,7 @@ class ScenarioTabState extends State<ScenarioTab> {
   }
 
   Future<void> _deleteScenario(int id) async {
+    if (_scenarioController.busy) return;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -165,6 +169,7 @@ class ScenarioTabState extends State<ScenarioTab> {
   }
 
   Future<void> _saveScenario() async {
+    if (_scenarioController.busy) return;
     if (!_scenarioFormKey.currentState!.validate()) {
       AppLogger.warning('Scenario Form validation failed.');
       return;

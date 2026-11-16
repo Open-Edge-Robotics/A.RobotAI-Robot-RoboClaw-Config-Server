@@ -21,6 +21,7 @@ import 'package:frontend/platform/file_picker.dart';
 
 class PendingAdminApi implements AdminApi {
   final fetchConfigsCompleter = Completer<List<RoboClawConfig>>();
+  final activateConfigCompleter = Completer<void>();
   final saveConfigCompleter = Completer<RoboClawConfig>();
   final deleteConfigCompleter = Completer<void>();
   final fetchScenariosCompleter = Completer<List<TestScenario>>();
@@ -71,7 +72,7 @@ class PendingAdminApi implements AdminApi {
   }) => importCompleter.future;
 
   @override
-  Future<void> activateConfig(int id) => throw UnimplementedError();
+  Future<void> activateConfig(int id) => activateConfigCompleter.future;
 
   @override
   Future<String> fetchConfigFile(int id, String filename) =>
@@ -168,13 +169,14 @@ void main() {
       controller.addListener(() => notifications++);
 
       final future = controller.save(_cfg(1, 'saved'), true);
+      expect(notifications, 1, reason: 'busy=true 를 먼저 알린다');
       controller.dispose();
 
       api.saveConfigCompleter.complete(_cfg(1, 'saved'));
       final saved = await future;
 
       expect(saved.id, 1, reason: 'API 반환 계약은 유지된다');
-      expect(notifications, 0);
+      expect(notifications, 1, reason: 'dispose 이후에는 알림이 없어야 한다');
     });
 
     test('delete 진행 중 dispose 되면 완료 후 알림과 예외가 없다', () async {
@@ -184,12 +186,31 @@ void main() {
       controller.addListener(() => notifications++);
 
       final future = controller.delete(1);
+      expect(notifications, 1, reason: 'busy=true 를 먼저 알린다');
       controller.dispose();
 
       api.deleteConfigCompleter.complete();
       await future;
 
-      expect(notifications, 0);
+      expect(notifications, 1, reason: 'dispose 이후에는 알림이 없어야 한다');
+    });
+
+    test('변이 중 dispose 되면 busy=false 전이도 알림 없이 끝난다', () async {
+      final api = PendingAdminApi();
+      final controller = ConfigController(api: api);
+      var notifications = 0;
+      controller.addListener(() => notifications++);
+
+      final future = controller.activate(1);
+      expect(controller.busy, isTrue);
+      expect(notifications, 1, reason: 'busy=true 를 먼저 알린다');
+
+      controller.dispose();
+      api.activateConfigCompleter.complete();
+      await future;
+
+      expect(controller.busy, isFalse);
+      expect(notifications, 1, reason: 'dispose 이후 busy=false 알림도 없어야 한다');
     });
   });
 
@@ -233,6 +254,7 @@ void main() {
       controller.addListener(() => notifications++);
 
       final future = controller.clone(1);
+      expect(notifications, 1, reason: 'busy=true 를 먼저 알린다');
       controller.dispose();
 
       api.cloneScenarioCompleter.complete(
@@ -247,7 +269,7 @@ void main() {
       final cloned = await future;
 
       expect(cloned.id, 2, reason: 'API 반환 계약은 유지된다');
-      expect(notifications, 0);
+      expect(notifications, 1, reason: 'dispose 이후에는 알림이 없어야 한다');
     });
   });
 

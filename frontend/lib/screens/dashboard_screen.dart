@@ -63,12 +63,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
               size: 30,
             ),
             const SizedBox(width: 12),
-            Text(
-              'AI 에이전트 설정 대시보드'.tr,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.8,
+            // 영어 등 긴 제목에서도 버전 배지를 밀어내지 않도록 제목만 줄인다.
+            Flexible(
+              child: Text(
+                'AI 에이전트 설정 대시보드'.tr,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.8,
+                ),
               ),
             ),
             const SizedBox(width: 12),

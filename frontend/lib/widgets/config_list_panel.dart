@@ -44,13 +44,19 @@ class ConfigListPanel extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '설정 프로필 목록'.tr,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  // 좁은 패널/긴 번역 문자열에서도 제목이 버튼을 밀어내지 않도록 한다.
+                  Expanded(
+                    child: Text(
+                      '설정 프로필 목록'.tr,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 8),
                   ElevatedButton.icon(
                     onPressed: onAddPressed,
                     icon: const Icon(Icons.add, size: 18),
