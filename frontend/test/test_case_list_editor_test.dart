@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/models/scenario_model.dart';
 import 'package:frontend/widgets/test_case_list_editor.dart';
 
+import 'support/localization_audit.dart';
+
 void main() {
   Future<void> pumpEditor(WidgetTester tester, List<TestCase> tcs) async {
     tester.view.physicalSize = const Size(1200, 900);
@@ -49,5 +51,22 @@ void main() {
 
     expect(find.text('ping'), findsOneWidget);
     expect(find.text('battery'), findsOneWidget);
+  });
+
+  testWidgets('영어 모드에서는 테스트 케이스 목록 에디터에 한국어가 남지 않는다', (tester) async {
+    useEnglishLocale();
+
+    await pumpEditor(tester, []);
+    expectNoKoreanText(tester);
+
+    // 템플릿 메뉴의 유형 이름/설명은 번역 대상이다.
+    await tester.tap(find.text('Add Test Case'));
+    await tester.pumpAndSettle();
+    expectNoKoreanText(tester);
+
+    await pumpEditor(tester, [
+      TestCase(id: 'tc1', name: 'Ping', step: 'Step 1', type: 'ping'),
+    ]);
+    expectNoKoreanText(tester);
   });
 }

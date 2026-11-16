@@ -101,8 +101,9 @@ class ConfigLlmSection extends StatelessWidget {
           title: Text('스킬 선택에 네이티브 도구 호출 사용 (RC_LLM_TOOL_CALLING)'.tr),
           subtitle: Text(
             '켜면 복합 명령도 하나의 도구 대화에서 LLM이 단계를 이어갑니다. '
-            '끄면 JSON 응답을 강제하고 복합 명령을 명령 분해기가 처리합니다. '
-            'provider가 도구 호출을 지원하지 않으면 자동으로 JSON 경로를 씁니다.',
+                    '끄면 JSON 응답을 강제하고 복합 명령을 명령 분해기가 처리합니다. '
+                    'provider가 도구 호출을 지원하지 않으면 자동으로 JSON 경로를 씁니다.'
+                .tr,
           ),
         ),
         const SizedBox(height: 8),

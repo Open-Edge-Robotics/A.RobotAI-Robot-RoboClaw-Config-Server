@@ -23,6 +23,25 @@ class LanguageManager {
     return _translations[text] ?? text;
   }
 
+  /// `{name}` 자리표시자를 가진 문구를 번역한 뒤 실제 값을 채운다.
+  ///
+  /// 값이 보간된 문자열은 번역 표의 키와 일치하지 않으므로, 보간 전
+  /// 템플릿을 키로 넘겨야 한다.
+  static String trTemplate(String template, Map<String, Object?> values) {
+    var text = tr(template);
+    values.forEach((key, value) {
+      text = text.replaceAll('{$key}', '${value ?? ''}');
+    });
+    return text;
+  }
+
+  /// 번역 표에 [text] 키가 있는지 확인한다(테스트 감사용).
+  static bool hasTranslation(String text) => _translations.containsKey(text);
+
+  /// 번역 표 전체(읽기 전용). 테스트에서 값 검증에 쓴다.
+  static Map<String, String> get allTranslations =>
+      Map<String, String>.unmodifiable(_translations);
+
   static final Map<String, String> _translations = {
     // Dashboard Header / Navigation
     'AI 에이전트 설정 대시보드': 'AI Agent Config Dashboard',
@@ -600,6 +619,141 @@ class LanguageManager {
     '가져올 수 없음': 'Cannot Import',
     '백업 가져오기 실패: ': 'Backup import failed: ',
     '백업 가져오기 처리 중 에러 발생: ': 'Error during backup import: ',
+
+    // ===== Maestro FleetControl =====
+    'Maestro FleetControl 연동': 'Maestro FleetControl Integration',
+    'Maestro 연동 사용 (MAESTRO_ENABLED)':
+        'Enable Maestro integration (MAESTRO_ENABLED)',
+    '끄면 MAESTRO_IP를 지정해도 로봇의 outbound connector를 시작하지 않습니다.':
+        'When off, the robot does not start its outbound connector even if MAESTRO_IP is set.',
+    'Maestro 서버 IP (MAESTRO_IP)': 'Maestro Server IP (MAESTRO_IP)',
+    '비워두면 fleet outbound connector 비활성':
+        'Leave empty to disable the fleet outbound connector',
+    'Maestro 서버 포트 (ROBOT_PORT)': 'Maestro Server Port (ROBOT_PORT)',
+    '로봇 ID (ROBOT_ID)': 'Robot ID (ROBOT_ID)',
+    'MAESTRO_IP 설정 시 필수': 'Required when MAESTRO_IP is set',
+    '사이트 ID (ROBOT_SITE_ID)': 'Site ID (ROBOT_SITE_ID)',
+    '맵 ID (ROBOT_MAP_ID)': 'Map ID (ROBOT_MAP_ID)',
+    '맵 버전 (ROBOT_MAP_VERSION)': 'Map Version (ROBOT_MAP_VERSION)',
+    '맵 TF frame (ROBOT_MAP_FRAME_ID)': 'Map TF Frame (ROBOT_MAP_FRAME_ID)',
+    '연결 단절 정책 (MAESTRO_DISCONNECT_POLICY)':
+        'Disconnect Policy (MAESTRO_DISCONNECT_POLICY)',
+    '하트비트 주기(초) (FLEET_HEARTBEAT_SEC)':
+        'Heartbeat Interval (sec) (FLEET_HEARTBEAT_SEC)',
+    '명령 저널 경로 (FLEET_COMMAND_JOURNAL_PATH)':
+        'Command Journal Path (FLEET_COMMAND_JOURNAL_PATH)',
+    '스킬 가이드 파일 (RC_SKILLS_GUIDE_FILE)':
+        'Skill Guide File (RC_SKILLS_GUIDE_FILE)',
+    '비워두면 배포 기본 경로(config/SKILLS.md) 사용':
+        'Leave empty to use the deployment default (config/SKILLS.md)',
+    'FleetControl mTLS 활성화 (FLEET_CONTROL_TLS)':
+        'Enable FleetControl mTLS (FLEET_CONTROL_TLS)',
+    'CA 인증서 (FLEET_CONTROL_CA_CERT)': 'CA Certificate (FLEET_CONTROL_CA_CERT)',
+    '클라이언트 인증서 (FLEET_CONTROL_CLIENT_CERT)':
+        'Client Certificate (FLEET_CONTROL_CLIENT_CERT)',
+    '클라이언트 키 (FLEET_CONTROL_CLIENT_KEY)':
+        'Client Key (FLEET_CONTROL_CLIENT_KEY)',
+
+    // ===== LangSmith Tracing =====
+    'LangSmith 트레이싱 / 모니터링': 'LangSmith Tracing / Monitoring',
+    'LangSmith 트레이싱 활성화 (LANGSMITH_TRACING)':
+        'Enable LangSmith tracing (LANGSMITH_TRACING)',
+    '트레이싱 활성화 시 필수. 미설정 시 트레이스 업로드 안 됨':
+        'Required when tracing is enabled. Traces are not uploaded if unset',
+    '프로젝트 이름 (LANGSMITH_PROJECT)': 'Project Name (LANGSMITH_PROJECT)',
+    '선택 — 미설정 시 "default"': 'Optional — defaults to "default"',
+    '엔드포인트 (LANGSMITH_ENDPOINT)': 'Endpoint (LANGSMITH_ENDPOINT)',
+    '선택 — 자체 호스팅/프록시 엔드포인트': 'Optional — self-hosted or proxy endpoint',
+
+    // ===== Task Queue / Decomposition =====
+    '11. 태스크 큐 / 복합 명령 자동 분해 설정':
+        '11. Task Queue / Automatic Command Decomposition',
+    '태스크 큐 최대 대기열 크기 (RC_TASK_QUEUE_MAX_SIZE)':
+        'Max Task Queue Size (RC_TASK_QUEUE_MAX_SIZE)',
+    '예: 8 (0=큐 비활성화)': 'e.g. 8 (0 disables the queue)',
+    '시작 시 LLM 검증 실패 기동 중단 (RC_LLM_FAIL_FAST)':
+        'Abort Startup on LLM Validation Failure (RC_LLM_FAIL_FAST)',
+    '필수 설정 파일 누락 시 기동 중단 (RC_STRICT_CONFIG)':
+        'Abort Startup on Missing Required Config (RC_STRICT_CONFIG)',
+    '복합 명령 자동 분해 활성화 (RC_ENABLE_TASK_DECOMPOSITION)':
+        'Enable Automatic Command Decomposition (RC_ENABLE_TASK_DECOMPOSITION)',
+    '분해 최대 단계 수 (RC_TASK_DECOMPOSITION_MAX_STEPS)':
+        'Max Decomposed Steps (RC_TASK_DECOMPOSITION_MAX_STEPS)',
+    '예: 6': 'e.g. 6',
+    '단계 실패 재시도 횟수 (RC_TASK_STEP_MAX_RETRIES)':
+        'Step Failure Retry Count (RC_TASK_STEP_MAX_RETRIES)',
+    '예: 1': 'e.g. 1',
+    '액션 대기 여유 시간 상한(초) (RC_TASK_DECOMPOSITION_WAIT_MARGIN_CAP_SEC)':
+        'Action Wait Margin Cap (sec) (RC_TASK_DECOMPOSITION_WAIT_MARGIN_CAP_SEC)',
+    '예: 1800.0 (30분)': 'e.g. 1800.0 (30 minutes)',
+
+    // ===== Dashboard Web Node =====
+    '사용 스위치를 끄면 host/port 를 지정해도 웹 노드를 실행하지 않습니다.':
+        'When this switch is off, the web node does not run even if host/port are set.',
+    '대시보드 웹 노드 사용 (RC_USE_DASHBOARD)':
+        'Enable Dashboard Web Node (RC_USE_DASHBOARD)',
+
+    // ===== CLOi Cleanup Demo (expression / pose) =====
+    '상황별 표현 모션 자동 재생': 'Auto-play expression motion by situation',
+    'CLOiD가 태스크를 마친 뒤 상황(인사·대화·탐색·실패)에 맞는 등록 모션을 한 번 재생합니다. 주행이 포함된 태스크에서는 재생하지 않습니다. 표현 모션이 부자연스러운 개체는 끄면 됩니다.':
+        'After CLOiD finishes a task, it plays a registered motion once to match the situation (greeting, conversation, exploration, failure). It does not play for tasks that include driving. Turn this off for robots whose expression motions look unnatural.',
+    '주행 전 boxing 자세 자동 정렬': 'Auto-align to Boxing Pose Before Driving',
+    '베이스 이동 스킬 직전에 CLOiD를 최소 부피(boxing) 자세로 한 번 정렬하고, 실패하면 주행을 거부합니다. 주행 후 자세는 자동 복원되지 않습니다. cloid 프로필 전용입니다.':
+        'Aligns CLOiD to the minimum-volume (boxing) pose once right before the base-move skill and refuses to drive if that fails. The pose is not restored after driving. cloid profile only.',
+
+    // ===== System 1 Section Helpers =====
+    'Intent별 confidence threshold를 JSON 객체로 지정합니다.':
+        'Set per-intent confidence thresholds as a JSON object.',
+    '비워두면 조건에 맞는 읽기 전용 스킬을 자동 선택합니다.':
+        'Leave empty to automatically select matching read-only skills.',
+    'Hosted provider가 인증을 요구할 때만 지정합니다.':
+        'Set this only when the hosted provider requires authentication.',
+
+    // ===== Basic / LLM / Path / Messenger =====
+    '에이전트 ID (agent_id)': 'Agent ID (agent_id)',
+    '예: Former0047': 'e.g. Former0047',
+    '스킬 선택에 네이티브 도구 호출 사용 (RC_LLM_TOOL_CALLING)':
+        'Use Native Tool Calling for Skill Selection (RC_LLM_TOOL_CALLING)',
+    '켜면 복합 명령도 하나의 도구 대화에서 LLM이 단계를 이어갑니다. 끄면 JSON 응답을 강제하고 복합 명령을 명령 분해기가 처리합니다. provider가 도구 호출을 지원하지 않으면 자동으로 JSON 경로를 씁니다.':
+        'When on, the LLM continues compound commands as steps inside a single tool conversation. When off, JSON responses are enforced and the command decomposer handles compound commands. If the provider does not support tool calling, the JSON path is used automatically.',
+    '정리 태스크 실험 계측 run log 경로 (RC_CLEANUP_RUN_LOG_PATH)':
+        'Cleanup Task Instrumentation Run Log Path (RC_CLEANUP_RUN_LOG_PATH)',
+    '비우면 기록하지 않습니다. 예: /ros2_ws/agent_workspace/cleanup_runs.jsonl':
+        'Leave empty to record nothing. e.g. /ros2_ws/agent_workspace/cleanup_runs.jsonl',
+    'Maestro 사용 중에는 로봇 간 협업(gRPC 서버/클라이언트, peer 목록)이 비활성화됩니다. 동료 작업은 Maestro가 중계합니다.':
+        'While Maestro is enabled, robot-to-robot collaboration (gRPC server/client, peer list) is disabled. Peer tasks are relayed by Maestro.',
+    'gRPC Peer Token (GRPC_PEER_TOKEN — 외부 접속 시 필수)':
+        'gRPC Peer Token (GRPC_PEER_TOKEN — required for external access)',
+    '기본 50052 — 50051은 RosGrpc 텔레메트리 전용':
+        'Default 50052 — 50051 is reserved for RosGrpc telemetry',
+
+    // ===== MCP Catalog Dialog / Server Form =====
+    'MCP 서버 찾아보기': 'Browse MCP Servers',
+    '닫기': 'Close',
+    '이름/설명으로 검색 (예: git, filesystem)':
+        'Search by name/description (e.g. git, filesystem)',
+    '카탈로그 조회 실패': 'Failed to load the catalog',
+    '다시 시도': 'Retry',
+    '검색 결과가 없습니다.': 'No search results.',
+    '예: https://example.com/mcp': 'e.g. https://example.com/mcp',
+
+    // ===== Scenario / Backup Screens =====
+    '모두 받기 (ZIP)': 'Download All (ZIP)',
+    '정말로 이 테스트 시나리오를 삭제하시겠습니까?':
+        'Are you sure you want to delete this test scenario?',
+    'gRPC Ping 연결성': 'gRPC Ping connectivity',
+    '설정 프로필 {configs}건, 시나리오 {scenarios}건 (신규 설정 {newConfigs}건 / 충돌 {conflictingConfigs}건, 신규 시나리오 {newScenarios}건 / 충돌 {conflictingScenarios}건)':
+        'Config profiles: {configs}, scenarios: {scenarios} (new configs: {newConfigs} / conflicts: {conflictingConfigs}, new scenarios: {newScenarios} / conflicts: {conflictingScenarios})',
+    '가져오기 완료: 설정(생성 {created}, 갱신 {updated}, 건너뜀 {skipped}), 시나리오(생성 {sCreated}, 갱신 {sUpdated}, 건너뜀 {sSkipped})':
+        'Import complete: configs (created {created}, updated {updated}, skipped {skipped}), scenarios (created {sCreated}, updated {sUpdated}, skipped {sSkipped})',
+
+    // ===== Scenario Editor Errors =====
+    '최상위 노드는 배열(List) 형식이어야 합니다.':
+        'The top-level node must be an array (List).',
+    'JSON이 배열([ ]) 형식이 아닙니다.': 'The JSON is not in array ([ ]) form.',
+    'JSON 문법 오류로 템플릿을 자동으로 추가할 수 없습니다: {error}':
+        'Templates cannot be added automatically due to a JSON syntax error: {error}',
+    '지원하지 않는 테스트 케이스 유형입니다.': 'Unsupported test case type.',
   };
 }
 

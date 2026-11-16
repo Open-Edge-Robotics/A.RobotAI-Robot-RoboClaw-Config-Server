@@ -13,6 +13,7 @@ import 'package:frontend/models/config_model.dart';
 import 'package:frontend/screens/config_tab.dart';
 
 import 'support/app_dependencies.dart';
+import 'support/localization_audit.dart';
 
 void main() {
   late TestDependencies deps;
@@ -342,6 +343,20 @@ void main() {
     for (final title in _sectionTitles) {
       expect(find.text(title), findsOneWidget, reason: title);
     }
+  });
+
+  testWidgets('영어 모드에서는 설정 상세 폼과 내보내기 메뉴에 한국어가 남지 않는다', (tester) async {
+    useEnglishLocale();
+    await pumpConfigTab(tester);
+
+    await tester.tap(find.text('cfg1'));
+    await tester.pumpAndSettle();
+    expectNoKoreanText(tester);
+
+    await tester.tap(find.byIcon(Icons.download));
+    await tester.pumpAndSettle();
+    expect(find.text('Download All (ZIP)'), findsOneWidget);
+    expectNoKoreanText(tester);
   });
 }
 

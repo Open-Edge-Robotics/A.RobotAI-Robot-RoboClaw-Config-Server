@@ -343,8 +343,10 @@ class _ScenarioJsonEditor extends StatelessWidget {
                 : const Color(0xFF0F172A),
           ),
           decoration: InputDecoration(
-            hintText:
-                '[\n  {\n    "id": "tc_ping",\n    "name": "gRPC Ping 연결성",\n    "step": "Step 1",\n    "type": "ping",\n    "timeout_ms": 3000,\n    "enabled": true\n  }\n]',
+            hintText: LanguageManager.trTemplate(
+              '[\n  {\n    "id": "tc_ping",\n    "name": "{name}",\n    "step": "Step 1",\n    "type": "ping",\n    "timeout_ms": 3000,\n    "enabled": true\n  }\n]',
+              {'name': 'gRPC Ping 연결성'.tr},
+            ),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             fillColor: Theme.of(context).brightness == Brightness.dark
                 ? const Color(0xFF1E1E1E)

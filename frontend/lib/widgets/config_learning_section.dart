@@ -33,7 +33,7 @@ class ConfigLearningSection extends StatelessWidget {
               onChanged: isEditing ? onEnableSkillLearningChanged : null,
             ),
             const SizedBox(width: 8),
-            Text('자가학습 활성화 (RC_ENABLE_SKILL_LEARNING)'.tr),
+            Expanded(child: Text('자가학습 활성화 (RC_ENABLE_SKILL_LEARNING)'.tr)),
           ],
         ),
         const SizedBox(height: 16),

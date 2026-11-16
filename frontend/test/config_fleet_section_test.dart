@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/models/config_model.dart';
 import 'package:frontend/widgets/config_fleet_section.dart';
 
+import 'support/localization_audit.dart';
+
 void main() {
   Widget buildSection({
     bool isEditing = true,
@@ -64,6 +66,16 @@ void main() {
     expect(find.text('Maestro 서버 IP (MAESTRO_IP)'), findsOneWidget);
     expect(find.text('로봇 ID (ROBOT_ID)'), findsOneWidget);
     expect(find.text('클라이언트 키 (FLEET_CONTROL_CLIENT_KEY)'), findsOneWidget);
+  });
+
+  testWidgets('영어 모드에서 Fleet 섹션에 한국어 문구가 남지 않는다', (tester) async {
+    // 위젯은 언어 변경 시 스스로 리빌드되지 않으므로 pump 전에 영어로 전환한다.
+    useEnglishLocale();
+    sizeView(tester);
+    await tester.pumpWidget(buildSection());
+    await tester.pumpAndSettle();
+
+    expectNoKoreanText(tester);
   });
 
   testWidgets('편집 중이 아니면 입력 필드가 비활성화된다', (tester) async {

@@ -2,6 +2,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/widgets/config_system1_section.dart';
 
+import 'support/localization_audit.dart';
+
 void main() {
   Widget buildSection({bool isEditing = true, bool shadow = false}) {
     return MaterialApp(
@@ -62,6 +64,19 @@ void main() {
     for (final label in optionalLabels) {
       expect(find.text(label), findsOneWidget, reason: label);
     }
+  });
+
+  testWidgets('영어 모드에서 System 1 섹션에 한국어 문구가 남지 않는다', (tester) async {
+    // 위젯은 언어 변경 시 스스로 리빌드되지 않으므로 pump 전에 영어로 전환한다.
+    useEnglishLocale();
+    tester.view.physicalSize = const Size(1600, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(buildSection());
+    await tester.pumpAndSettle();
+
+    expectNoKoreanText(tester);
   });
 
   testWidgets('SYSTEM1_ROUTER 라벨만 필수이고 나머지는 선택/기본값을 표시한다', (tester) async {

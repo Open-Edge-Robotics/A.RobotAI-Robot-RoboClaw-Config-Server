@@ -16,6 +16,7 @@ import 'package:frontend/screens/dashboard_screen.dart';
 import 'package:frontend/storage/language_store.dart';
 
 import 'support/app_dependencies.dart';
+import 'support/localization_audit.dart';
 
 /// 대시보드 검증은 한국어를 기본값으로 쓴다.
 class _FakeLanguageStore implements LanguageStore {
@@ -67,10 +68,37 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> startImportFlow(WidgetTester tester) async {
+  /// 영어 선택을 복원한 상태로 대시보드를 띄운다(LanguageController 가 전역 어댑터를 맞춘다).
+  Future<void> pumpDashboardEnglish(
+    WidgetTester tester,
+    TestDependencies deps,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DashboardScreen(
+          themeMode: ThemeMode.dark,
+          onThemeModeChanged: () {},
+          languageController: LanguageController(
+            store: _FakeLanguageStore()..value = 'en',
+          ),
+          dependencies: deps.dependencies,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> startImportFlow(
+    WidgetTester tester, {
+    String importLabel = '백업 파일 가져오기',
+  }) async {
     await tester.tap(find.byIcon(Icons.save_alt));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('백업 파일 가져오기'));
+    await tester.tap(find.text(importLabel));
     await tester.pumpAndSettle();
   }
 
@@ -215,5 +243,46 @@ void main() {
       scenariosBefore + 1,
       reason: '가져오기 성공 후 시나리오 탭을 다시 조회한다',
     );
+  });
+
+  testWidgets('영어 모드에서는 가져오기 다이얼로그와 완료 메시지가 영어로 표시된다', (tester) async {
+    final deps = buildTestDependencies(
+      respond: (request) async {
+        if (request.url.path.endsWith('/transfer/import/validate')) {
+          return http.Response(_validValidationJson, 200);
+        }
+        if (request.url.path.endsWith('/transfer/import')) {
+          return http.Response(_importResultJson, 200);
+        }
+        return http.Response('[]', 200);
+      },
+      backupFile: PickedBackupFile('backup.json', _validBackupJson),
+    );
+
+    await pumpDashboardEnglish(tester, deps);
+    await startImportFlow(tester, importLabel: 'Import Backup File');
+
+    // 다이얼로그의 정책 라벨/선택지가 영어로 보인다.
+    expect(find.text('Conflict Policy'), findsOneWidget);
+    expect(find.text('Activation Policy'), findsOneWidget);
+    expect(find.text('Skip (Keep Existing)'), findsOneWidget);
+    expect(find.text('Import as Inactive (Recommended)'), findsOneWidget);
+    // 보간이 들어간 요약 문구도 영어 템플릿으로 렌더된다.
+    expect(
+      find.textContaining('Config profiles: 2, scenarios: 1'),
+      findsOneWidget,
+    );
+    expectNoKoreanText(tester);
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Import'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining(
+        'Import complete: configs (created 2, updated 0, skipped 0)',
+      ),
+      findsOneWidget,
+    );
+    expectNoKoreanText(tester);
   });
 }

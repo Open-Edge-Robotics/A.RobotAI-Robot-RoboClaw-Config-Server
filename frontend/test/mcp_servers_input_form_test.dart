@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:frontend/widgets/mcp_servers_input_form.dart';
 
 import 'support/app_dependencies.dart';
+import 'support/localization_audit.dart';
 
 void main() {
   late TestDependencies deps;
@@ -84,5 +85,32 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('서버 이름'), findsWidgets);
+  });
+
+  testWidgets('영어 모드에서는 MCP 서버 입력 폼에 한국어가 남지 않는다', (tester) async {
+    useEnglishLocale();
+
+    await pumpForm(tester, TextEditingController(text: '[]'));
+    expectNoKoreanText(tester);
+
+    await pumpForm(
+      tester,
+      TextEditingController(
+        text:
+            '[{"name":"fs","transport":"stdio","command":"npx",'
+            '"env":{"GITHUB_TOKEN":"********"}}]',
+      ),
+    );
+    expectNoKoreanText(tester);
+
+    await pumpForm(
+      tester,
+      TextEditingController(
+        text:
+            '[{"name":"remote","transport":"streamable_http",'
+            '"url":"https://example.com/mcp"}]',
+      ),
+    );
+    expectNoKoreanText(tester);
   });
 }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../models/scenario_model.dart';
+import 'localization.dart';
 
 const Map<String, String> scenarioTestTypeGuideDescriptions = {
   'ping': '로봇 gRPC Ping 연결성 테스트 (실패 시 메신저 대체 통신)',
@@ -38,7 +39,7 @@ const JsonEncoder _testCaseJsonEncoder = JsonEncoder.withIndent('  ');
 List<TestCase> parseScenarioTestCasesJson(String source) {
   final decoded = jsonDecode(source);
   if (decoded is! List) {
-    throw const FormatException('최상위 노드는 배열(List) 형식이어야 합니다.');
+    throw FormatException('최상위 노드는 배열(List) 형식이어야 합니다.'.tr);
   }
 
   return decoded
@@ -62,14 +63,19 @@ String appendScenarioTestCaseTemplate({
   try {
     final decoded = jsonDecode(normalized);
     if (decoded is! List) {
-      throw const FormatException('JSON이 배열([ ]) 형식이 아닙니다.');
+      throw FormatException('JSON이 배열([ ]) 형식이 아닙니다.'.tr);
     }
 
     decoded.add(template);
     return _testCaseJsonEncoder.convert(decoded);
   } catch (error) {
     if (!normalized.endsWith(']')) {
-      throw FormatException('JSON 문법 오류로 템플릿을 자동으로 추가할 수 없습니다: $error');
+      throw FormatException(
+        LanguageManager.trTemplate(
+          'JSON 문법 오류로 템플릿을 자동으로 추가할 수 없습니다: {error}',
+          {'error': error},
+        ),
+      );
     }
 
     final lastBracketIndex = normalized.lastIndexOf(']');
@@ -196,5 +202,5 @@ Map<String, dynamic> buildScenarioTestCaseTemplate(String type) {
       };
   }
 
-  throw ArgumentError.value(type, 'type', '지원하지 않는 테스트 케이스 유형입니다.');
+  throw ArgumentError.value(type, 'type', '지원하지 않는 테스트 케이스 유형입니다.'.tr);
 }

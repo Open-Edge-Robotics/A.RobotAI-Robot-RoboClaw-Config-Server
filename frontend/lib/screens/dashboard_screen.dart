@@ -390,8 +390,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '설정 프로필 ${summary['configs'] ?? 0}건, 시나리오 ${summary['scenarios'] ?? 0}건 (신규 설정 ${summary['new_configs'] ?? 0}건 / 충돌 ${summary['conflicting_configs'] ?? 0}건, 신규 시나리오 ${summary['new_scenarios'] ?? 0}건 / 충돌 ${summary['conflicting_scenarios'] ?? 0}건)'
-                      .tr,
+                  LanguageManager.trTemplate(
+                    '설정 프로필 {configs}건, 시나리오 {scenarios}건 (신규 설정 {newConfigs}건 / 충돌 {conflictingConfigs}건, 신규 시나리오 {newScenarios}건 / 충돌 {conflictingScenarios}건)',
+                    {
+                      'configs': summary['configs'] ?? 0,
+                      'scenarios': summary['scenarios'] ?? 0,
+                      'newConfigs': summary['new_configs'] ?? 0,
+                      'conflictingConfigs': summary['conflicting_configs'] ?? 0,
+                      'newScenarios': summary['new_scenarios'] ?? 0,
+                      'conflictingScenarios':
+                          summary['conflicting_scenarios'] ?? 0,
+                    },
+                  ),
                   style: const TextStyle(fontSize: 13),
                 ),
                 const SizedBox(height: 8),
@@ -428,14 +438,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const Divider(height: 24),
                 DropdownButtonFormField<String>(
                   initialValue: conflictPolicy,
-                  decoration: const InputDecoration(labelText: '충돌 처리 정책'),
-                  items: const [
+                  decoration: InputDecoration(labelText: '충돌 처리 정책'.tr),
+                  items: [
                     DropdownMenuItem(
                       value: 'skip',
-                      child: Text('건너뛰기 (기존 유지)'),
+                      child: Text('건너뛰기 (기존 유지)'.tr),
                     ),
-                    DropdownMenuItem(value: 'overwrite', child: Text('덮어쓰기')),
-                    DropdownMenuItem(value: 'copy', child: Text('복사본 생성')),
+                    DropdownMenuItem(
+                      value: 'overwrite',
+                      child: Text('덮어쓰기'.tr),
+                    ),
+                    DropdownMenuItem(value: 'copy', child: Text('복사본 생성'.tr)),
                   ],
                   onChanged: importing
                       ? null
@@ -445,19 +458,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: activationPolicy,
-                  decoration: const InputDecoration(labelText: '활성 상태 정책'),
-                  items: const [
+                  decoration: InputDecoration(labelText: '활성 상태 정책'.tr),
+                  items: [
                     DropdownMenuItem(
                       value: 'inactive',
-                      child: Text('모두 비활성으로 가져오기 (권장)'),
+                      child: Text('모두 비활성으로 가져오기 (권장)'.tr),
                     ),
                     DropdownMenuItem(
                       value: 'preserve',
-                      child: Text('내보낸 활성 상태 유지'),
+                      child: Text('내보낸 활성 상태 유지'.tr),
                     ),
                     DropdownMenuItem(
                       value: 'keep_existing',
-                      child: Text('기존 활성 상태 유지'),
+                      child: Text('기존 활성 상태 유지'.tr),
                     ),
                   ],
                   onChanged: importing
@@ -495,8 +508,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         messenger.showSnackBar(
                           SnackBar(
                             content: Text(
-                              '가져오기 완료: 설정(생성 ${cfg['created']}, 갱신 ${cfg['updated']}, 건너뜀 ${cfg['skipped']}), 시나리오(생성 ${sc['created']}, 갱신 ${sc['updated']}, 건너뜀 ${sc['skipped']})'
-                                  .tr,
+                              LanguageManager.trTemplate(
+                                '가져오기 완료: 설정(생성 {created}, 갱신 {updated}, 건너뜀 {skipped}), 시나리오(생성 {sCreated}, 갱신 {sUpdated}, 건너뜀 {sSkipped})',
+                                {
+                                  'created': cfg['created'],
+                                  'updated': cfg['updated'],
+                                  'skipped': cfg['skipped'],
+                                  'sCreated': sc['created'],
+                                  'sUpdated': sc['updated'],
+                                  'sSkipped': sc['skipped'],
+                                },
+                              ),
                             ),
                           ),
                         );

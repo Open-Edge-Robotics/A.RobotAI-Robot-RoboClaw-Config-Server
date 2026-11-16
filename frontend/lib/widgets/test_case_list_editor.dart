@@ -551,7 +551,7 @@ class _TestCaseListEditorState extends State<TestCaseListEditor> {
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       decoration: InputDecoration(
-        labelText: labelText,
+        labelText: labelText.tr,
         border: const OutlineInputBorder(),
         isDense: true,
       ),

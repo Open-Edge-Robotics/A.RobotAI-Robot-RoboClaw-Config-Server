@@ -15,6 +15,7 @@ import 'package:frontend/storage/theme_mode_store.dart';
 import 'package:frontend/utils/localization.dart';
 
 import 'support/app_dependencies.dart';
+import 'support/localization_audit.dart';
 
 class FakeLanguageStore implements LanguageStore {
   FakeLanguageStore([this.value]);
@@ -113,5 +114,11 @@ void main() {
     expect(find.text('AI Agent Config Dashboard'), findsOneWidget);
     expect(LanguageManager.languageCode, 'en');
     expect('설정 관리'.tr, 'Configs');
+  });
+
+  testWidgets('영어 선택으로 복원하면 대시보드 전체에 한국어가 남지 않는다', (tester) async {
+    await pumpApp(tester, FakeLanguageStore('en'));
+    expect(find.text('AI Agent Config Dashboard'), findsOneWidget);
+    expectNoKoreanText(tester);
   });
 }

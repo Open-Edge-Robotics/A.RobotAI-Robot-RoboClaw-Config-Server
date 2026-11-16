@@ -133,7 +133,7 @@ class _TextField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       enabled: enabled,
-      decoration: InputDecoration(labelText: label.tr, hintText: hint),
+      decoration: InputDecoration(labelText: label.tr, hintText: hint?.tr),
     );
   }
 }

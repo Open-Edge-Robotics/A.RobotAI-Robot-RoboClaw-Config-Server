@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:frontend/screens/scenario_tab.dart';
 
 import 'support/app_dependencies.dart';
+import 'support/localization_audit.dart';
 
 void main() {
   late TestDependencies deps;
@@ -164,5 +165,20 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('편집'), findsOneWidget);
+  });
+
+  testWidgets('영어 모드에서는 시나리오 목록/상세에 한국어가 남지 않는다', (tester) async {
+    useEnglishLocale();
+    await pumpScenarioTab(tester);
+    expectNoKoreanText(tester);
+
+    await tester.tap(find.text('sc1'));
+    await tester.pumpAndSettle();
+    expectNoKoreanText(tester);
+
+    // 신규 시나리오(편집 폼)에서도 라벨이 영어로 보인다.
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpAndSettle();
+    expectNoKoreanText(tester);
   });
 }

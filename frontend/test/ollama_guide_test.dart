@@ -4,6 +4,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/widgets/ollama_guide.dart';
 
+import 'support/localization_audit.dart';
+
 void main() {
   Future<void> pumpPanel(
     WidgetTester tester, {
@@ -48,5 +50,11 @@ void main() {
       find.widgetWithText(TextButton, '기본 템플릿 입력'),
     );
     expect(button.onPressed, isNull);
+  });
+
+  testWidgets('영어 모드에서는 Ollama 가이드에 한국어가 남지 않는다', (tester) async {
+    useEnglishLocale();
+    await pumpPanel(tester, isEditing: true, onApply: () {});
+    expectNoKoreanText(tester);
   });
 }

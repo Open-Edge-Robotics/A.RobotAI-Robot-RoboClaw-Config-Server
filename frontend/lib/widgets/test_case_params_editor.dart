@@ -267,7 +267,7 @@ class _KeywordField extends StatelessWidget {
       initialValue: initialKeywords.join(', '),
       enabled: enabled,
       decoration: InputDecoration(
-        labelText: label,
+        labelText: label.tr,
         border: const OutlineInputBorder(),
         isDense: true,
         hintText: '키워드1, 키워드2'.tr,

@@ -173,9 +173,9 @@ class ConfigMessengerSection extends StatelessWidget {
                   controller: grpcPortCtrl,
                   enabled: peerEnabled,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'gRPC Server Port (ROBO_CLAW_GRPC_PORT)',
-                    helperText: '기본 50052 — 50051은 RosGrpc 텔레메트리 전용',
+                    helperText: '기본 50052 — 50051은 RosGrpc 텔레메트리 전용'.tr,
                   ),
                 ),
               ),
@@ -242,7 +242,7 @@ class _SecretField extends StatelessWidget {
       controller: controller,
       enabled: enabled,
       obscureText: true,
-      decoration: InputDecoration(labelText: label),
+      decoration: InputDecoration(labelText: label.tr),
     );
   }
 }

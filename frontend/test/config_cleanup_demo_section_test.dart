@@ -2,6 +2,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/widgets/config_cleanup_demo_section.dart';
 
+import 'support/localization_audit.dart';
+
 Widget _host({
   required bool enabled,
   required ValueChanged<bool> onEnabledChanged,
@@ -52,6 +54,25 @@ void main() {
     await tester.enterText(field, '[]');
     expect(controller.text, '[]');
     expect(find.textContaining('pre_id'), findsOneWidget);
+  });
+
+  testWidgets('영어 모드에서 CLOi 정리 시연 섹션에 한국어 문구가 남지 않는다', (tester) async {
+    // 위젯은 언어 변경 시 스스로 리빌드되지 않으므로 pump 전에 영어로 전환한다.
+    useEnglishLocale();
+    tester.view.physicalSize = const Size(1600, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      _host(
+        enabled: true,
+        onEnabledChanged: (_) {},
+        controller: TextEditingController(text: '[]'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expectNoKoreanText(tester);
   });
 
   testWidgets('CLOi 상황별 표현 모션 스위치를 켜고 끌 수 있다', (tester) async {

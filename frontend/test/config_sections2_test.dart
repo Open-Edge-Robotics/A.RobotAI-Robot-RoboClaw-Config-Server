@@ -12,6 +12,7 @@ import 'package:frontend/widgets/config_task_queue_section.dart';
 import 'package:http/http.dart' as http;
 
 import 'support/app_dependencies.dart';
+import 'support/localization_audit.dart';
 
 void main() {
   late TestDependencies deps;
@@ -283,5 +284,112 @@ void main() {
       find.widgetWithText(CheckboxListTile, 'gRPC Telemetry (RosGrpc)'),
     );
     expect(telemetry.onChanged, isNotNull);
+  });
+
+  testWidgets('영어 모드에서는 모든 설정 섹션에 한국어가 남지 않는다', (tester) async {
+    useEnglishLocale();
+
+    final sections = <String, Widget Function()>{
+      'MCP': () => ConfigMcpSection(
+        api: deps.dependencies.api,
+        isEditing: true,
+        enableMcp: true,
+        onEnableMcpChanged: (_) {},
+        mcpServersJsonCtrl: TextEditingController(),
+      ),
+      '경로': () => ConfigPathSection(
+        isEditing: true,
+        agentWorkspaceDirCtrl: TextEditingController(),
+        butlerScriptsDirCtrl: TextEditingController(),
+        butlerSourceDirCtrl: TextEditingController(),
+        configDirCtrl: TextEditingController(),
+        systemPromptFileCtrl: TextEditingController(),
+        robotDescriptionFileCtrl: TextEditingController(),
+        cleanupRunLogPathCtrl: TextEditingController(),
+      ),
+      '카메라': () => ConfigCameraSection(
+        isEditing: true,
+        cameraTopicCtrl: TextEditingController(),
+        useVision: false,
+        onUseVisionChanged: (_) {},
+        visionModelPathCtrl: TextEditingController(),
+        gripperCameraTopicCtrl: TextEditingController(),
+        gripperDepthTopicCtrl: TextEditingController(),
+        gripperCameraInfoTopicCtrl: TextEditingController(),
+        gripperPointcloudTopicCtrl: TextEditingController(),
+        useGripperVision: false,
+        onUseGripperVisionChanged: (_) {},
+        gripperVisionMaxInferenceHzCtrl: TextEditingController(),
+        lidarTopicCtrl: TextEditingController(),
+        imuTopicCtrl: TextEditingController(),
+      ),
+      '태스크 큐': () => ConfigTaskQueueSection(
+        isEditing: true,
+        taskQueueMaxSizeCtrl: TextEditingController(),
+        llmFailFast: false,
+        onLlmFailFastChanged: (_) {},
+        strictConfig: false,
+        onStrictConfigChanged: (_) {},
+        enableTaskDecomposition: true,
+        onEnableTaskDecompositionChanged: (_) {},
+        taskDecompositionMaxStepsCtrl: TextEditingController(),
+        taskStepMaxRetriesCtrl: TextEditingController(),
+        taskDecompositionWaitMarginCapSecCtrl: TextEditingController(),
+      ),
+      'HTTP 보안': () => ConfigHttpSecSection(
+        isEditing: true,
+        httpHostCtrl: TextEditingController(),
+        httpPortCtrl: TextEditingController(),
+        httpReadonlyTokenCtrl: TextEditingController(),
+        httpControlTokenCtrl: TextEditingController(),
+        httpAllowedCidrsCtrl: TextEditingController(),
+        httpRateLimitCtrl: TextEditingController(),
+        httpAllowedSkillsCtrl: TextEditingController(),
+        httpBlockedSkillsCtrl: TextEditingController(),
+      ),
+      'Dashboard': () => ConfigDashboardSection(
+        isEditing: true,
+        useDashboard: false,
+        onUseDashboardChanged: (_) {},
+        dashboardHostCtrl: TextEditingController(),
+        dashboardPortCtrl: TextEditingController(),
+      ),
+      '메신저': () => ConfigMessengerSection(
+        isEditing: true,
+        maestroEnabled: false,
+        enableDiscord: false,
+        enableSlack: false,
+        enableTelegram: false,
+        enableGrpc: true,
+        useGrpc: false,
+        enableGrpcClient: false,
+        onDiscordChanged: (_) {},
+        onSlackChanged: (_) {},
+        onTelegramChanged: (_) {},
+        onGrpcChanged: (_) {},
+        onUseGrpcChanged: (_) {},
+        onGrpcClientChanged: (_) {},
+        discordTokenCtrl: TextEditingController(),
+        slackAppTokenCtrl: TextEditingController(),
+        slackBotTokenCtrl: TextEditingController(),
+        telegramTokenCtrl: TextEditingController(),
+        grpcTargetHostCtrl: TextEditingController(),
+        grpcTargetPortCtrl: TextEditingController(),
+        grpcTargetPeersJsonCtrl: TextEditingController(),
+        grpcPeerTokenCtrl: TextEditingController(text: 'test-token'),
+        grpcPortCtrl: TextEditingController(text: '50052'),
+      ),
+    };
+
+    for (final entry in sections.entries) {
+      await pump(tester, entry.value());
+      final leftovers = renderedKoreanTexts(tester);
+      expect(
+        leftovers,
+        isEmpty,
+        reason:
+            '${entry.key} 섹션에 번역되지 않은 문구가 남아 있습니다: ${leftovers.join(' | ')}',
+      );
+    }
   });
 }

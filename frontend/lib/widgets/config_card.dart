@@ -146,8 +146,9 @@ class ConfigListItemCard extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              // 영어 라벨은 한국어보다 길어 카드 폭을 넘길 수 있으므로 Wrap 으로 흘린다.
+              Wrap(
+                alignment: WrapAlignment.end,
                 children: [
                   if (!config.isActive)
                     TextButton(

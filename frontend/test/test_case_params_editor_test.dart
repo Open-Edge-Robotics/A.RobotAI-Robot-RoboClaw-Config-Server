@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/models/scenario_model.dart';
 import 'package:frontend/widgets/test_case_params_editor.dart';
 
+import 'support/localization_audit.dart';
+
 void main() {
   Future<void> pumpEditor(WidgetTester tester, TestCase tc) async {
     tester.view.physicalSize = const Size(1200, 900);
@@ -65,5 +67,51 @@ void main() {
     );
     await pumpEditor(tester, tc);
     expect(find.text('LLM 검증 프롬프트 (prompt)'), findsOneWidget);
+  });
+
+  testWidgets('영어 모드에서는 테스트 파라미터 에디터에 한국어가 남지 않는다', (tester) async {
+    useEnglishLocale();
+
+    await pumpEditor(
+      tester,
+      TestCase(
+        id: 'tc1',
+        name: 'n',
+        step: 'Step 1',
+        type: 'custom',
+        params: {'prompt': 'hello'},
+      ),
+    );
+    expectNoKoreanText(tester);
+
+    await pumpEditor(
+      tester,
+      TestCase(
+        id: 'tc2',
+        name: 'n',
+        step: 'Step 1',
+        type: 'navigation',
+        params: {'mode': 'motion', 'command': 'go forward'},
+      ),
+    );
+    expectNoKoreanText(tester);
+
+    await pumpEditor(
+      tester,
+      TestCase(
+        id: 'tc3',
+        name: 'n',
+        step: 'Step 1',
+        type: 'persona',
+        params: {'prompt': 'who are you'},
+      ),
+    );
+    expectNoKoreanText(tester);
+
+    await pumpEditor(
+      tester,
+      TestCase(id: 'tc4', name: 'n', step: 'Step 1', type: 'ping'),
+    );
+    expectNoKoreanText(tester);
   });
 }
