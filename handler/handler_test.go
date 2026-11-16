@@ -10,10 +10,9 @@ import (
 	"testing"
 
 	"ai-config-server/config"
-	"ai-config-server/database"
 	"ai-config-server/database/models"
+	"ai-config-server/testutil"
 	"github.com/gin-gonic/gin"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -160,24 +159,18 @@ func TestValidateJSONFieldsMcpServers(t *testing.T) {
 	}
 }
 
-func setupHandlerTestDB(t *testing.T) {
+// setupHandlerTestDB 는 테스트별 고유 DB 와 Handler 를 만든다.
+func setupHandlerTestDB(t *testing.T) (*Handler, *gorm.DB) {
 	t.Helper()
-
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("failed to open test db: %v", err)
-	}
-	if err := db.AutoMigrate(&models.RoboClawConfig{}, &models.TestScenario{}); err != nil {
-		t.Fatalf("failed to migrate test db: %v", err)
-	}
-	database.DB = db
+	db := testutil.NewTestDB(t)
+	return NewHandler(db), db
 }
 
 func TestCreateConfigKeepsSingleActivePerRobotEnvironment(t *testing.T) {
-	setupHandlerTestDB(t)
+	h, db := setupHandlerTestDB(t)
 
 	r := gin.New()
-	r.POST("/configs", CreateConfig)
+	r.POST("/configs", h.CreateConfig)
 
 	for _, name := range []string{"first", "second"} {
 		body := []byte(`{"name":"` + name + `","robot_name":"butler","environment":"office","is_active":true,"limits_content":"{}"}`)
@@ -192,7 +185,7 @@ func TestCreateConfigKeepsSingleActivePerRobotEnvironment(t *testing.T) {
 	}
 
 	var activeCount int64
-	if err := database.DB.Model(&models.RoboClawConfig{}).
+	if err := db.Model(&models.RoboClawConfig{}).
 		Where("robot_name = ? AND environment = ? AND is_active = ?", "butler", "office", true).
 		Count(&activeCount).Error; err != nil {
 		t.Fatal(err)
@@ -211,10 +204,10 @@ func TestCreateConfigKeepsSingleActivePerRobotEnvironment(t *testing.T) {
 // GORM Create → DB 재조회 전 구간을 거쳐 명시적 false가 그대로 보존되는지
 // 검증해 동일한 버그의 재발을 막는다.
 func TestCreateConfigPreservesExplicitFalseForBoolDefaults(t *testing.T) {
-	setupHandlerTestDB(t)
+	h, db := setupHandlerTestDB(t)
 
 	r := gin.New()
-	r.POST("/configs", CreateConfig)
+	r.POST("/configs", h.CreateConfig)
 
 	body := []byte(`{
 		"name": "bool-default-regression",
@@ -234,7 +227,7 @@ func TestCreateConfigPreservesExplicitFalseForBoolDefaults(t *testing.T) {
 	}
 
 	var saved models.RoboClawConfig
-	if err := database.DB.Where("name = ?", "bool-default-regression").First(&saved).Error; err != nil {
+	if err := db.Where("name = ?", "bool-default-regression").First(&saved).Error; err != nil {
 		t.Fatalf("failed to reload saved config: %v", err)
 	}
 
@@ -247,10 +240,10 @@ func TestCreateConfigPreservesExplicitFalseForBoolDefaults(t *testing.T) {
 }
 
 func TestCreateScenarioKeepsSingleActivePerRobotEnvironment(t *testing.T) {
-	setupHandlerTestDB(t)
+	h, db := setupHandlerTestDB(t)
 
 	r := gin.New()
-	r.POST("/scenarios", CreateTestScenario)
+	r.POST("/scenarios", h.CreateTestScenario)
 
 	for _, name := range []string{"first", "second"} {
 		body := []byte(`{"name":"` + name + `","robot_name":"butler","environment":"office","is_active":true,"test_cases":[]}`)
@@ -265,7 +258,7 @@ func TestCreateScenarioKeepsSingleActivePerRobotEnvironment(t *testing.T) {
 	}
 
 	var activeCount int64
-	if err := database.DB.Model(&models.TestScenario{}).
+	if err := db.Model(&models.TestScenario{}).
 		Where("robot_name = ? AND environment = ? AND is_active = ?", "butler", "office", true).
 		Count(&activeCount).Error; err != nil {
 		t.Fatal(err)
@@ -490,11 +483,11 @@ func TestMaskSensitiveFieldsKeepsMcpServersVisibleWithMaskedCredentials(t *testi
 }
 
 func TestUpdateConfigPreservesMaskedMcpServersJson(t *testing.T) {
-	setupHandlerTestDB(t)
+	h, db := setupHandlerTestDB(t)
 
 	r := gin.New()
-	r.POST("/configs", CreateConfig)
-	r.PUT("/configs/:id", UpdateConfig)
+	r.POST("/configs", h.CreateConfig)
+	r.PUT("/configs/:id", h.UpdateConfig)
 
 	original := `[{"name":"fs","transport":"stdio","command":"npx"}]`
 	createBody, err := json.Marshal(map[string]interface{}{
@@ -540,7 +533,7 @@ func TestUpdateConfigPreservesMaskedMcpServersJson(t *testing.T) {
 	}
 
 	var stored models.RoboClawConfig
-	if err := database.DB.First(&stored, created.ID).Error; err != nil {
+	if err := db.First(&stored, created.ID).Error; err != nil {
 		t.Fatal(err)
 	}
 	if stored.McpServersJson != original {
@@ -572,16 +565,16 @@ func TestBuildEnvContentUsesConfiguredButlerPaths(t *testing.T) {
 }
 
 func TestListConfigsWithoutQueryParams(t *testing.T) {
-	setupHandlerTestDB(t)
+	h, db := setupHandlerTestDB(t)
 
 	// 테스트용 데이터 2개 생성
 	cfg1 := models.RoboClawConfig{Name: "cfg-1", RobotName: "butler", Environment: "office"}
 	cfg2 := models.RoboClawConfig{Name: "cfg-2", RobotName: "former", Environment: "factory"}
-	database.DB.Create(&cfg1)
-	database.DB.Create(&cfg2)
+	db.Create(&cfg1)
+	db.Create(&cfg2)
 
 	r := gin.New()
-	r.GET("/configs", ListConfigs)
+	r.GET("/configs", h.ListConfigs)
 
 	// 1. 파라미터 없이 전체 목록 조회
 	req := httptest.NewRequest("GET", "/configs", nil)

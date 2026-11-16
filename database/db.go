@@ -13,28 +13,37 @@ import (
 //go:embed seeds/*
 var seedFS embed.FS
 
-var DB *gorm.DB
-
-// Init DB를 초기화하고 AutoMigrate를 실행한다
-func Init(dsn string) error {
+// Init 은 dsn 으로 DB 를 열고 AutoMigrate 와 시드 데이터를 적용한다.
+// 성공 시 호출자가 소유하는 *gorm.DB 를 반환하고, 실패 시 nil 과 에러를 반환한다.
+// 전역 상태를 두지 않으므로 서버/테스트마다 독립된 DB 를 가질 수 있다.
+func Init(dsn string) (*gorm.DB, error) {
 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
 		SkipDefaultTransaction: true,
 	})
 	if err != nil {
-		return fmt.Errorf("DB 연결 실패: %w", err)
+		return nil, fmt.Errorf("DB 연결 실패: %w", err)
 	}
 
 	sqlDB, err := db.DB()
 	if err != nil {
-		return fmt.Errorf("SQL DB 객체 획득 실패: %w", err)
+		return nil, fmt.Errorf("SQL DB 객체 획득 실패: %w", err)
 	}
+
+	// 초기화 단계가 실패하면 커넥션을 닫는다. 성공 시에는 소유권이 호출자에게
+	// 넘어가므로 닫지 않는다. 닫기 오류는 원래 실패 원인을 가리지 않도록 버린다.
+	succeeded := false
+	defer func() {
+		if !succeeded {
+			_ = sqlDB.Close()
+		}
+	}()
 
 	// SQLite 동시 접근 안정성 확보를 위한 WAL 모드 및 대기 타임아웃 활성화
 	if _, err := sqlDB.Exec("PRAGMA journal_mode=WAL;"); err != nil {
-		return fmt.Errorf("WAL 모드 설정 실패: %w", err)
+		return nil, fmt.Errorf("WAL 모드 설정 실패: %w", err)
 	}
 	if _, err := sqlDB.Exec("PRAGMA busy_timeout=5000;"); err != nil {
-		return fmt.Errorf("busy_timeout 설정 실패: %w", err)
+		return nil, fmt.Errorf("busy_timeout 설정 실패: %w", err)
 	}
 
 	// SQLite의 쓰기 락 충돌 방지를 위해 최대 커넥션을 1개로 한정
@@ -44,19 +53,19 @@ func Init(dsn string) error {
 	// 실행하면 운영자가 끄 둔 스위치를 다시 켜게 된다.
 	hadMaestroEnabled := db.Migrator().HasColumn(&models.RoboClawConfig{}, "maestro_enabled")
 	if err := db.AutoMigrate(&models.RoboClawConfig{}, &models.TestScenario{}); err != nil {
-		return fmt.Errorf("AutoMigrate 실패: %w", err)
+		return nil, fmt.Errorf("AutoMigrate 실패: %w", err)
 	}
 	if !hadMaestroEnabled {
 		if err := backfillMaestroEnabled(db); err != nil {
-			return fmt.Errorf("maestro_enabled 백필 실패: %w", err)
+			return nil, fmt.Errorf("maestro_enabled 백필 실패: %w", err)
 		}
 	}
 
-	DB = db
 	if err := seedData(db); err != nil {
-		return fmt.Errorf("초기 데이터 시드 실패: %w", err)
+		return nil, fmt.Errorf("초기 데이터 시드 실패: %w", err)
 	}
-	return nil
+	succeeded = true
+	return db, nil
 }
 
 // backfillMaestroEnabled는 스위치 도입 이전 프로필의 동작(IP가 있으면 연결)을

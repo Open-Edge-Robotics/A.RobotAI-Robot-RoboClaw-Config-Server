@@ -3,35 +3,33 @@ package handler
 import (
 	"encoding/json"
 	"strings"
-	"sync"
 	"testing"
 
 	"ai-config-server/config"
-	"ai-config-server/database"
 	"ai-config-server/database/models"
 	"ai-config-server/testutil"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func init() {
 	gin.SetMode(gin.TestMode)
 }
 
-// setupRouterTestDB 는 통합 테스트용 DB 를 전역에 연결한다.
-// 아직 핸들러가 database.DB 전역을 참조하므로 직렬 실행 전제로 동작한다.
-// 전역 Rate Limiter 버킷도 초기화해 테스트 순서 의존성을 제거한다.
-func setupRouterTestDB(t *testing.T) {
+// setupRouterTestDB 는 테스트별 DB 와 Handler 를 만든다. 전역 상태를 교체하지
+// 않으므로 테스트가 병렬로 돌더라도 서로의 DB 를 덮어쓰지 않는다.
+func setupRouterTestDB(t *testing.T) (*Handler, *gorm.DB) {
 	t.Helper()
-	ipBuckets = sync.Map{}
-	database.DB = testutil.NewTestDB(t)
+	db := testutil.NewTestDB(t)
+	return NewHandler(db), db
 }
 
 func TestRouterRejectsMissingAuthenticationInProductionMode(t *testing.T) {
-	setupRouterTestDB(t)
+	_, db := setupRouterTestDB(t)
 	cfg := &config.Config{}
 	cfg.Security.RequireAuth = true
-	r := NewRouter(cfg)
+	r := NewRouter(cfg, db)
 
 	w := testutil.PerformJSON(r, "GET", "/api/v1/admin/transfer/export", "", nil)
 	if w.Code != 401 {
@@ -40,8 +38,8 @@ func TestRouterRejectsMissingAuthenticationInProductionMode(t *testing.T) {
 }
 
 func TestRouterLimitsRequestBody(t *testing.T) {
-	setupRouterTestDB(t)
-	r := NewRouter(testutil.NewTestConfig())
+	_, db := setupRouterTestDB(t)
+	r := NewRouter(testutil.NewTestConfig(), db)
 	body := map[string]any{"name": strings.Repeat("x", 11<<20)}
 
 	w := testutil.PerformJSON(r, "POST", "/api/v1/admin/configs", "", body)
@@ -51,8 +49,8 @@ func TestRouterLimitsRequestBody(t *testing.T) {
 }
 
 func TestRouterPing(t *testing.T) {
-	setupRouterTestDB(t)
-	r := NewRouter(testutil.NewTestConfig())
+	_, db := setupRouterTestDB(t)
+	r := NewRouter(testutil.NewTestConfig(), db)
 
 	w := testutil.PerformJSON(r, "GET", "/ping", "", nil)
 	if w.Code != 200 {
@@ -68,8 +66,8 @@ func TestRouterPing(t *testing.T) {
 }
 
 func TestRouterUnknownRouteReturnsJSON404(t *testing.T) {
-	setupRouterTestDB(t)
-	r := NewRouter(testutil.NewTestConfig())
+	_, db := setupRouterTestDB(t)
+	r := NewRouter(testutil.NewTestConfig(), db)
 
 	w := testutil.PerformJSON(r, "GET", "/no/such/route", "", nil)
 	if w.Code != 404 {
@@ -85,11 +83,11 @@ func TestRouterUnknownRouteReturnsJSON404(t *testing.T) {
 }
 
 func TestRouterAdminExportRequiresAdminToken(t *testing.T) {
-	setupRouterTestDB(t)
+	_, db := setupRouterTestDB(t)
 	cfg := testutil.NewTestConfig(func(c *config.Config) {
 		c.Security.AdminToken = "admin-secret"
 	})
-	r := NewRouter(cfg)
+	r := NewRouter(cfg, db)
 
 	// 토큰 없음 → 401
 	w := testutil.PerformJSON(r, "GET", "/api/v1/admin/transfer/export", "", nil)
@@ -118,11 +116,11 @@ func TestRouterAdminExportRequiresAdminToken(t *testing.T) {
 }
 
 func TestRouterAdminConfigCreateRequiresAdminToken(t *testing.T) {
-	setupRouterTestDB(t)
+	_, db := setupRouterTestDB(t)
 	cfg := testutil.NewTestConfig(func(c *config.Config) {
 		c.Security.AdminToken = "admin-secret"
 	})
-	r := NewRouter(cfg)
+	r := NewRouter(cfg, db)
 
 	body := map[string]any{
 		"name": "router-cfg", "robot_name": "butler", "environment": "office",
@@ -140,14 +138,14 @@ func TestRouterAdminConfigCreateRequiresAdminToken(t *testing.T) {
 }
 
 func TestRouterDeviceRouteAllowsAdminToken(t *testing.T) {
-	setupRouterTestDB(t)
+	_, db := setupRouterTestDB(t)
 	cfg := testutil.NewTestConfig(func(c *config.Config) {
 		c.Security.AdminToken = "admin-secret"
 		c.Security.DeviceToken = "device-secret"
 	})
-	r := NewRouter(cfg)
+	r := NewRouter(cfg, db)
 
-	database.DB.Create(&models.RoboClawConfig{
+	db.Create(&models.RoboClawConfig{
 		Name: "active", RobotName: "butler", Environment: "office", IsActive: true,
 	})
 

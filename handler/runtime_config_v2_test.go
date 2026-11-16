@@ -4,15 +4,14 @@ import (
 	"encoding/json"
 	"testing"
 
-	"ai-config-server/database"
 	"ai-config-server/database/models"
 	"ai-config-server/testutil"
 	"github.com/gin-gonic/gin"
 )
 
 func TestGetActiveRuntimeConfigV2ReturnsVersionedEnvelope(t *testing.T) {
-	setupRouterTestDB(t)
-	database.DB.Create(&models.RoboClawConfig{
+	h, db := setupRouterTestDB(t)
+	db.Create(&models.RoboClawConfig{
 		Name: "active", RobotName: "butler", Environment: "office", IsActive: true,
 		LlmProvider: "ollama", LlmModel: "llama3.2", OpenaiApiKey: "secret",
 		CloidCleanupDemoEnabled: boolPtr(false), CloidCleanupDemoMotionIDsJson: "[22,60]",
@@ -21,7 +20,7 @@ func TestGetActiveRuntimeConfigV2ReturnsVersionedEnvelope(t *testing.T) {
 	})
 
 	r := gin.New()
-	r.GET("/api/v2/device/runtime-config", GetActiveRuntimeConfigV2)
+	r.GET("/api/v2/device/runtime-config", h.GetActiveRuntimeConfigV2)
 	w := testutil.PerformJSON(r, "GET", "/api/v2/device/runtime-config?robot_name=butler&environment=office", "", nil)
 	if w.Code != 200 {
 		t.Fatalf("expected 200, got %d", w.Code)

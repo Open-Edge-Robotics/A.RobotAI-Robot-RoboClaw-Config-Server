@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"sync"
 	"testing"
 
-	"ai-config-server/database"
 	"ai-config-server/database/models"
 	"ai-config-server/testutil"
 
@@ -18,9 +16,6 @@ import (
 // ===== Rate Limit =====
 
 func TestLimitRateRejectsOverBurst(t *testing.T) {
-	// 전역 버킷 정리 (같은 테스트 IP 영향 방지)
-	ipBuckets = sync.Map{}
-
 	router := gin.New()
 	router.Use(LimitRate(0, 1)) // refill 0, burst 1 → 두 번째 요청부터 거절
 	router.GET("/x", func(c *gin.Context) { c.Status(http.StatusOK) })
@@ -34,8 +29,6 @@ func TestLimitRateRejectsOverBurst(t *testing.T) {
 }
 
 func TestLimitRateAllowsUnderBurst(t *testing.T) {
-	ipBuckets = sync.Map{}
-
 	router := gin.New()
 	router.Use(LimitRate(0, 5))
 	router.GET("/x", func(c *gin.Context) { c.Status(http.StatusOK) })
@@ -102,15 +95,15 @@ func TestCORSRejectsDisallowedOrigin(t *testing.T) {
 // ===== Config 핸들러 (Get/Delete/Activate/Clone) =====
 
 func TestGetConfigReturnsMaskedSecrets(t *testing.T) {
-	setupHandlerTestDB(t)
+	h, db := setupHandlerTestDB(t)
 	cfg := models.RoboClawConfig{
 		Name: "masked", RobotName: "butler", Environment: "office",
 		AzureOpenaiApiKey: "top-secret",
 	}
-	database.DB.Create(&cfg)
+	db.Create(&cfg)
 
 	r := gin.New()
-	r.GET("/c/:id", GetConfig)
+	r.GET("/c/:id", h.GetConfig)
 	w := testutil.PerformJSON(r, "GET", fmt.Sprintf("/c/%d", cfg.ID), "", nil)
 	if w.Code != 200 {
 		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
@@ -125,9 +118,9 @@ func TestGetConfigReturnsMaskedSecrets(t *testing.T) {
 }
 
 func TestGetConfigNotFound(t *testing.T) {
-	setupHandlerTestDB(t)
+	h, _ := setupHandlerTestDB(t)
 	r := gin.New()
-	r.GET("/c/:id", GetConfig)
+	r.GET("/c/:id", h.GetConfig)
 	w := testutil.PerformJSON(r, "GET", "/c/9999", "", nil)
 	if w.Code != 404 {
 		t.Fatalf("expected 404, got %d", w.Code)
@@ -135,61 +128,61 @@ func TestGetConfigNotFound(t *testing.T) {
 }
 
 func TestDeleteConfigRemovesRecord(t *testing.T) {
-	setupHandlerTestDB(t)
+	h, db := setupHandlerTestDB(t)
 	cfg := models.RoboClawConfig{Name: "del", RobotName: "butler", Environment: "office"}
-	database.DB.Create(&cfg)
+	db.Create(&cfg)
 
 	r := gin.New()
-	r.DELETE("/c/:id", DeleteConfig)
+	r.DELETE("/c/:id", h.DeleteConfig)
 	w := testutil.PerformJSON(r, "DELETE", fmt.Sprintf("/c/%d", cfg.ID), "", nil)
 	if w.Code != 200 {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
 	var count int64
-	database.DB.Model(&models.RoboClawConfig{}).Where("id = ?", cfg.ID).Count(&count)
+	db.Model(&models.RoboClawConfig{}).Where("id = ?", cfg.ID).Count(&count)
 	if count != 0 {
 		t.Errorf("expected record deleted, count=%d", count)
 	}
 }
 
 func TestActivateConfigDeactivatesOthersInSameRobotEnv(t *testing.T) {
-	setupHandlerTestDB(t)
+	h, db := setupHandlerTestDB(t)
 	a := models.RoboClawConfig{Name: "a", RobotName: "butler", Environment: "office", IsActive: true}
 	b := models.RoboClawConfig{Name: "b", RobotName: "butler", Environment: "office"}
-	database.DB.Create(&a)
-	database.DB.Create(&b)
+	db.Create(&a)
+	db.Create(&b)
 
 	r := gin.New()
-	r.POST("/c/:id/activate", ActivateConfig)
+	r.POST("/c/:id/activate", h.ActivateConfig)
 	w := testutil.PerformJSON(r, "POST", fmt.Sprintf("/c/%d/activate", b.ID), "", nil)
 	if w.Code != 200 {
 		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
 	}
 
 	var activeCount int64
-	database.DB.Model(&models.RoboClawConfig{}).
+	db.Model(&models.RoboClawConfig{}).
 		Where("robot_name = ? AND environment = ? AND is_active = ?", "butler", "office", true).
 		Count(&activeCount)
 	if activeCount != 1 {
 		t.Fatalf("expected exactly 1 active, got %d", activeCount)
 	}
 	var bReload models.RoboClawConfig
-	database.DB.First(&bReload, b.ID)
+	db.First(&bReload, b.ID)
 	if !bReload.IsActive {
 		t.Error("expected target to be active")
 	}
 }
 
 func TestCloneConfigCopiesSecrets(t *testing.T) {
-	setupHandlerTestDB(t)
+	h, db := setupHandlerTestDB(t)
 	cfg := models.RoboClawConfig{
 		Name: "orig", RobotName: "butler", Environment: "office",
 		AzureOpenaiApiKey: "secret", Description: "desc",
 	}
-	database.DB.Create(&cfg)
+	db.Create(&cfg)
 
 	r := gin.New()
-	r.POST("/c/:id/clone", CloneConfig)
+	r.POST("/c/:id/clone", h.CloneConfig)
 	w := testutil.PerformJSON(r, "POST", fmt.Sprintf("/c/%d/clone", cfg.ID), "", nil)
 	if w.Code != 201 {
 		t.Fatalf("expected 201, got %d: %s", w.Code, w.Body.String())
@@ -203,7 +196,7 @@ func TestCloneConfigCopiesSecrets(t *testing.T) {
 		t.Errorf("expected clone response api key masked, got %q", resp.AzureOpenaiApiKey)
 	}
 	var stored models.RoboClawConfig
-	database.DB.First(&stored, resp.ID)
+	db.First(&stored, resp.ID)
 	if stored.AzureOpenaiApiKey != "secret" {
 		t.Errorf("expected cloned record to preserve secret, got %q", stored.AzureOpenaiApiKey)
 	}
@@ -211,22 +204,22 @@ func TestCloneConfigCopiesSecrets(t *testing.T) {
 
 // ===== Scenario 핸들러 (List/Get/Update/Delete/Clone/Activate/Active) =====
 
-func scenarioRouter() *gin.Engine {
+func scenarioRouter(h *Handler) *gin.Engine {
 	r := gin.New()
-	r.GET("/s", ListTestScenarios)
-	r.GET("/s/:id", GetTestScenario)
-	r.POST("/s", CreateTestScenario)
-	r.PUT("/s/:id", UpdateTestScenario)
-	r.DELETE("/s/:id", DeleteTestScenario)
-	r.POST("/s/:id/clone", CloneTestScenario)
-	r.POST("/s/:id/activate", ActivateTestScenario)
-	r.GET("/active", GetActiveTestScenario)
+	r.GET("/s", h.ListTestScenarios)
+	r.GET("/s/:id", h.GetTestScenario)
+	r.POST("/s", h.CreateTestScenario)
+	r.PUT("/s/:id", h.UpdateTestScenario)
+	r.DELETE("/s/:id", h.DeleteTestScenario)
+	r.POST("/s/:id/clone", h.CloneTestScenario)
+	r.POST("/s/:id/activate", h.ActivateTestScenario)
+	r.GET("/active", h.GetActiveTestScenario)
 	return r
 }
 
 func TestScenarioCRUDLifecycle(t *testing.T) {
-	setupHandlerTestDB(t)
-	r := scenarioRouter()
+	h, db := setupHandlerTestDB(t)
+	r := scenarioRouter(h)
 
 	// List (empty)
 	w := testutil.PerformJSON(r, "GET", "/s", "", nil)
@@ -288,7 +281,7 @@ func TestScenarioCRUDLifecycle(t *testing.T) {
 		t.Fatalf("delete expected 200, got %d", w.Code)
 	}
 	var count int64
-	database.DB.Model(&models.TestScenario{}).Where("id = ?", created.ID).Count(&count)
+	db.Model(&models.TestScenario{}).Where("id = ?", created.ID).Count(&count)
 	if count != 0 {
 		t.Errorf("expected scenario deleted, count=%d", count)
 	}

@@ -9,14 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"ai-config-server/database"
 	"ai-config-server/database/models"
 )
 
 // ListTestScenarios GET /api/v1/scenarios
-func ListTestScenarios(c *gin.Context) {
+func (h *Handler) ListTestScenarios(c *gin.Context) {
 	var items []models.TestScenario
-	query := database.DB
+	query := h.DB.WithContext(c.Request.Context())
 
 	if robotName := c.Query("robot_name"); robotName != "" {
 		query = query.Where("robot_name = ?", robotName)
@@ -34,7 +33,7 @@ func ListTestScenarios(c *gin.Context) {
 }
 
 // GetTestScenario GET /api/v1/scenarios/:id
-func GetTestScenario(c *gin.Context) {
+func (h *Handler) GetTestScenario(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		LogAndRespondError(c, http.StatusBadRequest, "올바르지 않은 ID 형식입니다.", err)
@@ -42,7 +41,7 @@ func GetTestScenario(c *gin.Context) {
 	}
 
 	var item models.TestScenario
-	if err := database.DB.First(&item, id).Error; err != nil {
+	if err := h.DB.WithContext(c.Request.Context()).First(&item, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			LogAndRespondError(c, http.StatusNotFound, "해당 테스트 시나리오를 찾을 수 없습니다.", err)
 		} else {
@@ -55,14 +54,14 @@ func GetTestScenario(c *gin.Context) {
 }
 
 // CreateTestScenario POST /api/v1/scenarios
-func CreateTestScenario(c *gin.Context) {
+func (h *Handler) CreateTestScenario(c *gin.Context) {
 	var item models.TestScenario
 	if err := c.ShouldBindJSON(&item); err != nil {
 		LogAndRespondError(c, http.StatusBadRequest, "요청한 JSON 데이터의 유효성 검증에 실패했습니다.", err)
 		return
 	}
 
-	err := database.DB.Transaction(func(tx *gorm.DB) error {
+	err := h.DB.WithContext(c.Request.Context()).Transaction(func(tx *gorm.DB) error {
 		if item.IsActive {
 			if err := tx.Model(&models.TestScenario{}).
 				Where("robot_name = ? AND environment = ?", item.RobotName, item.Environment).
@@ -84,7 +83,7 @@ func CreateTestScenario(c *gin.Context) {
 // CloneTestScenario POST /api/v1/scenarios/:id/clone
 // 기존 테스트 시나리오를 복제하여 새 시나리오를 생성합니다.
 // TestCases는 GORM 커스텀 타입(TestCaseList)으로 DB에서 직접 복사 시 JSON 직렬화가 자동 처리됩니다.
-func CloneTestScenario(c *gin.Context) {
+func (h *Handler) CloneTestScenario(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		LogAndRespondError(c, http.StatusBadRequest, "올바르지 않은 ID 형식입니다.", err)
@@ -92,7 +91,7 @@ func CloneTestScenario(c *gin.Context) {
 	}
 
 	var src models.TestScenario
-	if err := database.DB.First(&src, id).Error; err != nil {
+	if err := h.DB.WithContext(c.Request.Context()).First(&src, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			LogAndRespondError(c, http.StatusNotFound, "복제 대상 테스트 시나리오를 찾을 수 없습니다.", err)
 		} else {
@@ -107,14 +106,14 @@ func CloneTestScenario(c *gin.Context) {
 	clone.UpdatedAt = time.Time{}
 	clone.DeletedAt = gorm.DeletedAt{}
 	clone.IsActive = false
-	clone.Name = generateUniqueCloneName(&models.TestScenario{}, src.Name)
+	clone.Name = h.generateUniqueCloneName(c.Request.Context(), &models.TestScenario{}, src.Name)
 	if clone.Description == "" {
 		clone.Description = fmt.Sprintf("(원본 복제: %s)", src.Name)
 	} else {
 		clone.Description = fmt.Sprintf("%s (원본 복제: %s)", clone.Description, src.Name)
 	}
 
-	if err := database.DB.Create(&clone).Error; err != nil {
+	if err := h.DB.WithContext(c.Request.Context()).Create(&clone).Error; err != nil {
 		LogAndRespondError(c, http.StatusInternalServerError, "복제 테스트 시나리오를 데이터베이스에 등록하는 중 오류가 발생했습니다.", err)
 		return
 	}
@@ -124,7 +123,7 @@ func CloneTestScenario(c *gin.Context) {
 }
 
 // UpdateTestScenario PUT /api/v1/scenarios/:id
-func UpdateTestScenario(c *gin.Context) {
+func (h *Handler) UpdateTestScenario(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		LogAndRespondError(c, http.StatusBadRequest, "올바르지 않은 ID 형식입니다.", err)
@@ -132,7 +131,7 @@ func UpdateTestScenario(c *gin.Context) {
 	}
 
 	var item models.TestScenario
-	if err := database.DB.First(&item, id).Error; err != nil {
+	if err := h.DB.WithContext(c.Request.Context()).First(&item, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			LogAndRespondError(c, http.StatusNotFound, "수정 대상 테스트 시나리오를 찾을 수 없습니다.", err)
 		} else {
@@ -149,7 +148,7 @@ func UpdateTestScenario(c *gin.Context) {
 
 	req.ID = uint(id)
 
-	err = database.DB.Transaction(func(tx *gorm.DB) error {
+	err = h.DB.WithContext(c.Request.Context()).Transaction(func(tx *gorm.DB) error {
 		if req.IsActive {
 			if err := tx.Model(&models.TestScenario{}).
 				Where("robot_name = ? AND environment = ? AND id <> ?", req.RobotName, req.Environment, id).
@@ -169,14 +168,14 @@ func UpdateTestScenario(c *gin.Context) {
 }
 
 // DeleteTestScenario DELETE /api/v1/scenarios/:id
-func DeleteTestScenario(c *gin.Context) {
+func (h *Handler) DeleteTestScenario(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		LogAndRespondError(c, http.StatusBadRequest, "올바르지 않은 ID 형식입니다.", err)
 		return
 	}
 
-	if err := database.DB.Delete(&models.TestScenario{}, id).Error; err != nil {
+	if err := h.DB.WithContext(c.Request.Context()).Delete(&models.TestScenario{}, id).Error; err != nil {
 		LogAndRespondError(c, http.StatusInternalServerError, "테스트 시나리오를 삭제하는 중 오류가 발생했습니다.", err)
 		return
 	}
@@ -186,7 +185,7 @@ func DeleteTestScenario(c *gin.Context) {
 }
 
 // ActivateTestScenario POST /api/v1/scenarios/:id/activate
-func ActivateTestScenario(c *gin.Context) {
+func (h *Handler) ActivateTestScenario(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		LogAndRespondError(c, http.StatusBadRequest, "올바르지 않은 ID 형식입니다.", err)
@@ -194,7 +193,7 @@ func ActivateTestScenario(c *gin.Context) {
 	}
 
 	var target models.TestScenario
-	if err := database.DB.First(&target, id).Error; err != nil {
+	if err := h.DB.WithContext(c.Request.Context()).First(&target, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			LogAndRespondError(c, http.StatusNotFound, "활성화 타겟 테스트 시나리오를 찾을 수 없습니다.", err)
 		} else {
@@ -204,7 +203,7 @@ func ActivateTestScenario(c *gin.Context) {
 	}
 
 	// 트랜잭션을 통해 기존 설정들을 비활성화하고 대상 시나리오를 활성화
-	err = database.DB.Transaction(func(tx *gorm.DB) error {
+	err = h.DB.WithContext(c.Request.Context()).Transaction(func(tx *gorm.DB) error {
 		// 동일 로봇 및 환경의 모든 시나리오를 비활성화
 		err := tx.Model(&models.TestScenario{}).
 			Where("robot_name = ? AND environment = ?", target.RobotName, target.Environment).
@@ -232,7 +231,7 @@ func ActivateTestScenario(c *gin.Context) {
 
 // GetActiveTestScenario GET /api/v1/scenarios/active
 // 디바이스/CLI용: 특정 로봇/환경 기준 활성 시나리오를 조회합니다.
-func GetActiveTestScenario(c *gin.Context) {
+func (h *Handler) GetActiveTestScenario(c *gin.Context) {
 	robotName := c.Query("robot_name")
 	env := c.Query("environment")
 
@@ -242,7 +241,9 @@ func GetActiveTestScenario(c *gin.Context) {
 	}
 
 	var scenario models.TestScenario
-	err := database.DB.Where("robot_name = ? AND environment = ? AND is_active = ?", robotName, env, true).First(&scenario).Error
+	err := h.DB.WithContext(c.Request.Context()).
+		Where("robot_name = ? AND environment = ? AND is_active = ?", robotName, env, true).
+		First(&scenario).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			LogAndRespondError(c, http.StatusNotFound, fmt.Sprintf("해당 로봇(%s)/환경(%s)에서 활성화된 테스트 시나리오를 찾을 수 없습니다.", robotName, env), err)

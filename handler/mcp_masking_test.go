@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"ai-config-server/database"
 	"ai-config-server/database/models"
 	"ai-config-server/testutil"
 
@@ -207,7 +206,7 @@ func TestMergeMaskedMcpServersJsonHandlesServerChanges(t *testing.T) {
 // TestUpdateConfigPreservesMcpCredentialsWhenFieldMasked 는 대시보드가 받은
 // 마스킹 목록을 그대로 저장해도 실제 자격 증명이 보존되는지 end-to-end 로 검증한다.
 func TestUpdateConfigPreservesMcpCredentialsWhenFieldMasked(t *testing.T) {
-	setupRouterTestDB(t)
+	h, db := setupRouterTestDB(t)
 	cfg := models.RoboClawConfig{
 		Name:        "c",
 		RobotName:   "butler",
@@ -215,10 +214,10 @@ func TestUpdateConfigPreservesMcpCredentialsWhenFieldMasked(t *testing.T) {
 		McpServersJson: `[{"name":"gh","transport":"stdio","command":"npx","args":["-y","server-github"],` +
 			`"env":{"GITHUB_TOKEN":"ghp-secret","LOG_LEVEL":"debug"}}]`,
 	}
-	database.DB.Create(&cfg)
+	db.Create(&cfg)
 
 	r := gin.New()
-	r.PUT("/c/:id", UpdateConfig)
+	r.PUT("/c/:id", h.UpdateConfig)
 
 	// 대시보드 응답과 동일하게 자격 증명만 마스킹된 목록을 만들어 그대로 저장한다.
 	masked := maskMcpServersJson(cfg.McpServersJson)
@@ -236,7 +235,7 @@ func TestUpdateConfigPreservesMcpCredentialsWhenFieldMasked(t *testing.T) {
 	}
 
 	var stored models.RoboClawConfig
-	database.DB.First(&stored, cfg.ID)
+	db.First(&stored, cfg.ID)
 	servers := parseMcpServers(t, stored.McpServersJson)
 
 	if servers[0].Env["GITHUB_TOKEN"] != "ghp-secret" {
@@ -253,17 +252,17 @@ func TestUpdateConfigPreservesMcpCredentialsWhenFieldMasked(t *testing.T) {
 // TestUpdateConfigOverwritesMcpCredentialWhenProvided 는 마스킹 대신 새 값을
 // 입력하면 그 값으로 교체되는지 검증한다.
 func TestUpdateConfigOverwritesMcpCredentialWhenProvided(t *testing.T) {
-	setupRouterTestDB(t)
+	h, db := setupRouterTestDB(t)
 	cfg := models.RoboClawConfig{
 		Name:           "c",
 		RobotName:      "butler",
 		Environment:    "office",
 		McpServersJson: `[{"name":"gh","env":{"GITHUB_TOKEN":"old-token","OTHER":"keep"}}]`,
 	}
-	database.DB.Create(&cfg)
+	db.Create(&cfg)
 
 	r := gin.New()
-	r.PUT("/c/:id", UpdateConfig)
+	r.PUT("/c/:id", h.UpdateConfig)
 
 	body := map[string]any{
 		"name": "c", "robot_name": "butler", "environment": "office",
@@ -275,7 +274,7 @@ func TestUpdateConfigOverwritesMcpCredentialWhenProvided(t *testing.T) {
 	}
 
 	var stored models.RoboClawConfig
-	database.DB.First(&stored, cfg.ID)
+	db.First(&stored, cfg.ID)
 	servers := parseMcpServers(t, stored.McpServersJson)
 
 	if servers[0].Env["GITHUB_TOKEN"] != "new-token" {
@@ -292,16 +291,16 @@ func TestUpdateConfigOverwritesMcpCredentialWhenProvided(t *testing.T) {
 //
 //	여기서는 전용 헬퍼를 쓰는 경로만 확인한다.)
 func TestUpdateConfigPreservesWholeMaskedMcpServersJsonViaRouter(t *testing.T) {
-	setupRouterTestDB(t)
+	h, db := setupRouterTestDB(t)
 	original := `[{"name":"fs","env":{"TOKEN":"secret"}}]`
 	cfg := models.RoboClawConfig{
 		Name: "c", RobotName: "butler", Environment: "office",
 		McpServersJson: original,
 	}
-	database.DB.Create(&cfg)
+	db.Create(&cfg)
 
 	r := gin.New()
-	r.PUT("/c/:id", UpdateConfig)
+	r.PUT("/c/:id", h.UpdateConfig)
 
 	body := map[string]any{
 		"name": "c", "robot_name": "butler", "environment": "office",
@@ -313,7 +312,7 @@ func TestUpdateConfigPreservesWholeMaskedMcpServersJsonViaRouter(t *testing.T) {
 	}
 
 	var stored models.RoboClawConfig
-	database.DB.First(&stored, cfg.ID)
+	db.First(&stored, cfg.ID)
 	servers := parseMcpServers(t, stored.McpServersJson)
 	if servers[0].Env["TOKEN"] != "secret" {
 		t.Errorf("expected whole-masked payload to preserve stored value, got %q", servers[0].Env["TOKEN"])

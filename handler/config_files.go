@@ -12,13 +12,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"ai-config-server/database"
 	"ai-config-server/database/models"
 )
 
 // GetConfigFile GET /api/v1/configs/:id/files/:filename
 // 관리자용: 활성 여부와 무관하게 특정 설정 ID의 파일(.env 등)을 조회합니다.
-func GetConfigFile(c *gin.Context) {
+func (h *Handler) GetConfigFile(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		LogAndRespondError(c, http.StatusBadRequest, "올바르지 않은 ID 형식입니다.", err)
@@ -27,7 +26,7 @@ func GetConfigFile(c *gin.Context) {
 	filename := c.Param("filename")
 
 	var config models.RoboClawConfig
-	if err := database.DB.First(&config, id).Error; err != nil {
+	if err := h.DB.WithContext(c.Request.Context()).First(&config, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			LogAndRespondError(c, http.StatusNotFound, "해당 설정을 찾을 수 없습니다.", err)
 		} else {

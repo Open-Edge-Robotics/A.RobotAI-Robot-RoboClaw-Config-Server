@@ -13,9 +13,9 @@ import (
 
 // TestValidateImportMalformedBody 는 잘못된 JSON 요청 시 400 을 검증한다.
 func TestValidateImportMalformedBody(t *testing.T) {
-	setupRouterTestDB(t)
+	h, _ := setupRouterTestDB(t)
 	r := gin.New()
-	r.POST("/validate", ValidateImport)
+	r.POST("/validate", h.ValidateImport)
 
 	req := httptest.NewRequest("POST", "/validate", bytes.NewReader([]byte("{bad json")))
 	req.Header.Set("Content-Type", "application/json")
@@ -28,9 +28,9 @@ func TestValidateImportMalformedBody(t *testing.T) {
 
 // TestImportBackupInvalidConflictPolicy 는 잘못된 충돌 정책 시 400 을 검증한다.
 func TestImportBackupInvalidConflictPolicy(t *testing.T) {
-	setupRouterTestDB(t)
+	h, _ := setupRouterTestDB(t)
 	r := gin.New()
-	r.POST("/import", ImportBackup)
+	r.POST("/import", h.ImportBackup)
 
 	body := map[string]any{
 		"document": map[string]any{
@@ -47,9 +47,9 @@ func TestImportBackupInvalidConflictPolicy(t *testing.T) {
 
 // TestImportBackupInvalidActivationPolicy 는 잘못된 활성 정책 시 400 을 검증한다.
 func TestImportBackupInvalidActivationPolicy(t *testing.T) {
-	setupRouterTestDB(t)
+	h, _ := setupRouterTestDB(t)
 	r := gin.New()
-	r.POST("/import", ImportBackup)
+	r.POST("/import", h.ImportBackup)
 
 	body := map[string]any{
 		"document": map[string]any{
@@ -66,9 +66,9 @@ func TestImportBackupInvalidActivationPolicy(t *testing.T) {
 
 // TestExportBackupMalformedBody 는 잘못된 내보내기 요청 시 400 을 검증한다.
 func TestExportBackupMalformedBody(t *testing.T) {
-	setupRouterTestDB(t)
+	h, _ := setupRouterTestDB(t)
 	r := gin.New()
-	r.POST("/export", ExportBackup)
+	r.POST("/export", h.ExportBackup)
 
 	req := httptest.NewRequest("POST", "/export", bytes.NewReader([]byte("{bad")))
 	req.Header.Set("Content-Type", "application/json")

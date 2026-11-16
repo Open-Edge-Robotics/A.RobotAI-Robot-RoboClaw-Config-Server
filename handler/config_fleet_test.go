@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"ai-config-server/database"
 	"ai-config-server/database/models"
 	"ai-config-server/testutil"
 	"github.com/gin-gonic/gin"
@@ -305,8 +304,8 @@ func TestConfigTransferRoundTripPreservesFleetControl(t *testing.T) {
 // TestGetActiveRuntimeConfigV2IncludesFleetFields 는 v2 manifest 응답의
 // config에 contract api_json field가 포함되는지 확인한다.
 func TestGetActiveRuntimeConfigV2IncludesFleetFields(t *testing.T) {
-	setupRouterTestDB(t)
-	database.DB.Create(&models.RoboClawConfig{
+	h, db := setupRouterTestDB(t)
+	db.Create(&models.RoboClawConfig{
 		Name: "active", RobotName: "butler", Environment: "office", IsActive: true,
 		MaestroIp: "10.0.0.5", RobotId: "butler-01", RobotPort: 50053,
 		LangsmithWorkspaceId: "workspace-123",
@@ -314,7 +313,7 @@ func TestGetActiveRuntimeConfigV2IncludesFleetFields(t *testing.T) {
 	})
 
 	r := gin.New()
-	r.GET("/api/v2/device/runtime-config", GetActiveRuntimeConfigV2)
+	r.GET("/api/v2/device/runtime-config", h.GetActiveRuntimeConfigV2)
 	w := testutil.PerformJSON(r, "GET", "/api/v2/device/runtime-config?robot_name=butler&environment=office", "", nil)
 	if w.Code != 200 {
 		t.Fatalf("expected 200, got %d", w.Code)

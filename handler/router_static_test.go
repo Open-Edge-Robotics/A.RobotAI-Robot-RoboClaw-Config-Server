@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"testing"
 
 	"ai-config-server/testutil"
@@ -37,7 +36,6 @@ func setupWebFixture(t *testing.T) string {
 	}
 
 	t.Chdir(dir)
-	ipBuckets = sync.Map{}
 
 	return webDir
 }
@@ -61,7 +59,8 @@ func assertJSONErrorBody(t *testing.T, raw []byte) {
 // "JSON.parse: unexpected character at line 1 column 1" 오류를 낸다.
 func TestRouterMissingSourceMapReturns404(t *testing.T) {
 	setupWebFixture(t)
-	r := NewRouter(testutil.NewTestConfig())
+	_, db := setupRouterTestDB(t)
+	r := NewRouter(testutil.NewTestConfig(), db)
 
 	w := testutil.PerformJSON(r, "GET", "/web/flutter.js.map", "", nil)
 
@@ -81,7 +80,8 @@ func TestRouterMissingSourceMapReturns404(t *testing.T) {
 // 요청이 조용히 성공한 것처럼 보여 캐시 문제를 추적하기 어려워진다.
 func TestRouterMissingStaticAssetReturns404(t *testing.T) {
 	setupWebFixture(t)
-	r := NewRouter(testutil.NewTestConfig())
+	_, db := setupRouterTestDB(t)
+	r := NewRouter(testutil.NewTestConfig(), db)
 
 	for _, path := range []string{
 		"/web/assets/AssetManifest.json",
@@ -104,7 +104,8 @@ func TestRouterMissingStaticAssetReturns404(t *testing.T) {
 // 기존처럼 index.html 로 fallback 되는지 검증한다.
 func TestRouterSpaDeepLinkServesIndexHTML(t *testing.T) {
 	setupWebFixture(t)
-	r := NewRouter(testutil.NewTestConfig())
+	_, db := setupRouterTestDB(t)
+	r := NewRouter(testutil.NewTestConfig(), db)
 
 	for _, path := range []string{"/web/", "/web/dashboard", "/web/configs/1/edit"} {
 		w := testutil.PerformJSON(r, "GET", path, "", nil)
@@ -122,7 +123,8 @@ func TestRouterSpaDeepLinkServesIndexHTML(t *testing.T) {
 // 검증한다(확장자 필터가 정상 자산까지 막지 않아야 한다).
 func TestRouterServesExistingStaticAsset(t *testing.T) {
 	setupWebFixture(t)
-	r := NewRouter(testutil.NewTestConfig())
+	_, db := setupRouterTestDB(t)
+	r := NewRouter(testutil.NewTestConfig(), db)
 
 	w := testutil.PerformJSON(r, "GET", "/web/flutter.js", "", nil)
 	if w.Code != http.StatusOK {
@@ -137,7 +139,8 @@ func TestRouterServesExistingStaticAsset(t *testing.T) {
 // index.html fallback 에 삼켜지지 않는지 검증한다.
 func TestRouterWebPrefixBoundary(t *testing.T) {
 	setupWebFixture(t)
-	r := NewRouter(testutil.NewTestConfig())
+	_, db := setupRouterTestDB(t)
+	r := NewRouter(testutil.NewTestConfig(), db)
 
 	for _, path := range []string{"/webhook", "/webhook/notify", "/no/such/route"} {
 		w := testutil.PerformJSON(r, "GET", path, "", nil)

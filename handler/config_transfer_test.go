@@ -7,15 +7,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"ai-config-server/database"
 	"ai-config-server/database/models"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-// setupTransferTestDB는 설정/시나리오 모델을 갖는 인메모리 DB를 준비한다.
-func setupTransferTestDB(t *testing.T) {
+// setupTransferTestDB는 설정/시나리오 모델을 갖는 인메모리 DB 핸들을 준비한다.
+func setupTransferTestDB(t *testing.T) (*Handler, *gorm.DB) {
 	t.Helper()
-	setupHandlerTestDB(t)
+	return setupHandlerTestDB(t)
 }
 
 func TestConfigToTransferOmitsSecrets(t *testing.T) {
@@ -240,7 +240,7 @@ func TestConfigTransferToModelOverwritesSecretsWhenProvided(t *testing.T) {
 }
 
 func TestExportBackupOmitsIDsAndTimestamps(t *testing.T) {
-	setupTransferTestDB(t)
+	h, db := setupTransferTestDB(t)
 
 	cfg := models.RoboClawConfig{
 		Name:        "cfg-a",
@@ -248,7 +248,7 @@ func TestExportBackupOmitsIDsAndTimestamps(t *testing.T) {
 		Environment: "office",
 		Description: "hello",
 	}
-	database.DB.Create(&cfg)
+	db.Create(&cfg)
 	sc := models.TestScenario{
 		Name:        "sc-a",
 		RobotName:   "butler",
@@ -257,10 +257,10 @@ func TestExportBackupOmitsIDsAndTimestamps(t *testing.T) {
 			{ID: "tc1", Name: "n", Type: "ping", Enabled: true},
 		},
 	}
-	database.DB.Create(&sc)
+	db.Create(&sc)
 
 	r := gin.New()
-	r.GET("/export", ExportBackup)
+	r.GET("/export", h.ExportBackup)
 	req := httptest.NewRequest("GET", "/export", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -288,8 +288,8 @@ func TestExportBackupOmitsIDsAndTimestamps(t *testing.T) {
 }
 
 func TestExportBackupWithSecretsIncludesKeys(t *testing.T) {
-	setupTransferTestDB(t)
-	database.DB.Create(&models.RoboClawConfig{
+	h, db := setupTransferTestDB(t)
+	db.Create(&models.RoboClawConfig{
 		Name:              "cfg-a",
 		RobotName:         "butler",
 		Environment:       "office",
@@ -297,7 +297,7 @@ func TestExportBackupWithSecretsIncludesKeys(t *testing.T) {
 	})
 
 	r := gin.New()
-	r.POST("/export", ExportBackup)
+	r.POST("/export", h.ExportBackup)
 	body := []byte(`{"include_secrets":true,"include_configs":true,"include_scenarios":true}`)
 	req := httptest.NewRequest("POST", "/export", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -317,10 +317,10 @@ func TestExportBackupWithSecretsIncludesKeys(t *testing.T) {
 }
 
 func TestValidateImportRejectsBadSchemaAndInvalidJSON(t *testing.T) {
-	setupTransferTestDB(t)
+	h, _ := setupTransferTestDB(t)
 
 	r := gin.New()
-	r.POST("/validate", ValidateImport)
+	r.POST("/validate", h.ValidateImport)
 
 	// 잘못된 스키마 버전
 	body := []byte(`{"document":{"kind":"ai-config-server.portable-backup","schema_version":99,"configs":[],"scenarios":[]}}`)
@@ -350,10 +350,10 @@ func TestValidateImportRejectsBadSchemaAndInvalidJSON(t *testing.T) {
 }
 
 func TestImportBackupFreshServer(t *testing.T) {
-	setupTransferTestDB(t)
+	h, db := setupTransferTestDB(t)
 
 	r := gin.New()
-	r.POST("/import", ImportBackup)
+	r.POST("/import", h.ImportBackup)
 
 	body := []byte(`{
 		"document": {
@@ -394,7 +394,7 @@ func TestImportBackupFreshServer(t *testing.T) {
 	}
 
 	var stored models.RoboClawConfig
-	if err := database.DB.Where("name = ?", "imported-cfg").First(&stored).Error; err != nil {
+	if err := db.Where("name = ?", "imported-cfg").First(&stored).Error; err != nil {
 		t.Fatal(err)
 	}
 	if stored.AzureOpenaiApiKey != "secret-key" {
@@ -406,15 +406,15 @@ func TestImportBackupFreshServer(t *testing.T) {
 }
 
 func TestImportBackupConflictSkipAndCopy(t *testing.T) {
-	setupTransferTestDB(t)
-	database.DB.Create(&models.RoboClawConfig{
+	h, db := setupTransferTestDB(t)
+	db.Create(&models.RoboClawConfig{
 		Name:        "dup",
 		RobotName:   "butler",
 		Environment: "office",
 	})
 
 	r := gin.New()
-	r.POST("/import", ImportBackup)
+	r.POST("/import", h.ImportBackup)
 
 	doc := map[string]any{
 		"kind":           BackupKind,
@@ -460,8 +460,8 @@ func TestImportBackupConflictSkipAndCopy(t *testing.T) {
 }
 
 func TestImportBackupPreservesExistingSecretsWhenBackupOmitsThem(t *testing.T) {
-	setupTransferTestDB(t)
-	database.DB.Create(&models.RoboClawConfig{
+	h, db := setupTransferTestDB(t)
+	db.Create(&models.RoboClawConfig{
 		Name:              "existing",
 		RobotName:         "butler",
 		Environment:       "office",
@@ -469,7 +469,7 @@ func TestImportBackupPreservesExistingSecretsWhenBackupOmitsThem(t *testing.T) {
 	})
 
 	r := gin.New()
-	r.POST("/import", ImportBackup)
+	r.POST("/import", h.ImportBackup)
 
 	// 백업에 민감 정보 없음 → 덮어쓰기 시 기존 키 보존
 	body := []byte(`{
@@ -497,7 +497,7 @@ func TestImportBackupPreservesExistingSecretsWhenBackupOmitsThem(t *testing.T) {
 	}
 
 	var stored models.RoboClawConfig
-	if err := database.DB.Where("name = ?", "existing").First(&stored).Error; err != nil {
+	if err := db.Where("name = ?", "existing").First(&stored).Error; err != nil {
 		t.Fatal(err)
 	}
 	if stored.AzureOpenaiApiKey != "keep-me" {
@@ -509,8 +509,8 @@ func TestImportBackupPreservesExistingSecretsWhenBackupOmitsThem(t *testing.T) {
 }
 
 func TestImportBackupSingleActivePerRobotEnvironment(t *testing.T) {
-	setupTransferTestDB(t)
-	database.DB.Create(&models.RoboClawConfig{
+	h, db := setupTransferTestDB(t)
+	db.Create(&models.RoboClawConfig{
 		Name:        "old-active",
 		RobotName:   "butler",
 		Environment: "office",
@@ -518,7 +518,7 @@ func TestImportBackupSingleActivePerRobotEnvironment(t *testing.T) {
 	})
 
 	r := gin.New()
-	r.POST("/import", ImportBackup)
+	r.POST("/import", h.ImportBackup)
 
 	// preserve 활성 정책, 활성 신규 항목 1개
 	body := []byte(`{
@@ -545,7 +545,7 @@ func TestImportBackupSingleActivePerRobotEnvironment(t *testing.T) {
 	}
 
 	var activeCount int64
-	database.DB.Model(&models.RoboClawConfig{}).
+	db.Model(&models.RoboClawConfig{}).
 		Where("robot_name = ? AND environment = ? AND is_active = ?", "butler", "office", true).
 		Count(&activeCount)
 	if activeCount != 1 {
@@ -553,16 +553,16 @@ func TestImportBackupSingleActivePerRobotEnvironment(t *testing.T) {
 	}
 
 	var newActive models.RoboClawConfig
-	database.DB.Where("name = ?", "new-active").First(&newActive)
+	db.Where("name = ?", "new-active").First(&newActive)
 	if !newActive.IsActive {
 		t.Error("expected new-active to be active with preserve policy")
 	}
 }
 
 func TestImportBackupAllInactivePolicy(t *testing.T) {
-	setupTransferTestDB(t)
+	h, db := setupTransferTestDB(t)
 	r := gin.New()
-	r.POST("/import", ImportBackup)
+	r.POST("/import", h.ImportBackup)
 
 	body := []byte(`{
 		"document": {
@@ -588,16 +588,16 @@ func TestImportBackupAllInactivePolicy(t *testing.T) {
 	}
 
 	var stored models.RoboClawConfig
-	database.DB.Where("name = ?", "cfg-a").First(&stored)
+	db.Where("name = ?", "cfg-a").First(&stored)
 	if stored.IsActive {
 		t.Error("expected config imported as inactive under inactive policy")
 	}
 }
 
 func TestImportBackupRollsBackOnBadData(t *testing.T) {
-	setupTransferTestDB(t)
+	h, db := setupTransferTestDB(t)
 	r := gin.New()
-	r.POST("/import", ImportBackup)
+	r.POST("/import", h.ImportBackup)
 
 	// 유효한 config 하나와 잘못된(필수 필드 누락) config 하나 → 전체 롤백
 	body := []byte(`{
@@ -623,7 +623,7 @@ func TestImportBackupRollsBackOnBadData(t *testing.T) {
 	}
 
 	var count int64
-	database.DB.Model(&models.RoboClawConfig{}).Count(&count)
+	db.Model(&models.RoboClawConfig{}).Count(&count)
 	if count != 0 {
 		t.Fatalf("expected no configs inserted after rollback, got %d", count)
 	}

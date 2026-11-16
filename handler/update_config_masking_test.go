@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"ai-config-server/database"
 	"ai-config-server/database/models"
 	"ai-config-server/testutil"
 
@@ -13,7 +12,7 @@ import (
 
 // TestUpdateConfigPreservesAllMaskedFields 는 수정 시 모든 마스킹된 민감 필드 보존을 검증한다.
 func TestUpdateConfigPreservesAllMaskedFields(t *testing.T) {
-	setupRouterTestDB(t)
+	h, db := setupRouterTestDB(t)
 	cfg := models.RoboClawConfig{
 		Name:               "c",
 		RobotName:          "butler",
@@ -34,10 +33,10 @@ func TestUpdateConfigPreservesAllMaskedFields(t *testing.T) {
 		System1ApiKey:      "system1-secret",
 		McpServersJson:     `[{"name":"fs","command":"npx"}]`,
 	}
-	database.DB.Create(&cfg)
+	db.Create(&cfg)
 
 	r := gin.New()
-	r.PUT("/c/:id", UpdateConfig)
+	r.PUT("/c/:id", h.UpdateConfig)
 
 	body := map[string]any{
 		"name": "c", "robot_name": "butler", "environment": "office",
@@ -63,7 +62,7 @@ func TestUpdateConfigPreservesAllMaskedFields(t *testing.T) {
 	}
 
 	var stored models.RoboClawConfig
-	database.DB.First(&stored, cfg.ID)
+	db.First(&stored, cfg.ID)
 
 	checks := []struct {
 		name string
@@ -95,15 +94,15 @@ func TestUpdateConfigPreservesAllMaskedFields(t *testing.T) {
 
 // TestUpdateConfigOverwritesSecretsWhenProvided 는 새 값 제공 시 덮어쓰기를 검증한다.
 func TestUpdateConfigOverwritesSecretsWhenProvided(t *testing.T) {
-	setupRouterTestDB(t)
+	h, db := setupRouterTestDB(t)
 	cfg := models.RoboClawConfig{
 		Name: "c", RobotName: "butler", Environment: "office",
 		AzureOpenaiApiKey: "old-key",
 	}
-	database.DB.Create(&cfg)
+	db.Create(&cfg)
 
 	r := gin.New()
-	r.PUT("/c/:id", UpdateConfig)
+	r.PUT("/c/:id", h.UpdateConfig)
 
 	body := map[string]any{
 		"name": "c", "robot_name": "butler", "environment": "office",
@@ -115,7 +114,7 @@ func TestUpdateConfigOverwritesSecretsWhenProvided(t *testing.T) {
 	}
 
 	var stored models.RoboClawConfig
-	database.DB.First(&stored, cfg.ID)
+	db.First(&stored, cfg.ID)
 	if stored.AzureOpenaiApiKey != "new-key" {
 		t.Errorf("expected new key, got %q", stored.AzureOpenaiApiKey)
 	}
