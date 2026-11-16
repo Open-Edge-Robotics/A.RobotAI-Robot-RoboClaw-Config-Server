@@ -13,17 +13,20 @@ RUN apt-get update && apt-get install -y \
     libglu1-mesa \
     && rm -rf /var/lib/apt/lists/*
 
-# Flutter SDK 고정 (로컬 개발 버전 3.47.0 과 일치시켜 재현성 확보)
+# Flutter SDK 고정 (검증한 3.50.0). frontend 의 material_ui 는 Flutter 3.47.0 이상을
+# 요구하므로, 이 버전 아래로 내리려면 pubspec 의 flutter 하한도 함께 확인해야 한다.
 # --depth 1 로 shallow clone 하여 빌드 시간 단축
-RUN git clone --depth 1 -b 3.47.0 https://github.com/flutter/flutter.git /usr/local/flutter
+ARG FLUTTER_VERSION=3.50.0
+RUN git clone --depth 1 -b ${FLUTTER_VERSION} https://github.com/flutter/flutter.git /usr/local/flutter
 ENV PATH="/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${PATH}"
 
 WORKDIR /app
 
 # 캐시 활용을 위한 pubspec 복사 및 의존성 다운로드
+# --enforce-lockfile: lockfile 과 어긋나면 빌드를 중단해 이미지 재현성을 지킨다(CI 와 동일 정책).
 COPY frontend/pubspec.yaml frontend/pubspec.lock ./frontend/
 WORKDIR /app/frontend
-RUN flutter pub get
+RUN flutter pub get --enforce-lockfile
 
 # 소스코드 전체 복사 후 Web 빌드 실행 (base-href /web/ 적용)
 WORKDIR /app
