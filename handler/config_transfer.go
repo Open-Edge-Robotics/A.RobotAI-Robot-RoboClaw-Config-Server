@@ -31,7 +31,6 @@ import (
 const (
 	BackupKind             = transfer.Kind
 	BackupSchemaVersion    = transfer.SchemaVersion
-	MaskValue              = "********"
 	ConflictSkip           = transfer.ConflictSkip
 	ConflictOverwrite      = transfer.ConflictOverwrite
 	ConflictCopy           = transfer.ConflictCopy

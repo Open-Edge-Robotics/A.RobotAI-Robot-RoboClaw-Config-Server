@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 
 	"ai-config-server/database/models"
 	"ai-config-server/service"
+	"ai-config-server/service/profile"
 )
 
 // applyButlerPathDefaults 는 butler 로봇 설정의 비어 있는 기본 경로를 채운다.
@@ -96,14 +98,7 @@ func (h *Handler) CreateConfig(c *gin.Context) {
 	applyButlerPathDefaults(&item)
 
 	err := h.DB.WithContext(c.Request.Context()).Transaction(func(tx *gorm.DB) error {
-		if item.IsActive {
-			if err := tx.Model(&models.RoboClawConfig{}).
-				Where("robot_name = ? AND environment = ?", item.RobotName, item.Environment).
-				Update("is_active", false).Error; err != nil {
-				return err
-			}
-		}
-		return tx.Create(&item).Error
+		return profile.CreateConfigInTx(tx, &item)
 	})
 	if err != nil {
 		LogAndRespondError(c, http.StatusInternalServerError, "신규 설정을 데이터베이스에 등록하는 중 오류가 발생했습니다.", err)
@@ -140,51 +135,12 @@ func (h *Handler) UpdateConfig(c *gin.Context) {
 		return
 	}
 
-	// 기존 레코드와 요청 필드를 병합한다. 전체 모델에 직접 바인딩하면
-	// 새 필드를 모르는 구형 클라이언트의 PUT 요청이 해당 필드를 zero value로
-	// 초기화하는 문제가 발생한다.
-	existingJSON, err := json.Marshal(item)
+	// 기존 레코드와 요청 필드를 병합하고, 마스킹된 자격 증명을 복원한다.
+	// 정책은 service/profile.Merge 가 소유한다.
+	req, err := profile.Merge(item, fields, uint(id))
 	if err != nil {
-		LogAndRespondError(c, http.StatusInternalServerError, "기존 설정을 병합하는 중 오류가 발생했습니다.", err)
+		LogAndRespondError(c, mergeErrorStatus(err), mergeErrorMessage(err), err)
 		return
-	}
-	merged := make(map[string]json.RawMessage)
-	if err := json.Unmarshal(existingJSON, &merged); err != nil {
-		LogAndRespondError(c, http.StatusInternalServerError, "기존 설정을 병합하는 중 오류가 발생했습니다.", err)
-		return
-	}
-	for key, value := range fields {
-		merged[key] = value
-	}
-	// 영속성 및 활성 상태는 일반 수정 payload가 변경할 수 없다.
-	delete(merged, "ID")
-	delete(merged, "id")
-	delete(merged, "CreatedAt")
-	delete(merged, "created_at")
-	delete(merged, "UpdatedAt")
-	delete(merged, "updated_at")
-	delete(merged, "DeletedAt")
-	delete(merged, "deleted_at")
-	delete(merged, "is_active")
-	mergedJSON, err := json.Marshal(merged)
-	if err != nil {
-		LogAndRespondError(c, http.StatusInternalServerError, "수정 요청을 병합하는 중 오류가 발생했습니다.", err)
-		return
-	}
-	var req models.RoboClawConfig
-	if err := json.Unmarshal(mergedJSON, &req); err != nil {
-		LogAndRespondError(c, http.StatusBadRequest, "수정 요청의 필드 형식이 올바르지 않습니다.", err)
-		return
-	}
-
-	// MCP 서버 목록은 자격 증명(env/headers)만 마스킹되어 내려간다.
-	// - JSON 전체가 "********" 인 경우(전체 마스킹 값)는 기존 값을 그대로 보존한다.
-	// - 필드 단위 마스킹이면 남아 있는 마스킹 값을 기존 저장 값으로 복원한다.
-	// JSON 포맷 검증 전에 복원해야 한다(validateJSONFields 가 이 필드도 검사한다).
-	if req.McpServersJson == MaskValue {
-		req.McpServersJson = item.McpServersJson
-	} else {
-		req.McpServersJson = mergeMaskedMcpServersJson(item.McpServersJson, req.McpServersJson)
 	}
 
 	// JSON 포맷 사전 검증
@@ -197,73 +153,8 @@ func (h *Handler) UpdateConfig(c *gin.Context) {
 		return
 	}
 
-	// 마스킹된 자격 증명이 그대로 전달된 경우 기존 값 유지
-	if req.AzureOpenaiApiKey == "********" {
-		req.AzureOpenaiApiKey = item.AzureOpenaiApiKey
-	}
-	if req.OpenaiApiKey == "********" {
-		req.OpenaiApiKey = item.OpenaiApiKey
-	}
-	if req.AnthropicApiKey == "********" {
-		req.AnthropicApiKey = item.AnthropicApiKey
-	}
-	if req.LlmEmbeddingApiKey == "********" {
-		req.LlmEmbeddingApiKey = item.LlmEmbeddingApiKey
-	}
-	if req.DiscordBotToken == "********" {
-		req.DiscordBotToken = item.DiscordBotToken
-	}
-	if req.SlackAppToken == "********" {
-		req.SlackAppToken = item.SlackAppToken
-	}
-	if req.SlackBotToken == "********" {
-		req.SlackBotToken = item.SlackBotToken
-	}
-	if req.TelegramBotToken == "********" {
-		req.TelegramBotToken = item.TelegramBotToken
-	}
-	if req.GrpcPeerToken == "********" {
-		req.GrpcPeerToken = item.GrpcPeerToken
-	}
-	if req.HttpReadonlyToken == "********" {
-		req.HttpReadonlyToken = item.HttpReadonlyToken
-	}
-	if req.HttpControlToken == "********" {
-		req.HttpControlToken = item.HttpControlToken
-	}
-	if req.QdrantApiKey == "********" {
-		req.QdrantApiKey = item.QdrantApiKey
-	}
-	if req.LangsmithApiKey == "********" {
-		req.LangsmithApiKey = item.LangsmithApiKey
-	}
-	if req.System1ApiKey == "********" {
-		req.System1ApiKey = item.System1ApiKey
-	}
-
-	// PUT은 프로필 내용을 수정하는 API다. 활성 상태 전환은 전용 activate API에서만 수행한다.
-	// 프론트엔드가 is_active를 생략하거나 오래된 클라이언트가 false를 보내도
-	// 활성 프로필이 편집으로 비활성화되지 않도록 기존 값을 보존한다.
-	req.IsActive = item.IsActive
-
-	// 클라이언트가 영속성 메타데이터를 임의로 변경하지 못하게 한다.
-	req.CreatedAt = item.CreatedAt
-	req.UpdatedAt = item.UpdatedAt
-	req.DeletedAt = item.DeletedAt
-
-	// 고유 ID 강제 고정
-	req.ID = uint(id)
-	applyButlerPathDefaults(&req)
-
 	err = h.DB.WithContext(c.Request.Context()).Transaction(func(tx *gorm.DB) error {
-		if req.IsActive {
-			if err := tx.Model(&models.RoboClawConfig{}).
-				Where("robot_name = ? AND environment = ? AND id <> ?", req.RobotName, req.Environment, id).
-				Update("is_active", false).Error; err != nil {
-				return err
-			}
-		}
-		return tx.Save(&req).Error
+		return profile.UpdateConfigInTx(tx, &req)
 	})
 	if err != nil {
 		LogAndRespondError(c, http.StatusInternalServerError, "설정 변경 사항을 데이터베이스에 반영하지 못했습니다.", err)
@@ -275,6 +166,26 @@ func (h *Handler) UpdateConfig(c *gin.Context) {
 	h.cache.clear() // 수정 내역 즉각 배포를 위해 캐시 무효화
 	maskSensitiveFields(&req)
 	c.JSON(http.StatusOK, req)
+}
+
+// mergeErrorStatus 는 profile.Merge 의 실패 단계를 HTTP 상태 코드로 매핑한다.
+func mergeErrorStatus(err error) int {
+	if errors.Is(err, profile.ErrPatchFieldType) {
+		return http.StatusBadRequest
+	}
+	return http.StatusInternalServerError
+}
+
+// mergeErrorMessage 는 profile.Merge 의 실패 단계별 응답·로그 문구를 돌려준다.
+func mergeErrorMessage(err error) string {
+	switch {
+	case errors.Is(err, profile.ErrPatchFieldType):
+		return "수정 요청의 필드 형식이 올바르지 않습니다."
+	case errors.Is(err, profile.ErrMergeBase):
+		return "기존 설정을 병합하는 중 오류가 발생했습니다."
+	default:
+		return "수정 요청을 병합하는 중 오류가 발생했습니다."
+	}
 }
 
 // CloneConfig POST /api/v1/configs/:id/clone
@@ -333,21 +244,9 @@ func (h *Handler) CloneConfig(c *gin.Context) {
 // generateUniqueCloneName은 원본 이름에 _copy 접미사를 붙이고,
 // 동일 이름이 존재하면 _copy_2, _copy_3 형태로 번호를 증가시켜 고유 이름을 생성합니다.
 // model 인자는 조회 대상 GORM 모델을 지정합니다 (RoboClawConfig, TestScenario 등).
+// 실제 구현은 profile.CloneName 에 있다.
 func (h *Handler) generateUniqueCloneName(ctx context.Context, model interface{}, originalName string) string {
-	base := originalName + "_copy"
-	var count int64
-	h.DB.WithContext(ctx).Model(model).Where("name = ?", base).Count(&count)
-	if count == 0 {
-		return base
-	}
-
-	for i := 2; ; i++ {
-		candidate := fmt.Sprintf("%s_%d", base, i)
-		h.DB.WithContext(ctx).Model(model).Where("name = ?", candidate).Count(&count)
-		if count == 0 {
-			return candidate
-		}
-	}
+	return profile.CloneName(ctx, h.DB, model, originalName)
 }
 
 // DeleteConfig DELETE /api/v1/configs/:id
@@ -389,20 +288,7 @@ func (h *Handler) ActivateConfig(c *gin.Context) {
 
 	// 트랜잭션을 통해 기존 설정들을 비활성화하고 대상 설정을 활성화
 	err = h.DB.WithContext(c.Request.Context()).Transaction(func(tx *gorm.DB) error {
-		// 동일 로봇 및 환경의 모든 설정을 비활성화
-		err := tx.Model(&models.RoboClawConfig{}).
-			Where("robot_name = ? AND environment = ?", target.RobotName, target.Environment).
-			Update("is_active", false).Error
-		if err != nil {
-			return err
-		}
-
-		// 대상 설정만 활성화
-		err = tx.Model(&target).Update("is_active", true).Error
-		if err != nil {
-			return err
-		}
-		return nil
+		return profile.ActivateConfigInTx(tx, &target)
 	})
 
 	if err != nil {

@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 
 	"ai-config-server/database/models"
+	"ai-config-server/service/profile"
 )
 
 // ListTestScenarios GET /api/v1/scenarios
@@ -62,14 +63,7 @@ func (h *Handler) CreateTestScenario(c *gin.Context) {
 	}
 
 	err := h.DB.WithContext(c.Request.Context()).Transaction(func(tx *gorm.DB) error {
-		if item.IsActive {
-			if err := tx.Model(&models.TestScenario{}).
-				Where("robot_name = ? AND environment = ?", item.RobotName, item.Environment).
-				Update("is_active", false).Error; err != nil {
-				return err
-			}
-		}
-		return tx.Create(&item).Error
+		return profile.CreateScenarioInTx(tx, &item)
 	})
 	if err != nil {
 		LogAndRespondError(c, http.StatusInternalServerError, "신규 테스트 시나리오를 등록하는 중 오류가 발생했습니다.", err)
@@ -149,14 +143,7 @@ func (h *Handler) UpdateTestScenario(c *gin.Context) {
 	req.ID = uint(id)
 
 	err = h.DB.WithContext(c.Request.Context()).Transaction(func(tx *gorm.DB) error {
-		if req.IsActive {
-			if err := tx.Model(&models.TestScenario{}).
-				Where("robot_name = ? AND environment = ? AND id <> ?", req.RobotName, req.Environment, id).
-				Update("is_active", false).Error; err != nil {
-				return err
-			}
-		}
-		return tx.Save(&req).Error
+		return profile.UpdateScenarioInTx(tx, &req)
 	})
 	if err != nil {
 		LogAndRespondError(c, http.StatusInternalServerError, "테스트 시나리오 변경 사항을 반영하지 못했습니다.", err)
@@ -204,20 +191,7 @@ func (h *Handler) ActivateTestScenario(c *gin.Context) {
 
 	// 트랜잭션을 통해 기존 설정들을 비활성화하고 대상 시나리오를 활성화
 	err = h.DB.WithContext(c.Request.Context()).Transaction(func(tx *gorm.DB) error {
-		// 동일 로봇 및 환경의 모든 시나리오를 비활성화
-		err := tx.Model(&models.TestScenario{}).
-			Where("robot_name = ? AND environment = ?", target.RobotName, target.Environment).
-			Update("is_active", false).Error
-		if err != nil {
-			return err
-		}
-
-		// 대상 시나리오만 활성화
-		err = tx.Model(&target).Update("is_active", true).Error
-		if err != nil {
-			return err
-		}
-		return nil
+		return profile.ActivateScenarioInTx(tx, &target)
 	})
 
 	if err != nil {

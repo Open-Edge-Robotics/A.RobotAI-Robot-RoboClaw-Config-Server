@@ -77,7 +77,7 @@ func TestConfigTransferJSONRoundTripPreservesAllProfileFields(t *testing.T) {
 }
 
 func TestConfigTransferGRPCJSONRoundTrip(t *testing.T) {
-	cfg := models.RoboClawConfig{GrpcPort: 51052, GrpcPeerToken: "test-peer-credential"}
+	cfg := models.RoboClawConfig{GrpcPort: 51052, GrpcPeerToken: "sample-peer-credential"}
 	for _, includeSecrets := range []bool{false, true} {
 		t.Run(map[bool]string{false: "without_secrets", true: "with_secrets"}[includeSecrets], func(t *testing.T) {
 			data, err := json.Marshal(configToTransfer(&cfg, includeSecrets))

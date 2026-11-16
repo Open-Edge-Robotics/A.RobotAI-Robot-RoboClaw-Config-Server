@@ -13,15 +13,34 @@ type APIErrorResponse struct {
 	Details string `json:"details,omitempty"`
 }
 
-// LogAndRespondError는 에러를 콘솔/로그 파일에 LevelError로 구조화하여 로깅하고,
+// errorLogLevel 은 응답 상태에 따른 로그 레벨을 정한다.
+//
+// 5xx 는 사람이 조치해야 하는 장애이므로 ERROR, 인증/권한/요청한도 실패는
+// 서비스는 살아 있지만 주의가 필요한 상태라 WARN, 나머지 4xx(입력 오류·없는
+// 리소스 등 기대된 실패)는 INFO 로 남겨 장애 로그와 섞이지 않게 한다.
+func errorLogLevel(statusCode int) logging.LogLevel {
+	switch {
+	case statusCode >= http.StatusInternalServerError:
+		return logging.LevelError
+	case statusCode == http.StatusUnauthorized,
+		statusCode == http.StatusForbidden,
+		statusCode == http.StatusTooManyRequests:
+		return logging.LevelWarn
+	default:
+		return logging.LevelInfo
+	}
+}
+
+// LogAndRespondError는 에러를 로그에 남기고,
 // 클라이언트에게는 APIErrorResponse 포맷의 JSON 데이터로 일관되게 응답합니다.
 func LogAndRespondError(c *gin.Context, statusCode int, userMsg string, sysErr error) {
 	logger := logging.GetLogger()
+	level := errorLogLevel(statusCode)
 
 	if sysErr != nil {
-		logger.Log(logging.LevelError, "[API FAILED] URL: %s %s | Msg: %s | SysErr: %v", c.Request.Method, c.Request.URL.Path, userMsg, sysErr)
+		logger.Log(level, "[API FAILED] URL: %s %s | Msg: %s | SysErr: %v", c.Request.Method, c.Request.URL.Path, userMsg, sysErr)
 	} else {
-		logger.Log(logging.LevelError, "[API FAILED] URL: %s %s | Msg: %s", c.Request.Method, c.Request.URL.Path, userMsg)
+		logger.Log(level, "[API FAILED] URL: %s %s | Msg: %s", c.Request.Method, c.Request.URL.Path, userMsg)
 	}
 
 	resp := APIErrorResponse{
