@@ -31,10 +31,17 @@ backend-test:
     - go run . secret-scan
     # Contract 및 Schema Lock 무결성 검증
     - go run . contract check
-    # 포맷 위반이 있으면 실패 (gofmt -l 은 출력이 있어도 exit 0 이므로 test -z 로 검사)
-    - test -z "$(gofmt -l cmd/ config/ database/ handler/ internal/ main.go testutil/)"
+    # 포맷 출력과 명령 실패를 모두 검사한다.
+    - |
+      files="$(gofmt -l cmd/ config/ database/ handler/ internal/ service/ testutil/ main.go)" || exit $?
+      if [ -n "$files" ]; then printf '%s\n' "$files"; exit 1; fi
     - go vet ./...
     - go test ./...
+    - go test ./... -coverprofile=coverage.out
+    - |
+      report="$(go tool cover -func=coverage.out)" || exit $?
+      printf '%s\n' "$report"
+      printf '%s\n' "$report" | awk '/^total:/ { found=1; coverage=$NF; sub(/%$/, "", coverage); if (coverage+0 < 80) exit 1 } END { if (!found) exit 1 }'
   cache:
     key:
       files:
@@ -51,14 +58,14 @@ frontend-test:
   image: ghcr.io/cirruslabs/flutter:stable
   script:
     - cd frontend
-    - flutter pub get
+    - flutter pub get --enforce-lockfile
     - dart format --output=none --set-exit-if-changed lib test
     - flutter analyze
     - flutter test --coverage
     # 커버리지 게이트 (기준선 80%). 핵심 Controller/API/모델은 100% 수준이며,
     # 화면/위젯 테스트가 늘어나면 임계치를 점진적으로 상향한다. (docs/testing.md 참고)
     - |
-      awk -F: '/^LF:/{lf+=$2}/^LH:/{lh+=$2}END{printf "coverage: %.1f%%\n",100*lh/lf; if (100*lh/lf < 80) exit 1}' coverage/lcov.info
+      awk -F: '/^LF:/{lf+=$2}/^LH:/{lh+=$2}END{if (lf<=0) exit 1; printf "coverage: %.1f%%\n",100*lh/lf; if (100*lh/lf < 80) exit 1}' coverage/lcov.info
   artifacts:
     when: always
     paths:
@@ -97,7 +104,7 @@ frontend-build:
   image: ghcr.io/cirruslabs/flutter:stable
   script:
     - cd frontend
-    - flutter pub get
+    - flutter pub get --enforce-lockfile
     - flutter build web --base-href "/web/" --release
   artifacts:
     paths:

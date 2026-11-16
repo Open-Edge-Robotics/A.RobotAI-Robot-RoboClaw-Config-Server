@@ -30,6 +30,8 @@
 ## 빌드 및 실행 방법
 
 이 프로젝트는 빌드 및 관리를 위해 [Taskfile](https://taskfile.dev)을 사용합니다. 사전에 `task` CLI를 설치해야 합니다.
+프론트엔드는 Flutter 3.47.0 이상·Dart 3.13.0 이상과 공식 `material_ui` 패키지를 사용합니다.
+`frontend/pubspec.lock`으로 앱 의존성을 고정하며, 현재 검증 SDK는 Flutter 3.50.0입니다.
 
 ### Task 설치
 

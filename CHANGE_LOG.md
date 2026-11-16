@@ -1,5 +1,25 @@
 # CHANGE_LOG
 
+## Unreleased
+
+### Changed
+- Flutter의 Material import를 공식 `material_ui`로 전환하고 앱 lockfile을 추적합니다.
+- 로컬·CI에서 백엔드와 프론트엔드 커버리지 80% 게이트를 동일하게 적용합니다.
+- 전역 DB를 제거하고 `database.Init(dsn)`의 반환 DB를 `handler.NewRouter(cfg, db)`에 주입합니다.
+- 서버별 배포 캐시·rate limiter를 구성하고 DB 요청 context와 초기화 실패 시 연결 정리를 적용합니다.
+- `serve`는 SIGINT/SIGTERM에 graceful shutdown하고, 종료 타임아웃·리스너 오류를 테스트로 고정합니다.
+- runtime 검증·배포 경로 기본값과 백업 DTO·변환·검증·적용·트랜잭션을 `service/`로 분리하고, Handler 타입·함수는 호환 래퍼로 유지합니다.
+- 프론트엔드는 `AppDependencies`로 API·TokenStore·파일 입출력을 화면까지 주입하고, 운영 위젯은 static 파사드를 사용하지 않습니다.
+- 설정 폼을 순수 변환(`ConfigDraft`·`ConfigFormMapper`)·controller 소유권(`ConfigFormFields`)·섹션 렌더링(`ConfigEditorForm`)으로 분리해 `config_tab.dart`를 1,442줄에서 552줄로 축소합니다.
+- 목록·loading 상태를 Controller 단일 소스로 만들고 `ListenableBuilder`로 렌더하며, dispose 이후 응답은 알림/`setState`하지 않습니다.
+- API 계층에 20초 요청 timeout을 두고, 로깅을 controller 경계 1회로 옮깁니다.
+- 언어 선택을 `LanguageStore`/`LanguageController`로 영속화하고 기존 `LanguageManager`/`String.tr`는 어댑터로 유지합니다.
+
+### Fixed
+- Go 포맷 위반을 실제 실패로 처리하고 `testutil/`도 검사합니다.
+- 백업 왕복에서 gRPC 포트·peer token을 보존합니다. 토큰 제외 백업과 구형 파일의 누락 필드는 기존 값을 유지합니다.
+- 활성 설정 파일을 먼저 요청한 뒤 프로필을 조회해도 캐시가 빈 프로필을 반환하지 않도록 고칩니다(재현 테스트 추가).
+
 ## 2026-11-09 — Maestro 사용 시 로봇 간 협업 차단
 
 - Maestro는 여러 로봇의 계획·배정·기록을 단일 경로로 관리하므로, `maestro_enabled=true`

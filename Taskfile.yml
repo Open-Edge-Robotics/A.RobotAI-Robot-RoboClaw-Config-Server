@@ -55,7 +55,7 @@ tasks:
   fmt:
     desc: Go 및 Dart 소스 코드 포맷팅
     cmds:
-      - gofmt -w cmd/ config/ database/ handler/ internal/ main.go
+      - gofmt -w cmd/ config/ database/ handler/ internal/ service/ testutil/ main.go
       - task: dart-format
 
   dart-format:
@@ -67,7 +67,12 @@ tasks:
   fmt-check:
     desc: 포맷 위반 여부 검사 (파일을 수정하지 않음)
     cmds:
-      - gofmt -l cmd/ config/ database/ handler/ internal/ main.go
+      - |
+        files="$(gofmt -l cmd/ config/ database/ handler/ internal/ service/ testutil/ main.go)" || exit $?
+        if [ -n "$files" ]; then
+          printf '%s\n' "$files"
+          exit 1
+        fi
       - task: dart-format-check
 
   dart-format-check:
@@ -92,11 +97,14 @@ tasks:
       - go test -race ./...
 
   test:coverage:
-    desc: 백엔드 테스트 커버리지 리포트
+    desc: 백엔드 테스트 커버리지 리포트 및 80% 게이트
     cmds:
+      - defer: rm -f coverage.out
       - go test ./... -coverprofile=coverage.out
-      - go tool cover -func=coverage.out
-      - rm -f coverage.out
+      - |
+        report="$(go tool cover -func=coverage.out)" || exit $?
+        printf '%s\n' "$report"
+        printf '%s\n' "$report" | awk '/^total:/ { found=1; coverage=$NF; sub(/%$/, "", coverage); if (coverage+0 < 80) exit 1 } END { if (!found) exit 1 }'
 
   test:frontend:
     desc: 프론트엔드 정적 분석 + 단위 테스트 (순차)
@@ -105,10 +113,12 @@ tasks:
       - task: flutter-test
 
   test:coverage:frontend:
-    desc: 프론트엔드 테스트 커버리지(lcov)
+    desc: 프론트엔드 테스트 커버리지(lcov) 및 80% 게이트
     dir: frontend
     cmds:
       - flutter test --coverage
+      - |
+        awk -F: '/^LF:/{lf+=$2}/^LH:/{lh+=$2}END{if (lf<=0) exit 1; printf "coverage: %.1f%%\n",100*lh/lf; if (100*lh/lf < 80) exit 1}' coverage/lcov.info
 
   test:all:
     desc: 백엔드 + 프론트엔드 전체 테스트 (단위/경쟁/커버리지/분석)
@@ -172,8 +182,9 @@ tasks:
       - task: fmt-check
       - task: vet
       - task: test
+      - task: test:coverage
       - task: analyze
-      - task: flutter-test
+      - task: test:coverage:frontend
       - task: frontend-contract
       - echo "==> 전체 검증 완료!"
 
@@ -186,8 +197,9 @@ tasks:
       - task: fmt-check
       - task: vet
       - task: test
+      - task: test:coverage
       - task: analyze
-      - task: flutter-test
+      - task: test:coverage:frontend
       - task: frontend-contract
       - task: build-server
       - task: build-web

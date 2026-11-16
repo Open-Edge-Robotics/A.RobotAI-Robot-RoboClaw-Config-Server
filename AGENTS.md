@@ -60,11 +60,12 @@ task test:coverage  # 커버리지
 ### 현재 구조 (개선 진행 중)
 
 ```
-cmd/        CLI 명령 (serve 등)
+cmd/        CLI 명령 (serve 등) — DB·서버 수명 소유, graceful shutdown
 config/     설정 바인딩
-database/   GORM 열기/마이그레이션/시드
-handler/    Gin 핸들러, 미들웨어, 백업 로직
-frontend/   Flutter Web
+database/   GORM 열기/마이그레이션/시드 (전역 없음, 호출자가 DB 소유)
+handler/    Gin 라우터·미들웨어·HTTP 파싱/응답
+service/    runtime 검증·배포 경로 기본값·백업 DTO/검증/적용/트랜잭션
+frontend/   Flutter Web (AppDependencies 로 API/Store/파일I/O 주입)
 ```
 
 > wcli 는 공개 모듈(`github.com/wkqco33/wcli`)로 의존한다. 저장소 내 소스는 두지 않는다.
@@ -72,13 +73,14 @@ frontend/   Flutter Web
 ### 목표 구조
 
 ```
-cmd/
-handler/        HTTP 계층 (파싱/응답만)
-service/        비즈니스 규칙 (테스트 우선)
-repository/     영속성 인터페이스/구현
+cmd/            조립·수명 소유만
+handler/        HTTP 계층 (파싱/응답만, 정책은 service 호출)
+service/        비즈니스 규칙 (runtime 검증, 배포 기본값, 백업 transfer)
+repository/     영속성 인터페이스/구현 (필요한 경계에만)
 testutil/       테스트 공용 헬퍼 (DB, HTTP, Fixture)
-frontend/lib/api/        주입 가능한 API Client
-frontend/lib/features/   기능별 Controller/Widget 분리
+frontend/lib/api/        주입 가능한 API Client + 중립 ApiException
+frontend/lib/features/   기능별 Controller/순수 변환
+frontend/lib/widgets/    섹션·폼 위젯 (controller 소유는 ConfigFormFields)
 ```
 
 ### 의존 방향 (궁극 목표)
@@ -91,12 +93,13 @@ HTTP(handler) → Service → Repository
 
 ## 4. 핵심 테스트 제약 (아직 개선 중)
 
-### 백엔드: 전역 DB 의존
+### 백엔드: 명시적 DB 및 서버 상태 주입
 
-- 일부 핸들러가 여전히 `database.DB` 전역을 직접 사용한다.
-- **이 전역 의존을 제거하고 생성자/인터페이스 주입으로 옮기는 것이 최우선 개선 과제**다.
-- 따라서 전역 DB를 교체하는 테스트는 **직렬로만 실행**(`t.Parallel()` 금지)한다.
-- 테스트별 고유 인메모리 SQLite DSN + `t.Cleanup`으로 DB 정리.
+- `database.Init(dsn) (*gorm.DB, error)`는 성공한 DB를 반환하며 전역 DB를 두지 않는다.
+- 운영 조립 지점이 DB 연결을 소유하고 닫는다. Handler는 전달받은 DB를 닫지 않는다.
+- `handler.NewRouter(cfg, db)`가 서버별 Handler·배포 캐시·rate limiter를 구성한다.
+- 테스트는 `NewHandler(db)`와 고유 인메모리 SQLite DSN을 사용하고 `t.Cleanup`으로 DB를 정리한다.
+- 독립된 DB·Handler를 사용하는 테스트는 병렬 실행할 수 있다. 다른 전역 설정이나 작업 디렉터리를 변경하는 테스트는 직렬로 유지한다.
 
 ### 프론트엔드: 정적 ApiService
 
@@ -112,22 +115,29 @@ HTTP(handler) → Service → Repository
 
 ### 우선순위
 
-1. [ ] **`database.DB` 전역 제거** — Handler/Service 생성자로 `*gorm.DB` 주입.
-   - `database.Init` 을 `Init(dsn) (*gorm.DB, error)` 로 변경해 전역 할당 제거.
-   - Handler 를 `*Handler{ DB: *gorm.DB }` 구조체 메서드로 전환.
-2. [x] **Router Factory** — `handler.NewRouter(cfg)` 로 라우트 중앙화(통합 테스트 가능).
-3. [ ] **Service 계층 분리** — Config/Scenario/Transfer 비즈니스 로직을 `service/` 로 이동.
-4. [~] **프론트엔드 API 주입 가능화** — `AdminApi` 인터페이스 + `HttpAdminApi`(http.Client/TokenStore 주입) 분리 완료.
+1. [x] **`database.DB` 전역 제거** — Handler 생성자로 `*gorm.DB` 주입.
+   - `database.Init(dsn) (*gorm.DB, error)`와 `handler.NewRouter(cfg, db)`로 운영·테스트 조립을 명시한다.
+   - 서버별 배포 캐시·rate limiter를 사용한다. 캐시 무효화 세대로 오래된 조회의 재삽입을 차단한다.
+   - `serve`는 SIGINT/SIGTERM에 graceful shutdown하고, 종료 타임아웃·리스너 오류를 테스트로 고정한다.
+   - 남은 자원 작업: Handler 쿼리 외 외부 I/O(GitLab release 조회 등)의 deadline 정리.
+2. [x] **Router Factory** — `handler.NewRouter(cfg, db)`로 라우트 중앙화(통합 테스트 가능).
+3. [~] **Service 계층 분리** — `service/runtime_validation.go`(runtime 검증)·`service/butler_path_defaults.go`(배포 경로 기본값)·`service/transfer/`(백업 DTO·변환·검증·적용·트랜잭션)로 이동했다. Handler의 기존 타입·함수는 호환 래퍼로 유지한다.
+   - `handler/config_transfer.go`는 HTTP 파싱/응답·문서 타입·오류 문구 분기만 담당한다.
+   - 남은 작업: Config/Scenario CRUD 규칙(활성 배타성·병합·복제)의 Service 이동.
+4. [x] **프론트엔드 API 주입 가능화** — `AdminApi` 인터페이스 + `HttpAdminApi`(http.Client/TokenStore/요청 timeout 주입) 분리 완료.
    - `api/admin_api.dart`, `api/http_admin_api.dart` 추가. `ApiService` 는 얇은 파사드로 전환.
    - `storage/token_store.dart`(인터페이스) + `storage/web_token_store.dart`(브라우저 구현).
    - `platform/file_picker.dart`/`file_downloader.dart`(인터페이스) + web 구현 분리.
    - `main.dart` 에서 운영 인스턴스 구성. `test/api_service_test.dart` 로 MockClient/Fake 검증.
    - 테마 영속화: `storage/theme_mode_store.dart`(인터페이스) + `storage/web_theme_mode_store.dart`(브라우저 구현), `features/theme/theme_controller.dart`, 앱 루트 `app.dart`. 기본 테마는 라이트.
-5. [~] **Controller 분리** — `BackupController`(features/backup) 분리·테스트·대시보드 연결 완료. `ScenarioController`(features/scenarios) 분리·테스트·CRUD 전체 이관 완료. `ConfigController`(features/configs) 분리·테스트·CRUD 이관 완료. `ConfigFormMapper` Ollama 옵션 이관 완료. `ThemeController`(features/theme) 추가.
+5. [~] **Controller 분리** — `BackupController`(features/backup) 분리·테스트·대시보드 연결 완료. `ScenarioController`(features/scenarios) 분리·테스트·CRUD 전체 이관 완료. `ConfigController`(features/configs) 분리·테스트·CRUD 이관 완료. `ThemeController`(features/theme) 추가.
+   - 폼 분리: 순수 변환 `ConfigDraft`/`ConfigFormMapper`, controller 소유권 `ConfigFormFields`, 섹션 렌더링 `ConfigEditorForm`으로 나눠 `config_tab.dart`는 선택·편집 흐름만 담당한다.
+   - 목록·loading 상태는 Controller 단일 소스이며 `ListenableBuilder`로 렌더린다. dispose 이후 응답은 알림/`setState`하지 않는다.
    - 남은 작업: Widget 테스트 추가 확충 (에러/엣지 케이스).
-6. [x] **커버리지 강화** — 프론트엔드 테스트 237개, 백엔드 커버리지 80.7% (CI 게이트 80% 달성).
+6. [x] **커버리지 강화** — Go·Flutter 전체 커버리지 80% 게이트를 로컬 `task check`와 CI에 적용한다. 실제 수치는 실행한 보고서로 확인한다.
 7. [x] **CLI 통합 및 Python 의존성 제거** — `scripts/` 파이썬 스크립트를 Go 내장 CLI(`aics contract [check|generate|update]`, `secret-scan`)로 통합 완료. CI/로컬 개발 환경의 Python 3 의존성 완전 제거.
-8. [ ] **언어 설정 영속화** — `LanguageManager` 는 아직 `localStorage` 에 언어 선택을 저장하지 않아 새로고침 시 한국어로 초기화된다. 테마와 동일한 Store 주입 패턴으로 개선 필요.
+8. [x] **언어 설정 영속화** — `LanguageStore`(인터페이스) + `WebLanguageStore`(localStorage) + `LanguageController`를 테마와 동일한 주입 패턴으로 추가해 새로고침 후에도 선택이 유지된다. 기존 `LanguageManager`/`String.tr`는 전역 어댑터로 호환 유지.
+   - 남은 작업: 영어 레이아웃(고정폭 패널) 오버플로 점검, 지원 로케일 확장.
 
 ### 주의사항
 
