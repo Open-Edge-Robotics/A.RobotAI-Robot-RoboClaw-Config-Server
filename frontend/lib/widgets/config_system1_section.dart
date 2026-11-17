@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../utils/localization.dart';
+import 'config_responsive_row.dart';
 import 'config_section_header.dart';
 
 /// System 1 Fast Router settings exposed by the shared runtime contract.
@@ -153,31 +154,26 @@ class ConfigSystem1Section extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
+        ConfigResponsiveRow(
           children: [
-            Expanded(
-              child: TextFormField(
-                controller: providerCtrl,
-                enabled: isEditing,
-                decoration: InputDecoration(
-                  labelText:
-                      'System 1 provider (SYSTEM1_PROVIDER, 선택, 기본: laya)'.tr,
-                  hintText: 'laya',
-                ),
+            TextFormField(
+              controller: providerCtrl,
+              enabled: isEditing,
+              decoration: InputDecoration(
+                labelText:
+                    'System 1 provider (SYSTEM1_PROVIDER, 선택, 기본: laya)'.tr,
+                hintText: 'laya',
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: timeoutMsCtrl,
-                enabled: isEditing,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'Timeout ms (SYSTEM1_TIMEOUT_MS, 선택, 기본: 300)'.tr,
-                  hintText: '300',
-                ),
+            TextFormField(
+              controller: timeoutMsCtrl,
+              enabled: isEditing,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: InputDecoration(
+                labelText: 'Timeout ms (SYSTEM1_TIMEOUT_MS, 선택, 기본: 300)'.tr,
+                hintText: '300',
               ),
             ),
           ],

@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../utils/localization.dart';
+import 'config_responsive_row.dart';
 import 'config_section_header.dart';
 import 'grpc_peers_input_form.dart';
 
@@ -63,7 +64,7 @@ class ConfigMessengerSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ConfigSectionHeader('4. 메신저 & 통신 데몬'),
+        ConfigSectionHeader('메신저 및 통신 데몬'),
         if (maestroEnabled) ...[
           const SizedBox(height: 8),
           Text(
@@ -74,7 +75,7 @@ class ConfigMessengerSection extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 8),
-        Row(
+        ConfigResponsiveRow(
           children: [
             _ToggleTile(
               title: 'Discord',
@@ -102,7 +103,7 @@ class ConfigMessengerSection extends StatelessWidget {
             ),
           ],
         ),
-        Row(
+        ConfigResponsiveRow(
           children: [
             _ToggleTile(
               title: 'gRPC Telemetry (RosGrpc)',
@@ -128,22 +129,17 @@ class ConfigMessengerSection extends StatelessWidget {
           const SizedBox(height: 16),
         ],
         if (enableSlack) ...[
-          Row(
+          ConfigResponsiveRow(
             children: [
-              Expanded(
-                child: _SecretField(
-                  controller: slackAppTokenCtrl,
-                  enabled: isEditing,
-                  label: 'Slack App Token (xapp-...)',
-                ),
+              _SecretField(
+                controller: slackAppTokenCtrl,
+                enabled: isEditing,
+                label: 'Slack App Token (xapp-...)',
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _SecretField(
-                  controller: slackBotTokenCtrl,
-                  enabled: isEditing,
-                  label: 'Slack Bot Token (xoxb-...)',
-                ),
+              _SecretField(
+                controller: slackBotTokenCtrl,
+                enabled: isEditing,
+                label: 'Slack Bot Token (xoxb-...)',
               ),
             ],
           ),
@@ -158,25 +154,20 @@ class ConfigMessengerSection extends StatelessWidget {
           const SizedBox(height: 16),
         ],
         if (enableGrpc) ...[
-          Row(
+          ConfigResponsiveRow(
             children: [
-              Expanded(
-                child: _SecretField(
-                  controller: grpcPeerTokenCtrl,
-                  enabled: peerEnabled,
-                  label: 'gRPC Peer Token (GRPC_PEER_TOKEN — 외부 접속 시 필수)',
-                ),
+              _SecretField(
+                controller: grpcPeerTokenCtrl,
+                enabled: peerEnabled,
+                label: 'gRPC Peer Token (GRPC_PEER_TOKEN — 외부 접속 시 필수)',
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextFormField(
-                  controller: grpcPortCtrl,
-                  enabled: peerEnabled,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'gRPC Server Port (ROBO_CLAW_GRPC_PORT)',
-                    helperText: '기본 50052 — 50051은 RosGrpc 텔레메트리 전용'.tr,
-                  ),
+              TextFormField(
+                controller: grpcPortCtrl,
+                enabled: peerEnabled,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'gRPC Server Port (ROBO_CLAW_GRPC_PORT)',
+                  helperText: '기본 50052 — 50051은 RosGrpc 텔레메트리 전용'.tr,
                 ),
               ),
             ],
@@ -210,17 +201,13 @@ class _ToggleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: CheckboxListTile(
-        title: Text(title.tr, style: const TextStyle(fontSize: 14)),
-        value: value,
-        onChanged: enabled ? (val) => onChanged(val!) : null,
-        fillColor: WidgetStateProperty.all(
-          Theme.of(context).colorScheme.primary,
-        ),
-        controlAffinity: ListTileControlAffinity.leading,
-        contentPadding: EdgeInsets.zero,
-      ),
+    return CheckboxListTile(
+      title: Text(title.tr, style: const TextStyle(fontSize: 14)),
+      value: value,
+      onChanged: enabled ? (val) => onChanged(val!) : null,
+      fillColor: WidgetStateProperty.all(Theme.of(context).colorScheme.primary),
+      controlAffinity: ListTileControlAffinity.leading,
+      contentPadding: EdgeInsets.zero,
     );
   }
 }

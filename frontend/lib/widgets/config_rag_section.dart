@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../utils/localization.dart';
+import 'config_responsive_row.dart';
 import 'config_section_header.dart';
 
 class ConfigRagSection extends StatelessWidget {
@@ -48,7 +49,7 @@ class ConfigRagSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ConfigSectionHeader('3. RAG 및 벡터 DB 설정'),
+        ConfigSectionHeader('RAG 및 벡터 DB 설정'),
         const SizedBox(height: 8),
         SwitchListTile(
           title: Text('RAG (Retrieval-Augmented Generation) 활성화'.tr),
@@ -59,7 +60,7 @@ class ConfigRagSection extends StatelessWidget {
         ),
         if (enableRag) ...[
           const SizedBox(height: 12),
-          _FieldRow(
+          ConfigResponsiveRow(
             children: [
               _TextField(
                 controller: embeddingProviderCtrl,
@@ -74,7 +75,7 @@ class ConfigRagSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _FieldRow(
+          ConfigResponsiveRow(
             children: [
               _TextField(
                 controller: embeddingBaseUrlCtrl,
@@ -90,7 +91,7 @@ class ConfigRagSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _FieldRow(
+          ConfigResponsiveRow(
             children: [
               _TextField(
                 controller: vectorBackendCtrl,
@@ -101,7 +102,7 @@ class ConfigRagSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _FieldRow(
+          ConfigResponsiveRow(
             children: [
               _TextField(
                 controller: qdrantUrlCtrl,
@@ -116,7 +117,7 @@ class ConfigRagSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _FieldRow(
+          ConfigResponsiveRow(
             children: [
               _TextField(
                 controller: qdrantApiKeyCtrl,
@@ -135,7 +136,7 @@ class ConfigRagSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _FieldRow(
+          ConfigResponsiveRow(
             children: [
               _TextField(
                 controller: ragTopKCtrl,
@@ -170,24 +171,6 @@ class ConfigRagSection extends StatelessWidget {
               hintText: '/path/to/memory',
             ),
           ),
-        ],
-      ],
-    );
-  }
-}
-
-class _FieldRow extends StatelessWidget {
-  final List<Widget> children;
-
-  const _FieldRow({required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (var i = 0; i < children.length; i++) ...[
-          Expanded(child: children[i]),
-          if (i != children.length - 1) const SizedBox(width: 16),
         ],
       ],
     );

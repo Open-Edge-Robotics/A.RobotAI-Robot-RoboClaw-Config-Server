@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../api/admin_api.dart';
 import '../utils/localization.dart';
+import 'config_responsive_row.dart';
 import 'config_section_header.dart';
 import 'mcp_servers_input_form.dart';
 
@@ -26,9 +27,9 @@ class ConfigMcpSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ConfigSectionHeader('10. MCP(Model Context Protocol) 서버 연동'),
+        ConfigSectionHeader('MCP 서버 연동'),
         const SizedBox(height: 8),
-        Row(
+        ConfigResponsiveRow(
           children: [
             _ToggleTile(
               title: 'MCP 사용',
@@ -67,17 +68,13 @@ class _ToggleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: CheckboxListTile(
-        title: Text(title.tr, style: const TextStyle(fontSize: 14)),
-        value: value,
-        onChanged: enabled ? (val) => onChanged(val!) : null,
-        fillColor: WidgetStateProperty.all(
-          Theme.of(context).colorScheme.primary,
-        ),
-        controlAffinity: ListTileControlAffinity.leading,
-        contentPadding: EdgeInsets.zero,
-      ),
+    return CheckboxListTile(
+      title: Text(title.tr, style: const TextStyle(fontSize: 14)),
+      value: value,
+      onChanged: enabled ? (val) => onChanged(val!) : null,
+      fillColor: WidgetStateProperty.all(Theme.of(context).colorScheme.primary),
+      controlAffinity: ListTileControlAffinity.leading,
+      contentPadding: EdgeInsets.zero,
     );
   }
 }

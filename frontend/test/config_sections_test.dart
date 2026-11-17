@@ -32,7 +32,7 @@ void main() {
         limitsCtrl: TextEditingController(),
       ),
     );
-    expect(find.text('9. 에이전트 마크다운 & 한계 스펙 정의'), findsOneWidget);
+    expect(find.text('에이전트 문서 및 한계 설정'), findsOneWidget);
   });
 
   testWidgets('학습 섹션 헤더가 표시된다', (tester) async {
@@ -46,7 +46,7 @@ void main() {
         skillLearningReflectIntervalSecCtrl: TextEditingController(),
       ),
     );
-    expect(find.text('8. 스킬 자가학습 설정 (RAG)'), findsOneWidget);
+    expect(find.text('스킬 자가학습'), findsOneWidget);
   });
 
   testWidgets('LangSmith 섹션 헤더가 표시된다', (tester) async {

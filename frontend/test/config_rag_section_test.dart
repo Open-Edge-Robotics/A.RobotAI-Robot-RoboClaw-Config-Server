@@ -41,7 +41,7 @@ void main() {
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(buildSection());
-    expect(find.text('3. RAG 및 벡터 DB 설정'), findsOneWidget);
+    expect(find.text('RAG 및 벡터 DB 설정'), findsOneWidget);
   });
 
   testWidgets('영어 모드에서 RAG 섹션에 한국어 문구가 남지 않는다', (tester) async {

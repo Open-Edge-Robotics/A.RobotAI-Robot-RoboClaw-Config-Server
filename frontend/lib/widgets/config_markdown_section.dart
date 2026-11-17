@@ -24,7 +24,7 @@ class ConfigMarkdownSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ConfigSectionHeader('9. 에이전트 마크다운 & 한계 스펙 정의'),
+        ConfigSectionHeader('에이전트 문서 및 한계 설정'),
         const SizedBox(height: 12),
         MarkdownEditorArea(
           isEditing: isEditing,

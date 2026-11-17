@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../utils/localization.dart';
+import 'config_responsive_row.dart';
 import 'config_section_header.dart';
 
 /// Dashboard 웹 노드(RC_USE_DASHBOARD / RC_DASHBOARD_HOST / RC_DASHBOARD_PORT) 설정 섹션.
@@ -45,27 +46,22 @@ class ConfigDashboardSection extends StatelessWidget {
           onChanged: isEditing ? onUseDashboardChanged : null,
         ),
         const SizedBox(height: 12),
-        Row(
+        ConfigResponsiveRow(
           children: [
-            Expanded(
-              child: TextFormField(
-                controller: dashboardHostCtrl,
-                enabled: isEditing,
-                decoration: InputDecoration(
-                  labelText:
-                      'Dashboard 바인딩 호스트 (RC_DASHBOARD_HOST, 기본: 127.0.0.1)'.tr,
-                ),
+            TextFormField(
+              controller: dashboardHostCtrl,
+              enabled: isEditing,
+              decoration: InputDecoration(
+                labelText:
+                    'Dashboard 바인딩 호스트 (RC_DASHBOARD_HOST, 기본: 127.0.0.1)'.tr,
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: dashboardPortCtrl,
-                enabled: isEditing,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Dashboard 포트 (RC_DASHBOARD_PORT, 기본: 9090)'.tr,
-                ),
+            TextFormField(
+              controller: dashboardPortCtrl,
+              enabled: isEditing,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Dashboard 포트 (RC_DASHBOARD_PORT, 기본: 9090)'.tr,
               ),
             ),
           ],

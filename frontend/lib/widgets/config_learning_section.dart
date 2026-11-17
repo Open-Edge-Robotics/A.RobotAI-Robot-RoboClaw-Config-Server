@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../utils/localization.dart';
+import 'config_responsive_row.dart';
 import 'config_section_header.dart';
 
 class ConfigLearningSection extends StatelessWidget {
@@ -24,7 +25,7 @@ class ConfigLearningSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ConfigSectionHeader('8. 스킬 자가학습 설정 (RAG)'),
+        ConfigSectionHeader('스킬 자가학습'),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -37,34 +38,29 @@ class ConfigLearningSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        Row(
+        ConfigResponsiveRow(
           children: [
-            Expanded(
-              child: TextFormField(
-                controller: skillLearningSuccessSampleRateCtrl,
-                enabled: isEditing && enableSkillLearning,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: InputDecoration(
-                  labelText:
-                      '성공 경험 샘플링 비율 (RC_SKILL_LEARNING_SUCCESS_SAMPLE_RATE)'.tr,
-                  hintText: '예: 0.1 (10%)'.tr,
-                ),
+            TextFormField(
+              controller: skillLearningSuccessSampleRateCtrl,
+              enabled: isEditing && enableSkillLearning,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: InputDecoration(
+                labelText:
+                    '성공 경험 샘플링 비율 (RC_SKILL_LEARNING_SUCCESS_SAMPLE_RATE)'.tr,
+                hintText: '예: 0.1 (10%)'.tr,
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: skillLearningReflectIntervalSecCtrl,
-                enabled: isEditing && enableSkillLearning,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText:
-                      '자가학습 교훈 추출 자동 주기(초) (RC_SKILL_LEARNING_REFLECT_INTERVAL_SEC)'
-                          .tr,
-                  hintText: '예: 1800 (초)'.tr,
-                ),
+            TextFormField(
+              controller: skillLearningReflectIntervalSecCtrl,
+              enabled: isEditing && enableSkillLearning,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText:
+                    '자가학습 교훈 추출 자동 주기(초) (RC_SKILL_LEARNING_REFLECT_INTERVAL_SEC)'
+                        .tr,
+                hintText: '예: 1800 (초)'.tr,
               ),
             ),
           ],

@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../utils/localization.dart';
+import 'config_responsive_row.dart';
 import 'config_section_header.dart';
 
 class ConfigHttpSecSection extends StatelessWidget {
@@ -32,9 +33,9 @@ class ConfigHttpSecSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ConfigSectionHeader('5. HTTP API 보안 설정'),
+        ConfigSectionHeader('HTTP API 보안 설정'),
         const SizedBox(height: 12),
-        _FieldRow(
+        ConfigResponsiveRow(
           children: [
             _TextField(
               controller: httpHostCtrl,
@@ -50,7 +51,7 @@ class ConfigHttpSecSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        _FieldRow(
+        ConfigResponsiveRow(
           children: [
             _TextField(
               controller: httpReadonlyTokenCtrl,
@@ -67,7 +68,7 @@ class ConfigHttpSecSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        _FieldRow(
+        ConfigResponsiveRow(
           children: [
             _TextField(
               controller: httpAllowedCidrsCtrl,
@@ -83,7 +84,7 @@ class ConfigHttpSecSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        _FieldRow(
+        ConfigResponsiveRow(
           children: [
             _TextField(
               controller: httpAllowedSkillsCtrl,
@@ -97,24 +98,6 @@ class ConfigHttpSecSection extends StatelessWidget {
             ),
           ],
         ),
-      ],
-    );
-  }
-}
-
-class _FieldRow extends StatelessWidget {
-  final List<Widget> children;
-
-  const _FieldRow({required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (var i = 0; i < children.length; i++) ...[
-          Expanded(child: children[i]),
-          if (i != children.length - 1) const SizedBox(width: 16),
-        ],
       ],
     );
   }

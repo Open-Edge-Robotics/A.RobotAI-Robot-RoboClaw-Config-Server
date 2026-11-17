@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../utils/localization.dart';
+import 'config_responsive_row.dart';
 import 'config_section_header.dart';
 
 class ConfigPathSection extends StatelessWidget {
@@ -30,9 +31,9 @@ class ConfigPathSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ConfigSectionHeader('6. 로컬 환경 경로 및 리소스 설정'),
+        ConfigSectionHeader('로컬 경로 및 리소스'),
         const SizedBox(height: 12),
-        _FieldRow(
+        ConfigResponsiveRow(
           children: [
             _TextField(
               controller: agentWorkspaceDirCtrl,
@@ -47,7 +48,7 @@ class ConfigPathSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        _FieldRow(
+        ConfigResponsiveRow(
           children: [
             _TextField(
               controller: butlerScriptsDirCtrl,
@@ -65,7 +66,7 @@ class ConfigPathSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        _FieldRow(
+        ConfigResponsiveRow(
           children: [
             _TextField(
               controller: systemPromptFileCtrl,
@@ -80,7 +81,7 @@ class ConfigPathSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        _FieldRow(
+        ConfigResponsiveRow(
           children: [
             _TextField(
               controller: cleanupRunLogPathCtrl,
@@ -92,24 +93,6 @@ class ConfigPathSection extends StatelessWidget {
             const SizedBox.shrink(),
           ],
         ),
-      ],
-    );
-  }
-}
-
-class _FieldRow extends StatelessWidget {
-  final List<Widget> children;
-
-  const _FieldRow({required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (var i = 0; i < children.length; i++) ...[
-          Expanded(child: children[i]),
-          if (i != children.length - 1) const SizedBox(width: 16),
-        ],
       ],
     );
   }

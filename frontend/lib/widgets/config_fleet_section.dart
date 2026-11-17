@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../utils/localization.dart';
+import 'config_responsive_row.dart';
 import 'config_section_header.dart';
 
 /// Maestro FleetControl outbound connector 설정 섹션 (contract v2.2.0).
@@ -76,145 +77,120 @@ class ConfigFleetSection extends StatelessWidget {
           onChanged: isEditing ? onMaestroEnabledChanged : null,
         ),
         const SizedBox(height: 12),
-        Row(
+        ConfigResponsiveRow(
           children: [
-            Expanded(
-              child: TextFormField(
-                controller: maestroIpCtrl,
-                enabled: fieldEnabled,
-                decoration: InputDecoration(
-                  labelText: 'Maestro 서버 IP (MAESTRO_IP)'.tr,
-                  hintText: '10.0.0.5',
-                  helperText: '비워두면 fleet outbound connector 비활성'.tr,
-                ),
+            TextFormField(
+              controller: maestroIpCtrl,
+              enabled: fieldEnabled,
+              decoration: InputDecoration(
+                labelText: 'Maestro 서버 IP (MAESTRO_IP)'.tr,
+                hintText: '10.0.0.5',
+                helperText: '비워두면 fleet outbound connector 비활성'.tr,
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: robotPortCtrl,
-                enabled: fieldEnabled,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Maestro 서버 포트 (ROBOT_PORT)'.tr,
-                  hintText: '50053',
-                ),
+            TextFormField(
+              controller: robotPortCtrl,
+              enabled: fieldEnabled,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Maestro 서버 포트 (ROBOT_PORT)'.tr,
+                hintText: '50053',
               ),
             ),
           ],
         ),
         const SizedBox(height: 16),
-        Row(
+        ConfigResponsiveRow(
           children: [
-            Expanded(
-              child: TextFormField(
-                controller: robotIdCtrl,
-                enabled: fieldEnabled,
-                decoration: InputDecoration(
-                  labelText: '로봇 ID (ROBOT_ID)'.tr,
-                  hintText: 'butler-01',
-                  helperText: 'MAESTRO_IP 설정 시 필수'.tr,
-                ),
+            TextFormField(
+              controller: robotIdCtrl,
+              enabled: fieldEnabled,
+              decoration: InputDecoration(
+                labelText: '로봇 ID (ROBOT_ID)'.tr,
+                hintText: 'butler-01',
+                helperText: 'MAESTRO_IP 설정 시 필수'.tr,
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: robotSiteIdCtrl,
-                enabled: fieldEnabled,
-                decoration: InputDecoration(
-                  labelText: '사이트 ID (ROBOT_SITE_ID)'.tr,
-                  hintText: 'site-a',
-                ),
+            TextFormField(
+              controller: robotSiteIdCtrl,
+              enabled: fieldEnabled,
+              decoration: InputDecoration(
+                labelText: '사이트 ID (ROBOT_SITE_ID)'.tr,
+                hintText: 'site-a',
               ),
             ),
           ],
         ),
         const SizedBox(height: 16),
-        Row(
+        ConfigResponsiveRow(
           children: [
-            Expanded(
-              child: TextFormField(
-                controller: robotMapIdCtrl,
-                enabled: fieldEnabled,
-                decoration: InputDecoration(
-                  labelText: '맵 ID (ROBOT_MAP_ID)'.tr,
-                  hintText: '1f',
-                ),
+            TextFormField(
+              controller: robotMapIdCtrl,
+              enabled: fieldEnabled,
+              decoration: InputDecoration(
+                labelText: '맵 ID (ROBOT_MAP_ID)'.tr,
+                hintText: '1f',
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: robotMapVersionCtrl,
-                enabled: fieldEnabled,
-                decoration: InputDecoration(
-                  labelText: '맵 버전 (ROBOT_MAP_VERSION)'.tr,
-                  hintText: 'v3',
-                ),
+            TextFormField(
+              controller: robotMapVersionCtrl,
+              enabled: fieldEnabled,
+              decoration: InputDecoration(
+                labelText: '맵 버전 (ROBOT_MAP_VERSION)'.tr,
+                hintText: 'v3',
               ),
             ),
           ],
         ),
         const SizedBox(height: 16),
-        Row(
+        ConfigResponsiveRow(
           children: [
-            Expanded(
-              child: TextFormField(
-                controller: robotMapFrameIdCtrl,
-                enabled: fieldEnabled,
-                decoration: InputDecoration(
-                  labelText: '맵 TF frame (ROBOT_MAP_FRAME_ID)'.tr,
-                  hintText: 'map',
-                ),
+            TextFormField(
+              controller: robotMapFrameIdCtrl,
+              enabled: fieldEnabled,
+              decoration: InputDecoration(
+                labelText: '맵 TF frame (ROBOT_MAP_FRAME_ID)'.tr,
+                hintText: 'map',
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: DropdownButtonFormField<String>(
-                key: ValueKey('maestro_disconnect_policy_$disconnectPolicy'),
-                initialValue: _disconnectPolicies.contains(disconnectPolicy)
-                    ? disconnectPolicy
-                    : 'complete',
-                decoration: InputDecoration(
-                  labelText: '연결 단절 정책 (MAESTRO_DISCONNECT_POLICY)'.tr,
-                ),
-                items: _disconnectPolicies
-                    .map(
-                      (policy) =>
-                          DropdownMenuItem(value: policy, child: Text(policy)),
-                    )
-                    .toList(),
-                onChanged: fieldEnabled ? onDisconnectPolicyChanged : null,
+            DropdownButtonFormField<String>(
+              key: ValueKey('maestro_disconnect_policy_$disconnectPolicy'),
+              initialValue: _disconnectPolicies.contains(disconnectPolicy)
+                  ? disconnectPolicy
+                  : 'complete',
+              decoration: InputDecoration(
+                labelText: '연결 단절 정책 (MAESTRO_DISCONNECT_POLICY)'.tr,
               ),
+              items: _disconnectPolicies
+                  .map(
+                    (policy) =>
+                        DropdownMenuItem(value: policy, child: Text(policy)),
+                  )
+                  .toList(),
+              onChanged: fieldEnabled ? onDisconnectPolicyChanged : null,
             ),
           ],
         ),
         const SizedBox(height: 16),
-        Row(
+        ConfigResponsiveRow(
           children: [
-            Expanded(
-              child: TextFormField(
-                controller: heartbeatSecCtrl,
-                enabled: fieldEnabled,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: InputDecoration(
-                  labelText: '하트비트 주기(초) (FLEET_HEARTBEAT_SEC)'.tr,
-                  hintText: '1.0',
-                ),
+            TextFormField(
+              controller: heartbeatSecCtrl,
+              enabled: fieldEnabled,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: InputDecoration(
+                labelText: '하트비트 주기(초) (FLEET_HEARTBEAT_SEC)'.tr,
+                hintText: '1.0',
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: commandJournalPathCtrl,
-                enabled: fieldEnabled,
-                decoration: InputDecoration(
-                  labelText: '명령 저널 경로 (FLEET_COMMAND_JOURNAL_PATH)'.tr,
-                  hintText: '/tmp/robo_claw_fleet_commands.sqlite3',
-                ),
+            TextFormField(
+              controller: commandJournalPathCtrl,
+              enabled: fieldEnabled,
+              decoration: InputDecoration(
+                labelText: '명령 저널 경로 (FLEET_COMMAND_JOURNAL_PATH)'.tr,
+                hintText: '/tmp/robo_claw_fleet_commands.sqlite3',
               ),
             ),
           ],
@@ -243,27 +219,22 @@ class ConfigFleetSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        Row(
+        ConfigResponsiveRow(
           children: [
-            Expanded(
-              child: TextFormField(
-                controller: controlCaCertCtrl,
-                enabled: fieldEnabled,
-                decoration: InputDecoration(
-                  labelText: 'CA 인증서 (FLEET_CONTROL_CA_CERT)'.tr,
-                  hintText: '/etc/robo/ca.pem',
-                ),
+            TextFormField(
+              controller: controlCaCertCtrl,
+              enabled: fieldEnabled,
+              decoration: InputDecoration(
+                labelText: 'CA 인증서 (FLEET_CONTROL_CA_CERT)'.tr,
+                hintText: '/etc/robo/ca.pem',
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: controlClientCertCtrl,
-                enabled: fieldEnabled,
-                decoration: InputDecoration(
-                  labelText: '클라이언트 인증서 (FLEET_CONTROL_CLIENT_CERT)'.tr,
-                  hintText: '/etc/robo/client.pem',
-                ),
+            TextFormField(
+              controller: controlClientCertCtrl,
+              enabled: fieldEnabled,
+              decoration: InputDecoration(
+                labelText: '클라이언트 인증서 (FLEET_CONTROL_CLIENT_CERT)'.tr,
+                hintText: '/etc/robo/client.pem',
               ),
             ),
           ],

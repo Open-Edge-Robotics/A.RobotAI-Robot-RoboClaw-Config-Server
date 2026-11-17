@@ -51,7 +51,7 @@ void main() {
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(buildSection());
-    expect(find.text('2. LLM 및 클라우드 API 자격 증명'), findsOneWidget);
+    expect(find.text('LLM 및 클라우드 API 자격 증명'), findsOneWidget);
     expect(find.text('LLM 제공자 (Provider)'), findsOneWidget);
   });
 

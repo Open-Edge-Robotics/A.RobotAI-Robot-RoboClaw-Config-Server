@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../utils/localization.dart';
+import 'config_responsive_row.dart';
 import 'config_section_header.dart';
 import 'ollama_guide.dart';
 
@@ -63,33 +64,28 @@ class ConfigLlmSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ConfigSectionHeader('2. LLM 및 클라우드 API 자격 증명'),
+        ConfigSectionHeader('LLM 및 클라우드 API 자격 증명'),
         const SizedBox(height: 12),
-        Row(
+        ConfigResponsiveRow(
           children: [
-            Expanded(
-              child: DropdownButtonFormField<String>(
-                key: ValueKey('llm_provider_$llmProvider'),
-                initialValue: llmProvider,
-                decoration: InputDecoration(labelText: 'LLM 제공자 (Provider)'.tr),
-                items: ['azure', 'openai', 'anthropic', 'ollama']
-                    .map(
-                      (p) => DropdownMenuItem(
-                        value: p,
-                        child: Text(p.toUpperCase()),
-                      ),
-                    )
-                    .toList(),
-                onChanged: isEditing ? onProviderChanged : null,
-              ),
+            DropdownButtonFormField<String>(
+              key: ValueKey('llm_provider_$llmProvider'),
+              initialValue: llmProvider,
+              decoration: InputDecoration(labelText: 'LLM 제공자 (Provider)'.tr),
+              items: ['azure', 'openai', 'anthropic', 'ollama']
+                  .map(
+                    (p) => DropdownMenuItem(
+                      value: p,
+                      child: Text(p.toUpperCase()),
+                    ),
+                  )
+                  .toList(),
+              onChanged: isEditing ? onProviderChanged : null,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: llmModelCtrl,
-                enabled: isEditing,
-                decoration: InputDecoration(labelText: '모델명 (llm_model)'.tr),
-              ),
+            TextFormField(
+              controller: llmModelCtrl,
+              enabled: isEditing,
+              decoration: InputDecoration(labelText: '모델명 (llm_model)'.tr),
             ),
           ],
         ),
@@ -282,48 +278,46 @@ class _OllamaOptionsEditor extends StatelessWidget {
                 const SizedBox(height: 16),
                 _OptionRow(
                   fields: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        key: ValueKey(
-                          'ollama_think_${thinkValue.isEmpty ? 'unset' : thinkValue}',
-                        ),
-                        initialValue: thinkValue.isEmpty ? 'unset' : thinkValue,
-                        decoration: InputDecoration(
-                          labelText: 'Think (Qwen3 추론 단계)'.tr,
-                          helperText: 'SLM 지연 시 off 권장. 미설정 시 모델 기본값'.tr,
-                        ),
-                        items: [
-                          DropdownMenuItem(
-                            value: 'unset',
-                            child: Text('기본값 (미설정)'.tr),
-                          ),
-                          DropdownMenuItem(
-                            value: 'false',
-                            child: Text('off (false) — SLM 권장'.tr),
-                          ),
-                          const DropdownMenuItem(
-                            value: 'true',
-                            child: Text('on (true)'),
-                          ),
-                          const DropdownMenuItem(
-                            value: 'low',
-                            child: Text('low'),
-                          ),
-                          const DropdownMenuItem(
-                            value: 'medium',
-                            child: Text('medium'),
-                          ),
-                          const DropdownMenuItem(
-                            value: 'high',
-                            child: Text('high'),
-                          ),
-                          const DropdownMenuItem(
-                            value: 'max',
-                            child: Text('max'),
-                          ),
-                        ],
-                        onChanged: isEditing ? onThinkChanged : null,
+                    DropdownButtonFormField<String>(
+                      key: ValueKey(
+                        'ollama_think_${thinkValue.isEmpty ? 'unset' : thinkValue}',
                       ),
+                      initialValue: thinkValue.isEmpty ? 'unset' : thinkValue,
+                      decoration: InputDecoration(
+                        labelText: 'Think (Qwen3 추론 단계)'.tr,
+                        helperText: 'SLM 지연 시 off 권장. 미설정 시 모델 기본값'.tr,
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'unset',
+                          child: Text('기본값 (미설정)'.tr),
+                        ),
+                        DropdownMenuItem(
+                          value: 'false',
+                          child: Text('off (false) — SLM 권장'.tr),
+                        ),
+                        const DropdownMenuItem(
+                          value: 'true',
+                          child: Text('on (true)'),
+                        ),
+                        const DropdownMenuItem(
+                          value: 'low',
+                          child: Text('low'),
+                        ),
+                        const DropdownMenuItem(
+                          value: 'medium',
+                          child: Text('medium'),
+                        ),
+                        const DropdownMenuItem(
+                          value: 'high',
+                          child: Text('high'),
+                        ),
+                        const DropdownMenuItem(
+                          value: 'max',
+                          child: Text('max'),
+                        ),
+                      ],
+                      onChanged: isEditing ? onThinkChanged : null,
                     ),
                   ],
                 ),
@@ -343,14 +337,7 @@ class _OptionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (var i = 0; i < fields.length; i++) ...[
-          Expanded(child: fields[i]),
-          if (i != fields.length - 1) const SizedBox(width: 16),
-        ],
-      ],
-    );
+    return ConfigResponsiveRow(children: fields);
   }
 }
 

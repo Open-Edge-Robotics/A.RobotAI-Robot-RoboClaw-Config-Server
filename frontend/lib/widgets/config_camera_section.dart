@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../utils/localization.dart';
+import 'config_responsive_row.dart';
 import 'config_section_header.dart';
 
 class ConfigCameraSection extends StatelessWidget {
@@ -42,7 +43,7 @@ class ConfigCameraSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ConfigSectionHeader('7. 카메라 / 비전 / 센서 설정'),
+        ConfigSectionHeader('카메라·비전·센서'),
         const SizedBox(height: 12),
         TextFormField(
           controller: cameraTopicCtrl,
@@ -62,28 +63,22 @@ class ConfigCameraSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
+        ConfigResponsiveRow(
           children: [
-            Expanded(
-              child: TextFormField(
-                controller: gripperDepthTopicCtrl,
-                enabled: isEditing,
-                decoration: InputDecoration(
-                  labelText: '그리퍼 Depth 토픽 (RC_GRIPPER_DEPTH_TOPIC)'.tr,
-                  hintText: '/gripper_camera/aligned_depth_to_color/image_raw',
-                ),
+            TextFormField(
+              controller: gripperDepthTopicCtrl,
+              enabled: isEditing,
+              decoration: InputDecoration(
+                labelText: '그리퍼 Depth 토픽 (RC_GRIPPER_DEPTH_TOPIC)'.tr,
+                hintText: '/gripper_camera/aligned_depth_to_color/image_raw',
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: gripperCameraInfoTopicCtrl,
-                enabled: isEditing,
-                decoration: InputDecoration(
-                  labelText: '그리퍼 CameraInfo (RC_GRIPPER_CAMERA_INFO_TOPIC)'.tr,
-                  hintText:
-                      '/gripper_camera/aligned_depth_to_color/camera_info',
-                ),
+            TextFormField(
+              controller: gripperCameraInfoTopicCtrl,
+              enabled: isEditing,
+              decoration: InputDecoration(
+                labelText: '그리퍼 CameraInfo (RC_GRIPPER_CAMERA_INFO_TOPIC)'.tr,
+                hintText: '/gripper_camera/aligned_depth_to_color/camera_info',
               ),
             ),
           ],
@@ -143,27 +138,22 @@ class ConfigCameraSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
+        ConfigResponsiveRow(
           children: [
-            Expanded(
-              child: TextFormField(
-                controller: lidarTopicCtrl,
-                enabled: isEditing,
-                decoration: InputDecoration(
-                  labelText: '자가진단 라이다 토픽 (RC_LIDAR_TOPIC)'.tr,
-                  hintText: '비워두면 robot_config 사용 (예: /scan)'.tr,
-                ),
+            TextFormField(
+              controller: lidarTopicCtrl,
+              enabled: isEditing,
+              decoration: InputDecoration(
+                labelText: '자가진단 라이다 토픽 (RC_LIDAR_TOPIC)'.tr,
+                hintText: '비워두면 robot_config 사용 (예: /scan)'.tr,
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: imuTopicCtrl,
-                enabled: isEditing,
-                decoration: InputDecoration(
-                  labelText: '자가진단 IMU 토픽 (RC_IMU_TOPIC)'.tr,
-                  hintText: '비워두면 robot_config 사용 (예: /imu/data)'.tr,
-                ),
+            TextFormField(
+              controller: imuTopicCtrl,
+              enabled: isEditing,
+              decoration: InputDecoration(
+                labelText: '자가진단 IMU 토픽 (RC_IMU_TOPIC)'.tr,
+                hintText: '비워두면 robot_config 사용 (예: /imu/data)'.tr,
               ),
             ),
           ],

@@ -46,7 +46,7 @@ void main() {
         mcpServersJsonCtrl: TextEditingController(),
       ),
     );
-    expect(find.text('10. MCP(Model Context Protocol) 서버 연동'), findsOneWidget);
+    expect(find.text('MCP 서버 연동'), findsOneWidget);
   });
 
   testWidgets('경로 섹션 헤더가 표시된다', (tester) async {
@@ -63,7 +63,7 @@ void main() {
         cleanupRunLogPathCtrl: TextEditingController(),
       ),
     );
-    expect(find.text('6. 로컬 환경 경로 및 리소스 설정'), findsOneWidget);
+    expect(find.text('로컬 경로 및 리소스'), findsOneWidget);
     expect(
       find.text('정리 태스크 실험 계측 run log 경로 (RC_CLEANUP_RUN_LOG_PATH)'),
       findsOneWidget,
@@ -90,7 +90,7 @@ void main() {
         imuTopicCtrl: TextEditingController(),
       ),
     );
-    expect(find.text('7. 카메라 / 비전 / 센서 설정'), findsOneWidget);
+    expect(find.text('카메라·비전·센서'), findsOneWidget);
   });
 
   testWidgets('태스크 큐 섹션 헤더가 표시된다', (tester) async {
@@ -110,7 +110,7 @@ void main() {
         taskDecompositionWaitMarginCapSecCtrl: TextEditingController(),
       ),
     );
-    expect(find.text('11. 태스크 큐 / 복합 명령 자동 분해 설정'), findsOneWidget);
+    expect(find.text('태스크 큐·명령 자동 분해'), findsOneWidget);
   });
 
   testWidgets('HTTP 보안 섹션 헤더가 표시된다', (tester) async {
@@ -128,7 +128,7 @@ void main() {
         httpBlockedSkillsCtrl: TextEditingController(),
       ),
     );
-    expect(find.text('5. HTTP API 보안 설정'), findsOneWidget);
+    expect(find.text('HTTP API 보안 설정'), findsOneWidget);
   });
 
   testWidgets('Dashboard 웹 노드 섹션 헤더와 필드가 표시된다', (tester) async {
@@ -224,7 +224,7 @@ void main() {
         grpcPortCtrl: TextEditingController(text: '50052'),
       ),
     );
-    expect(find.text('4. 메신저 & 통신 데몬'), findsOneWidget);
+    expect(find.text('메신저 및 통신 데몬'), findsOneWidget);
     // GRPC_PEER_TOKEN 입력이 없으면 외부 채팅이 불가하므로 반드시 노출돼야 한다.
     expect(
       find.widgetWithText(

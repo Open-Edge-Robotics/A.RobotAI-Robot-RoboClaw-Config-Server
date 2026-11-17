@@ -94,6 +94,12 @@ class LanguageManager {
     '신규 에이전트 설정 추가': 'Add New Agent Config',
     '설정 상세': 'Config Details',
     '설정 파일 내보내기': 'Export Config File',
+    '프로필·ROS 환경': 'Profile & ROS Environment',
+    'AI 모델·지식': 'AI Models & Knowledge',
+    '로봇 기능·센서': 'Robot Capabilities & Sensors',
+    '에이전트 동작·자료': 'Agent Behavior & Resources',
+    '외부 연동': 'Integrations',
+    '서버·보안·관측': 'Server, Security & Observability',
     '설정 활성화': 'Activate Config',
     '설정 복제': 'Clone Config',
     '설정 파일 업로드 완료': 'Config Upload Success',
@@ -212,12 +218,17 @@ class LanguageManager {
     ' 템플릿이 리스트에 추가되었습니다.': ' template added to list.',
 
     // ===== Config Detail: Section Headers =====
-    '1. 기본 정보': '1. Basic Information',
-    '2. LLM 및 클라우드 API 자격 증명': '2. LLM & Cloud API Credentials',
-    '4. 메신저 & 통신 데몬': '4. Messenger & Communication Daemons',
-    '9. 에이전트 마크다운 & 한계 스펙 정의': '9. Agent Markdown & Limit Spec Definition',
-    '10. MCP(Model Context Protocol) 서버 연동':
-        '10. MCP (Model Context Protocol) Server Integration',
+    '프로필 기본 정보': 'Profile Basics',
+    'LLM 및 클라우드 API 자격 증명': 'LLM & Cloud API Credentials',
+    '메신저 및 통신 데몬': 'Messaging & Communication Daemons',
+    '에이전트 문서 및 한계 설정': 'Agent Documents & Limits',
+    'MCP 서버 연동': 'MCP Server Integration',
+    'RAG 및 벡터 DB 설정': 'RAG & Vector DB Settings',
+    'HTTP API 보안 설정': 'HTTP API Security Settings',
+    '로컬 경로 및 리소스': 'Local Paths & Resources',
+    '카메라·비전·센서': 'Camera, Vision & Sensors',
+    '스킬 자가학습': 'Skill Self-Learning',
+    '태스크 큐·명령 자동 분해': 'Task Queue & Command Decomposition',
 
     // ===== Config Tab: Dialogs / Export / Messages =====
     '.env (환경 변수)': '.env (Environment Variables)',
@@ -666,8 +677,6 @@ class LanguageManager {
     '선택 — 자체 호스팅/프록시 엔드포인트': 'Optional — self-hosted or proxy endpoint',
 
     // ===== Task Queue / Decomposition =====
-    '11. 태스크 큐 / 복합 명령 자동 분해 설정':
-        '11. Task Queue / Automatic Command Decomposition',
     '태스크 큐 최대 대기열 크기 (RC_TASK_QUEUE_MAX_SIZE)':
         'Max Task Queue Size (RC_TASK_QUEUE_MAX_SIZE)',
     '예: 8 (0=큐 비활성화)': 'e.g. 8 (0 disables the queue)',

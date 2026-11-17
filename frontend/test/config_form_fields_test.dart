@@ -5,6 +5,7 @@
 
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:frontend/features/configs/config_draft.dart';
@@ -229,8 +230,14 @@ void main() {
 
       fields.dispose();
 
-      expect(() => textController.addListener(() {}), throwsStateError);
-      expect(() => ollamaController.addListener(() {}), throwsStateError);
+      expect(
+        () => textController.addListener(() {}),
+        throwsA(isA<FlutterError>()),
+      );
+      expect(
+        () => ollamaController.addListener(() {}),
+        throwsA(isA<FlutterError>()),
+      );
     });
   });
 }

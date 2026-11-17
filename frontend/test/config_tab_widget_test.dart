@@ -45,8 +45,11 @@ void main() {
     );
   });
 
-  Future<void> pumpConfigTab(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(1400, 900);
+  Future<void> pumpConfigTab(
+    WidgetTester tester, {
+    Size size = const Size(1400, 900),
+  }) async {
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
@@ -95,8 +98,33 @@ void main() {
     await tester.tap(find.text('cfg1'));
     await tester.pumpAndSettle();
 
-    expect(find.text('1. 기본 정보'), findsOneWidget);
-    expect(find.text('2. LLM 및 클라우드 API 자격 증명'), findsOneWidget);
+    expect(find.text('프로필 기본 정보'), findsOneWidget);
+    expect(find.text('LLM 및 클라우드 API 자격 증명'), findsOneWidget);
+  });
+
+  testWidgets('설정 폼이 환경별 그룹으로 나뉘고 그룹 바로가기로 이동한다', (tester) async {
+    await pumpConfigTab(tester);
+    await tester.tap(find.text('cfg1'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('AI 모델·지식'), findsOneWidget);
+    expect(find.text('로봇 기능·센서'), findsOneWidget);
+    expect(find.text('외부 연동'), findsOneWidget);
+    expect(find.text('서버·보안·관측'), findsOneWidget);
+
+    await tester.tap(find.text('5. 외부 연동'));
+    await tester.pumpAndSettle();
+
+    final groupTop = tester.getTopLeft(find.text('외부 연동')).dy;
+    expect(groupTop, lessThan(800));
+  });
+
+  testWidgets('좁은 화면에서 설정 필드가 가로로 넘치지 않는다', (tester) async {
+    await pumpConfigTab(tester, size: const Size(390, 844));
+    await tester.tap(find.text('cfg1'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('설정 삭제 시 확인 다이얼로그가 표시된다', (tester) async {
@@ -164,12 +192,12 @@ void main() {
     await tester.tap(find.text('cfg1'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text('9. 에이전트 마크다운 & 한계 스펙 정의'),
+      find.text('에이전트 문서 및 한계 설정'),
       500,
       scrollable: find.byType(Scrollable).first,
     );
 
-    expect(find.text('9. 에이전트 마크다운 & 한계 스펙 정의'), findsOneWidget);
+    expect(find.text('에이전트 문서 및 한계 설정'), findsOneWidget);
   });
 
   testWidgets('설정 상세에서 System 1 Fast Router 설정을 편집할 수 있다', (tester) async {
@@ -209,12 +237,12 @@ void main() {
     await tester.tap(find.text('cfg1'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text('10. MCP(Model Context Protocol) 서버 연동'),
+      find.text('MCP 서버 연동'),
       500,
       scrollable: find.byType(Scrollable).first,
     );
 
-    expect(find.text('10. MCP(Model Context Protocol) 서버 연동'), findsOneWidget);
+    expect(find.text('MCP 서버 연동'), findsOneWidget);
   });
 
   testWidgets('설정 상세 패널의 HTTP 보안 섹션으로 스크롤한다', (tester) async {
@@ -223,12 +251,12 @@ void main() {
     await tester.tap(find.text('cfg1'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text('5. HTTP API 보안 설정'),
+      find.text('HTTP API 보안 설정'),
       500,
       scrollable: find.byType(Scrollable).first,
     );
 
-    expect(find.text('5. HTTP API 보안 설정'), findsOneWidget);
+    expect(find.text('HTTP API 보안 설정'), findsOneWidget);
   });
 
   testWidgets('설정 상세 패널의 Dashboard 웹 노드 섹션으로 스크롤한다', (tester) async {
@@ -251,12 +279,12 @@ void main() {
     await tester.tap(find.text('cfg1'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text('3. RAG 및 벡터 DB 설정'),
+      find.text('RAG 및 벡터 DB 설정'),
       500,
       scrollable: find.byType(Scrollable).first,
     );
 
-    expect(find.text('3. RAG 및 벡터 DB 설정'), findsOneWidget);
+    expect(find.text('RAG 및 벡터 DB 설정'), findsOneWidget);
   });
 
   testWidgets('설정 상세 패널의 태스크 큐 섹션으로 스크롤한다', (tester) async {
@@ -265,12 +293,12 @@ void main() {
     await tester.tap(find.text('cfg1'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text('11. 태스크 큐 / 복합 명령 자동 분해 설정'),
+      find.text('태스크 큐·명령 자동 분해'),
       500,
       scrollable: find.byType(Scrollable).first,
     );
 
-    expect(find.text('11. 태스크 큐 / 복합 명령 자동 분해 설정'), findsOneWidget);
+    expect(find.text('태스크 큐·명령 자동 분해'), findsOneWidget);
   });
 
   testWidgets('설정 상세 패널의 카메라 섹션으로 스크롤한다', (tester) async {
@@ -279,12 +307,12 @@ void main() {
     await tester.tap(find.text('cfg1'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text('7. 카메라 / 비전 / 센서 설정'),
+      find.text('카메라·비전·센서'),
       500,
       scrollable: find.byType(Scrollable).first,
     );
 
-    expect(find.text('7. 카메라 / 비전 / 센서 설정'), findsOneWidget);
+    expect(find.text('카메라·비전·센서'), findsOneWidget);
   });
 
   // characterization: 프로필을 선택해 아무것도 수정하지 않고 저장해도
@@ -361,19 +389,19 @@ void main() {
 }
 
 const _sectionTitles = [
-  '1. 기본 정보',
-  '2. LLM 및 클라우드 API 자격 증명',
-  '3. RAG 및 벡터 DB 설정',
-  '4. 메신저 & 통신 데몬',
+  '프로필 기본 정보',
+  'LLM 및 클라우드 API 자격 증명',
+  'RAG 및 벡터 DB 설정',
+  '메신저 및 통신 데몬',
   'CLOi 정리 시연 설정',
-  '5. HTTP API 보안 설정',
+  'HTTP API 보안 설정',
   'Dashboard 웹 노드 설정',
-  '6. 로컬 환경 경로 및 리소스 설정',
-  '7. 카메라 / 비전 / 센서 설정',
-  '8. 스킬 자가학습 설정 (RAG)',
-  '9. 에이전트 마크다운 & 한계 스펙 정의',
-  '10. MCP(Model Context Protocol) 서버 연동',
-  '11. 태스크 큐 / 복합 명령 자동 분해 설정',
+  '로컬 경로 및 리소스',
+  '카메라·비전·센서',
+  '스킬 자가학습',
+  '에이전트 문서 및 한계 설정',
+  'MCP 서버 연동',
+  '태스크 큐·명령 자동 분해',
   'LangSmith 트레이싱 / 모니터링',
   'System 1 Fast Router',
   'Maestro FleetControl 연동',
