@@ -354,9 +354,9 @@ void main() {
     expect(jsonDecode(put.body), expected.toJson());
   });
 
-  // 유효한 설정을 렌더링하면 16개 섹션이 모두 만들어져야 한다.
+  // 유효한 설정을 렌더링하면 17개 섹션이 모두 만들어져야 한다.
   // 섹션/필드 키 오타는 ConfigFormFields 접근자에서 ArgumentError 로 드러난다.
-  testWidgets('유효한 설정에서 16개 섹션이 모두 렌더링된다', (tester) async {
+  testWidgets('유효한 설정에서 17개 섹션이 모두 렌더링된다', (tester) async {
     final originalJson = _sentinelConfigJson();
     deps = buildTestDependencies(
       respond: (request) async {
@@ -403,6 +403,7 @@ const _sectionTitles = [
   'MCP 서버 연동',
   '태스크 큐·명령 자동 분해',
   'LangSmith 트레이싱 / 모니터링',
+  'Langfuse 트레이싱 / 모니터링',
   'System 1 Fast Router',
   'Maestro FleetControl 연동',
 ];

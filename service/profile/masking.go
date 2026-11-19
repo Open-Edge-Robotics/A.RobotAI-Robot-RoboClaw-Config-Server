@@ -63,6 +63,8 @@ var secretFields = []secretField{
 	{name: "http_control_token", kind: secretString, str: func(c *models.RoboClawConfig) *string { return &c.HttpControlToken }},
 	{name: "qdrant_api_key", kind: secretString, str: func(c *models.RoboClawConfig) *string { return &c.QdrantApiKey }},
 	{name: "langsmith_api_key", kind: secretString, str: func(c *models.RoboClawConfig) *string { return &c.LangsmithApiKey }},
+	{name: "langfuse_public_key", kind: secretString, str: func(c *models.RoboClawConfig) *string { return &c.LangfusePublicKey }},
+	{name: "langfuse_secret_key", kind: secretString, str: func(c *models.RoboClawConfig) *string { return &c.LangfuseSecretKey }},
 	{name: "system1_api_key", kind: secretString, str: func(c *models.RoboClawConfig) *string { return &c.System1ApiKey }},
 	{name: "mcp_servers_json", kind: secretMCPServersJSON},
 }

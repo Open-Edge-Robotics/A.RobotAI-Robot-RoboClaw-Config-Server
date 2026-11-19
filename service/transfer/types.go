@@ -133,6 +133,11 @@ type ConfigTransfer struct {
 	LangsmithEndpoint    string  `json:"langsmith_endpoint"`
 	LangsmithWorkspaceId string  `json:"langsmith_workspace_id"`
 
+	LangfuseTracing   bool    `json:"langfuse_tracing"`
+	LangfusePublicKey *string `json:"langfuse_public_key,omitempty"`
+	LangfuseSecretKey *string `json:"langfuse_secret_key,omitempty"`
+	LangfuseHost      string  `json:"langfuse_host"`
+
 	System1Router             string  `json:"system1_router"`
 	System1Shadow             bool    `json:"system1_shadow"`
 	System1ShadowLog          string  `json:"system1_shadow_log"`

@@ -30,6 +30,8 @@ func TestUpdateConfigPreservesAllMaskedFields(t *testing.T) {
 		HttpControlToken:   "control-secret",
 		QdrantApiKey:       "qdrant-secret",
 		LangsmithApiKey:    "langsmith-secret",
+		LangfusePublicKey:  "langfuse-public-key",
+		LangfuseSecretKey:  "langfuse-secret-key",
 		System1ApiKey:      "system1-secret",
 		McpServersJson:     `[{"name":"fs","command":"npx"}]`,
 	}
@@ -53,6 +55,8 @@ func TestUpdateConfigPreservesAllMaskedFields(t *testing.T) {
 		"http_control_token":    MaskValue,
 		"qdrant_api_key":        MaskValue,
 		"langsmith_api_key":     MaskValue,
+		"langfuse_public_key":   MaskValue,
+		"langfuse_secret_key":   MaskValue,
 		"system1_api_key":       MaskValue,
 		"mcp_servers_json":      MaskValue,
 	}
@@ -82,6 +86,8 @@ func TestUpdateConfigPreservesAllMaskedFields(t *testing.T) {
 		{"control", stored.HttpControlToken, "control-secret"},
 		{"qdrant", stored.QdrantApiKey, "qdrant-secret"},
 		{"langsmith", stored.LangsmithApiKey, "langsmith-secret"},
+		{"langfuse-public", stored.LangfusePublicKey, "langfuse-public-key"},
+		{"langfuse-secret", stored.LangfuseSecretKey, "langfuse-secret-key"},
 		{"system1", stored.System1ApiKey, "system1-secret"},
 		{"mcp", stored.McpServersJson, `[{"name":"fs","command":"npx"}]`},
 	}

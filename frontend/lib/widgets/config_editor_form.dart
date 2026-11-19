@@ -341,6 +341,15 @@ class ConfigEditorForm extends StatelessWidget {
                 langsmithEndpointCtrl: fields.text('langsmith_endpoint'),
                 langsmithWorkspaceIdCtrl: fields.text('langsmith_workspace_id'),
               ),
+              ConfigLangfuseSection(
+                isEditing: isEditing,
+                langfuseTracing: fields.flag('langfuse_tracing'),
+                onLangfuseTracingChanged: (val) =>
+                    _onFlag('langfuse_tracing', val),
+                langfusePublicKeyCtrl: fields.text('langfuse_public_key'),
+                langfuseSecretKeyCtrl: fields.text('langfuse_secret_key'),
+                langfuseHostCtrl: fields.text('langfuse_host'),
+              ),
             ],
           ),
         ],

@@ -179,6 +179,82 @@ func TestInitKeepsOperatorDisabledMaestroEnabled(t *testing.T) {
 	}
 }
 
+// TestInitSeedsLangfuseDefaults 는 시드 프로필이 Langfuse 안전 기본값(비활성,
+// 빈 키/호스트)으로 생성되는지 검증한다. 테스트 계정 키가 DB 에 들어가면
+// 안 되므로 시드 값은 항상 빈 문자열이어야 한다.
+func TestInitSeedsLangfuseDefaults(t *testing.T) {
+	dsn := filepath.Join(t.TempDir(), "test.db")
+	db, err := Init(dsn)
+	if err != nil {
+		t.Fatalf("Init failed: %v", err)
+	}
+	t.Cleanup(func() { closeTestDB(t, db) })
+
+	var configs []models.RoboClawConfig
+	if err := db.Find(&configs).Error; err != nil {
+		t.Fatalf("query seeded configs failed: %v", err)
+	}
+	if len(configs) == 0 {
+		t.Fatal("expected seeded configs")
+	}
+	for _, cfg := range configs {
+		if cfg.LangfuseTracing {
+			t.Errorf("seed %s: expected Langfuse tracing to default to false", cfg.Name)
+		}
+		if cfg.LangfusePublicKey != "" || cfg.LangfuseSecretKey != "" || cfg.LangfuseHost != "" {
+			t.Errorf("seed %s: expected empty Langfuse keys/host, got %q/%q/%q",
+				cfg.Name, cfg.LangfusePublicKey, cfg.LangfuseSecretKey, cfg.LangfuseHost)
+		}
+	}
+}
+
+// TestInitAddsLangfuseColumnsToLegacyDatabase 는 Langfuse 컬럼이 없던 DB 가
+// AutoMigrate 로 컬럼을 얻고 기존 레코드가 안전 기본값을 갖는지 검증한다.
+func TestInitAddsLangfuseColumnsToLegacyDatabase(t *testing.T) {
+	dsn := filepath.Join(t.TempDir(), "legacy.db")
+	legacy := openTestDB(t, dsn)
+	if err := legacy.AutoMigrate(&models.RoboClawConfig{}); err != nil {
+		t.Fatalf("legacy migrate failed: %v", err)
+	}
+	// Langfuse 필드 도입 이전 상태 재현: 컬럼 제거
+	for _, column := range []string{"langfuse_tracing", "langfuse_public_key", "langfuse_secret_key", "langfuse_host"} {
+		if err := legacy.Exec("ALTER TABLE robo_claw_configs DROP COLUMN " + column).Error; err != nil {
+			t.Fatalf("drop column %s failed: %v", column, err)
+		}
+	}
+	if err := legacy.Exec(
+		"INSERT INTO robo_claw_configs (name, robot_name, environment, is_active) VALUES (?, ?, ?, ?)",
+		"former-real", "former", "real", true,
+	).Error; err != nil {
+		t.Fatalf("insert legacy config failed: %v", err)
+	}
+	closeTestDB(t, legacy)
+
+	db, err := Init(dsn)
+	if err != nil {
+		t.Fatalf("Init failed: %v", err)
+	}
+	t.Cleanup(func() { closeTestDB(t, db) })
+
+	for _, column := range []string{"langfuse_tracing", "langfuse_public_key", "langfuse_secret_key", "langfuse_host"} {
+		if !db.Migrator().HasColumn(&models.RoboClawConfig{}, column) {
+			t.Errorf("expected AutoMigrate to add column %s", column)
+		}
+	}
+
+	var cfg models.RoboClawConfig
+	if err := db.Where("robot_name = ? AND environment = ?", "former", "real").First(&cfg).Error; err != nil {
+		t.Fatalf("query config failed: %v", err)
+	}
+	if cfg.LangfuseTracing {
+		t.Error("expected langfuse_tracing to default to false for an existing profile")
+	}
+	if cfg.LangfusePublicKey != "" || cfg.LangfuseSecretKey != "" || cfg.LangfuseHost != "" {
+		t.Errorf("expected empty Langfuse keys/host for an existing profile, got %q/%q/%q",
+			cfg.LangfusePublicKey, cfg.LangfuseSecretKey, cfg.LangfuseHost)
+	}
+}
+
 // closeTestDB 는 테스트가 소유한 DB 커넥션을 닫는다. 여러 번 불려도 안전하다.
 func closeTestDB(t *testing.T, db *gorm.DB) {
 	t.Helper()

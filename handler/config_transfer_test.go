@@ -659,3 +659,64 @@ func TestConfigTransferDefaultsCleanupRunLogPathToEmpty(t *testing.T) {
 		t.Fatalf("expected empty run log path for older backups, got %q", model.CleanupRunLogPath)
 	}
 }
+
+func TestConfigTransferRoundTripPreservesLangfuseSettings(t *testing.T) {
+	cfg := models.RoboClawConfig{
+		LangfuseTracing: true,
+		LangfuseHost:    "http://langfuse.internal:3000",
+	}
+
+	tr := configToTransfer(&cfg, false)
+	if !tr.LangfuseTracing || tr.LangfuseHost != "http://langfuse.internal:3000" {
+		t.Fatalf("expected Langfuse settings in export, got %+v", tr)
+	}
+	if tr.LangfusePublicKey != nil || tr.LangfuseSecretKey != nil {
+		t.Fatal("expected Langfuse keys to stay out of the default export")
+	}
+
+	model := tr.toModel(nil)
+	if !model.LangfuseTracing || model.LangfuseHost != "http://langfuse.internal:3000" {
+		t.Fatalf("expected Langfuse settings preserved on import, got %+v", model)
+	}
+}
+
+func TestConfigTransferIncludesLangfuseKeysOnlyWithSecrets(t *testing.T) {
+	cfg := models.RoboClawConfig{
+		LangfusePublicKey: "pk-lf-dummy",
+		LangfuseSecretKey: "sk-lf-dummy",
+	}
+
+	tr := configToTransfer(&cfg, true)
+	if tr.LangfusePublicKey == nil || *tr.LangfusePublicKey != "pk-lf-dummy" {
+		t.Fatal("expected Langfuse public key in backup with secrets")
+	}
+	if tr.LangfuseSecretKey == nil || *tr.LangfuseSecretKey != "sk-lf-dummy" {
+		t.Fatal("expected Langfuse secret key in backup with secrets")
+	}
+
+	model := tr.toModel(nil)
+	if model.LangfusePublicKey != "pk-lf-dummy" || model.LangfuseSecretKey != "sk-lf-dummy" {
+		t.Fatalf("expected Langfuse keys preserved on import, got %+v", model)
+	}
+}
+
+func TestConfigTransferKeepsExistingLangfuseKeysWhenBackupOmitsThem(t *testing.T) {
+	existing := &models.RoboClawConfig{
+		LangfusePublicKey: "existing-public",
+		LangfuseSecretKey: "existing-secret",
+	}
+	tr := ConfigTransfer{
+		Name:        "test",
+		RobotName:   "butler",
+		Environment: "office",
+		// Langfuse 키는 nil (백업에 없음) → 기존 값 보존
+	}
+
+	model := tr.toModel(existing)
+	if model.LangfusePublicKey != "existing-public" {
+		t.Errorf("expected existing Langfuse public key preserved, got %q", model.LangfusePublicKey)
+	}
+	if model.LangfuseSecretKey != "existing-secret" {
+		t.Errorf("expected existing Langfuse secret key preserved, got %q", model.LangfuseSecretKey)
+	}
+}

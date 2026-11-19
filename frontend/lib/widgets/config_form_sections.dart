@@ -14,3 +14,4 @@ export 'config_section_header.dart';
 export 'config_system1_section.dart';
 export 'config_task_queue_section.dart';
 export 'config_langsmith_section.dart';
+export 'config_langfuse_section.dart';

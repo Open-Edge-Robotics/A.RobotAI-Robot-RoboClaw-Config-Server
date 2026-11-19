@@ -120,6 +120,43 @@ void main() {
     expect(decoded.limitsContent, '{"max_linear_speed":1.0}');
   });
 
+  test('RoboClawConfig Langfuse 트레이싱 설정을 API JSON에서 보존한다', () {
+    final config = RoboClawConfig(
+      name: 'former-0047',
+      robotName: 'former',
+      environment: 'kon47',
+      langfuseTracing: true,
+      langfusePublicKey: 'pk-lf-dummy',
+      langfuseSecretKey: 'sk-lf-dummy',
+      langfuseHost: 'http://192.168.50.47:3000',
+    );
+
+    final json = config.toJson();
+    expect(json['langfuse_tracing'], isTrue);
+    expect(json['langfuse_public_key'], 'pk-lf-dummy');
+    expect(json['langfuse_secret_key'], 'sk-lf-dummy');
+    expect(json['langfuse_host'], 'http://192.168.50.47:3000');
+
+    final decoded = RoboClawConfig.fromJson(json);
+    expect(decoded.langfuseTracing, isTrue);
+    expect(decoded.langfusePublicKey, 'pk-lf-dummy');
+    expect(decoded.langfuseSecretKey, 'sk-lf-dummy');
+    expect(decoded.langfuseHost, 'http://192.168.50.47:3000');
+  });
+
+  test('Langfuse 트레이싱 기본값은 비활성과 빈 값이다', () {
+    final config = RoboClawConfig.fromJson({
+      'name': 'default',
+      'robot_name': 'former',
+      'environment': 'kon47',
+    });
+
+    expect(config.langfuseTracing, isFalse);
+    expect(config.langfusePublicKey, '');
+    expect(config.langfuseSecretKey, '');
+    expect(config.langfuseHost, '');
+  });
+
   test(
     'RoboClawConfig System 1 router fields survive API JSON serialization',
     () {

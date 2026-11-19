@@ -398,6 +398,19 @@ func generateEnvContent(cfg *models.RoboClawConfig) string {
 		fmt.Fprintf(&sb, "LANGSMITH_WORKSPACE_ID=%s\n", cfg.LangsmithWorkspaceId)
 	}
 
+	// Langfuse 트레이싱 / 모니터링 설정
+	sb.WriteString("\n# ── Langfuse 트레이싱 / 모니터링 (선택) ──\n")
+	fmt.Fprintf(&sb, "LANGFUSE_TRACING=%t\n", cfg.LangfuseTracing)
+	if cfg.LangfusePublicKey != "" {
+		fmt.Fprintf(&sb, "LANGFUSE_PUBLIC_KEY=%s\n", cfg.LangfusePublicKey)
+	}
+	if cfg.LangfuseSecretKey != "" {
+		fmt.Fprintf(&sb, "LANGFUSE_SECRET_KEY=%s\n", cfg.LangfuseSecretKey)
+	}
+	if cfg.LangfuseHost != "" {
+		fmt.Fprintf(&sb, "LANGFUSE_HOST=%s\n", cfg.LangfuseHost)
+	}
+
 	// System 1 Fast Router 설정. 명시되지 않은 필드는 런타임 기본값과 일치시킨다.
 	router := cfg.System1Router
 	if router == "" {

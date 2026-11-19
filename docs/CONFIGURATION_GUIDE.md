@@ -252,6 +252,32 @@ Maestro는 여러 로봇의 계획·배정·기록을 단일 경로로 관리하
 기동하지 않습니다. `.env`에는 스위치가 항상 기록되므로, 노드를 쓰지 않는 프로필은 그대로
 꺼 두면 됩니다.
 
+### Langfuse 트레이싱 / 모니터링 (contract v2.14.0)
+
+`Langfuse 트레이싱 / 모니터링` 섹션에서 RoboClaw의 트레이스를 Langfuse로
+전송하는 설정을 관리합니다. LangSmith와 같은 자리의 관측 설정이며, 두 도구는
+서로 독립적으로 켜고 끌 수 있습니다.
+
+| 항목 | `.env` 키 | 기본값 | secret | 설명 |
+| --- | --- | --- | --- | --- |
+| `langfuse_tracing` | `LANGFUSE_TRACING` | `false` | 아니오 | 트레이싱 활성화 스위치입니다. |
+| `langfuse_public_key` | `LANGFUSE_PUBLIC_KEY` | 빈 값 | 예 | Langfuse 프로젝트 public key입니다. |
+| `langfuse_secret_key` | `LANGFUSE_SECRET_KEY` | 빈 값 | 예 | Langfuse 프로젝트 secret key입니다. |
+| `langfuse_host` | `LANGFUSE_HOST` | 빈 값 | 아니오 | 자체 호스팅 Langfuse 서버 주소입니다. 예: `http://192.168.50.47:3000` |
+
+- 키는 Langfuse 프로젝트의 `Settings → API Keys`에서 발급합니다.
+- `LANGFUSE_HOST`를 비우면 Langfuse 공개 클라우드를 사용합니다. 사내 Langfuse를
+  운영하면 위 예시처럼 서버 주소를 지정합니다.
+- `.env`에는 `LANGFUSE_TRACING`이 항상 기록되고, 나머지 세 항목은 값이 있을 때만
+  기록됩니다.
+- `langfuse_public_key`와 `langfuse_secret_key`는 API 응답과 v2 runtime manifest에서
+  `********`로 마스킹됩니다. 수정 요청에 마스킹 값이 그대로 오면 기존 저장 값을
+  유지합니다.
+- secret을 포함하지 않는 백업에서는 두 키가 빠지고, 가져오기 시 서버에 저장된 키를
+  덮어쓰지 않습니다.
+- 스위치만 켜고 키를 비우면 에이전트가 Langfuse 트레이싱을 비활성으로 처리하고 시작
+  로그에 키 누락을 남깁니다. 트레이싱을 켤 때는 두 키를 함께 지정합니다.
+
 ## 운영 확인
 
 서버 상태:

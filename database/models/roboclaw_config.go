@@ -163,6 +163,12 @@ type RoboClawConfig struct {
 	LangsmithEndpoint    string `json:"langsmith_endpoint"`                                // LANGSMITH_ENDPOINT (자체 호스팅/프록시 엔드포인트, 선택)
 	LangsmithWorkspaceId string `json:"langsmith_workspace_id"`                            // LANGSMITH_WORKSPACE_ID (workspace ID, 선택)
 
+	// ── Langfuse 트레이싱 / 모니터링 설정 ──
+	LangfuseTracing   bool   `gorm:"default:false" json:"langfuse_tracing"` // LANGFUSE_TRACING (트레이싱 활성화)
+	LangfusePublicKey string `json:"langfuse_public_key"`                   // LANGFUSE_PUBLIC_KEY (public key)
+	LangfuseSecretKey string `json:"langfuse_secret_key"`                   // LANGFUSE_SECRET_KEY (secret key)
+	LangfuseHost      string `json:"langfuse_host"`                         // LANGFUSE_HOST (self-hosted Langfuse 주소, 선택)
+
 	// ── System 1 Fast Router (contract v2.4.0+, step routing v2.9.0) ──
 	System1Router             string  `gorm:"default:'rule'" json:"system1_router"`          // SYSTEM1_ROUTER
 	System1Shadow             bool    `gorm:"default:false" json:"system1_shadow"`           // SYSTEM1_SHADOW

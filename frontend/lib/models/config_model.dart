@@ -135,6 +135,12 @@ class RoboClawConfig {
   String langsmithEndpoint;
   String langsmithWorkspaceId;
 
+  // Langfuse 트레이싱 / 모니터링 설정
+  bool langfuseTracing;
+  String langfusePublicKey;
+  String langfuseSecretKey;
+  String langfuseHost;
+
   // System 1 Fast Router (contract v2.4.0+, step routing v2.9.0)
   String system1Router;
   bool system1Shadow;
@@ -273,6 +279,10 @@ class RoboClawConfig {
     this.langsmithProject = 'former-0045-claw',
     this.langsmithEndpoint = '',
     this.langsmithWorkspaceId = '',
+    this.langfuseTracing = false,
+    this.langfusePublicKey = '',
+    this.langfuseSecretKey = '',
+    this.langfuseHost = '',
     this.system1Router = 'rule',
     this.system1Shadow = false,
     this.system1ShadowLog = '',
@@ -412,6 +422,10 @@ class RoboClawConfig {
       langsmithProject: json['langsmith_project'] ?? 'former-0045-claw',
       langsmithEndpoint: json['langsmith_endpoint'] ?? '',
       langsmithWorkspaceId: json['langsmith_workspace_id'] ?? '',
+      langfuseTracing: json['langfuse_tracing'] ?? false,
+      langfusePublicKey: json['langfuse_public_key'] ?? '',
+      langfuseSecretKey: json['langfuse_secret_key'] ?? '',
+      langfuseHost: json['langfuse_host'] ?? '',
       system1Router: json['system1_router'] ?? 'rule',
       system1Shadow: json['system1_shadow'] ?? false,
       system1ShadowLog: json['system1_shadow_log'] ?? '',
@@ -551,6 +565,10 @@ class RoboClawConfig {
       'langsmith_project': langsmithProject,
       'langsmith_endpoint': langsmithEndpoint,
       'langsmith_workspace_id': langsmithWorkspaceId,
+      'langfuse_tracing': langfuseTracing,
+      'langfuse_public_key': langfusePublicKey,
+      'langfuse_secret_key': langfuseSecretKey,
+      'langfuse_host': langfuseHost,
       'system1_router': system1Router,
       'system1_shadow': system1Shadow,
       'system1_shadow_log': system1ShadowLog,

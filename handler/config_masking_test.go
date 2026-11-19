@@ -21,6 +21,8 @@ func TestMaskSensitiveFieldsAll(t *testing.T) {
 		HttpControlToken:   "control",
 		QdrantApiKey:       "qdrant",
 		LangsmithApiKey:    "langsmith",
+		LangfusePublicKey:  "langfuse-public",
+		LangfuseSecretKey:  "langfuse-secret",
 		System1ApiKey:      "system1",
 		McpServersJson:     `[{"name":"fs"}]`,
 	}
@@ -43,6 +45,8 @@ func TestMaskSensitiveFieldsAll(t *testing.T) {
 		{"control", cfg.HttpControlToken},
 		{"qdrant", cfg.QdrantApiKey},
 		{"langsmith", cfg.LangsmithApiKey},
+		{"langfuse-public", cfg.LangfusePublicKey},
+		{"langfuse-secret", cfg.LangfuseSecretKey},
 		{"system1", cfg.System1ApiKey},
 	}
 	for _, f := range fields {

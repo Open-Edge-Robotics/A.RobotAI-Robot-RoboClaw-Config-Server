@@ -135,6 +135,10 @@ func seedData(db *gorm.DB) error {
 		LangsmithTracing:                false,
 		LangsmithApiKey:                 "",
 		LangsmithProject:                "former-0045-claw",
+		LangfuseTracing:                 false,
+		LangfusePublicKey:               "",
+		LangfuseSecretKey:               "",
+		LangfuseHost:                    "",
 	}
 	if err := db.Create(&butlerConfig).Error; err != nil {
 		return fmt.Errorf("Butler 기본 설정 시드 실패: %w", err)
@@ -169,6 +173,10 @@ func seedData(db *gorm.DB) error {
 		LangsmithTracing:                false,
 		LangsmithApiKey:                 "",
 		LangsmithProject:                "former-0045-claw",
+		LangfuseTracing:                 false,
+		LangfusePublicKey:               "",
+		LangfuseSecretKey:               "",
+		LangfuseHost:                    "",
 	}
 	if err := db.Create(&formerConfig).Error; err != nil {
 		return fmt.Errorf("Former 기본 설정 시드 실패: %w", err)

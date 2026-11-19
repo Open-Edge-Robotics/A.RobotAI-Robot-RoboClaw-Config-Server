@@ -2,6 +2,7 @@
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:frontend/widgets/config_langfuse_section.dart';
 import 'package:frontend/widgets/config_langsmith_section.dart';
 import 'package:frontend/widgets/config_learning_section.dart';
 import 'package:frontend/widgets/config_markdown_section.dart';
@@ -66,7 +67,27 @@ void main() {
     expect(find.text('Workspace ID (LANGSMITH_WORKSPACE_ID)'), findsOneWidget);
   });
 
-  testWidgets('영어 모드에서는 마크다운/학습/LangSmith 섹션에 한국어가 남지 않는다', (tester) async {
+  testWidgets('Langfuse 섹션 헤더가 표시된다', (tester) async {
+    await pump(
+      tester,
+      ConfigLangfuseSection(
+        isEditing: true,
+        langfuseTracing: true,
+        onLangfuseTracingChanged: (_) {},
+        langfusePublicKeyCtrl: TextEditingController(),
+        langfuseSecretKeyCtrl: TextEditingController(),
+        langfuseHostCtrl: TextEditingController(),
+      ),
+    );
+    expect(find.text('Langfuse 트레이싱 / 모니터링'), findsOneWidget);
+    expect(find.text('Public Key (LANGFUSE_PUBLIC_KEY)'), findsOneWidget);
+    expect(find.text('Secret Key (LANGFUSE_SECRET_KEY)'), findsOneWidget);
+    expect(find.text('Host (LANGFUSE_HOST)'), findsOneWidget);
+  });
+
+  testWidgets('영어 모드에서는 마크다운/학습/LangSmith/Langfuse 섹션에 한국어가 남지 않는다', (
+    tester,
+  ) async {
     useEnglishLocale();
 
     await pump(
@@ -103,6 +124,19 @@ void main() {
         langsmithWorkspaceIdCtrl: TextEditingController(),
         langsmithProjectCtrl: TextEditingController(),
         langsmithEndpointCtrl: TextEditingController(),
+      ),
+    );
+    expectNoKoreanText(tester);
+
+    await pump(
+      tester,
+      ConfigLangfuseSection(
+        isEditing: true,
+        langfuseTracing: true,
+        onLangfuseTracingChanged: (_) {},
+        langfusePublicKeyCtrl: TextEditingController(),
+        langfuseSecretKeyCtrl: TextEditingController(),
+        langfuseHostCtrl: TextEditingController(),
       ),
     );
     expectNoKoreanText(tester);

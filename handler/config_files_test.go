@@ -243,3 +243,37 @@ func TestGeneratedEnvOmitsCleanupRunLogPathWhenEmpty(t *testing.T) {
 		t.Fatalf("expected no cleanup run log path for empty value, got %q", content)
 	}
 }
+
+func TestGeneratedEnvIncludesLangfuseSettings(t *testing.T) {
+	cfg := &models.RoboClawConfig{
+		LangfuseTracing:   true,
+		LangfusePublicKey: "pk-lf-dummy",
+		LangfuseSecretKey: "sk-lf-dummy",
+		LangfuseHost:      "http://192.168.50.47:3000",
+	}
+
+	content := string(generateEnvContent(cfg))
+	for _, want := range []string{
+		"LANGFUSE_TRACING=true",
+		"LANGFUSE_PUBLIC_KEY=pk-lf-dummy",
+		"LANGFUSE_SECRET_KEY=sk-lf-dummy",
+		"LANGFUSE_HOST=http://192.168.50.47:3000",
+	} {
+		if !strings.Contains(content, want) {
+			t.Errorf("expected %q in generated dotenv, got %q", want, content)
+		}
+	}
+}
+
+func TestGeneratedEnvOmitsEmptyLangfuseValues(t *testing.T) {
+	content := string(generateEnvContent(&models.RoboClawConfig{}))
+
+	if !strings.Contains(content, "LANGFUSE_TRACING=false") {
+		t.Fatalf("expected LANGFUSE_TRACING=false in generated dotenv, got %q", content)
+	}
+	for _, key := range []string{"LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY", "LANGFUSE_HOST"} {
+		if strings.Contains(content, key) {
+			t.Errorf("expected no %s line for an empty value, got %q", key, content)
+		}
+	}
+}

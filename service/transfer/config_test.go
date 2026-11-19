@@ -279,3 +279,79 @@ func TestConfigFromModelCleanupDemoDefaults(t *testing.T) {
 		t.Error("신규 레코드는 기본값 true 를 써야 함")
 	}
 }
+
+// TestConfigTransferRoundTripPreservesLangfuseSettings 는 Langfuse 트레이싱
+// 설정 중 민감하지 않은 값(tracing/host)이 내보내기/가져오기 왕복에서
+// 그대로 유지되는지 확인한다.
+func TestConfigTransferRoundTripPreservesLangfuseSettings(t *testing.T) {
+	cfg := models.RoboClawConfig{
+		LangfuseTracing: true,
+		LangfuseHost:    "http://langfuse.internal:3000",
+	}
+
+	tr := ConfigFromModel(&cfg, false)
+	if !tr.LangfuseTracing || tr.LangfuseHost != "http://langfuse.internal:3000" {
+		t.Fatalf("Langfuse 비민감 설정이 내보내기에 담겨야 함: %#v", tr)
+	}
+
+	model := tr.ToModel(nil)
+	if !model.LangfuseTracing || model.LangfuseHost != "http://langfuse.internal:3000" {
+		t.Fatalf("Langfuse 비민감 설정이 왕복 후에도 유지되어야 함: %#v", model)
+	}
+}
+
+// TestConfigFromModelOmitsLangfuseSecretsByDefault 는 공개 키/시크릿 키가
+// 기본 내보내기에서 빠지고, 포함 옵션에서만 *string 으로 노출되는지 확인한다.
+func TestConfigFromModelOmitsLangfuseSecretsByDefault(t *testing.T) {
+	cfg := models.RoboClawConfig{
+		LangfusePublicKey: "pk-lf-dummy",
+		LangfuseSecretKey: "sk-lf-dummy",
+	}
+
+	withoutSecrets := ConfigFromModel(&cfg, false)
+	if withoutSecrets.LangfusePublicKey != nil || withoutSecrets.LangfuseSecretKey != nil {
+		t.Error("Langfuse 키는 기본 내보내기에서 빠져야 함")
+	}
+	data, err := json.Marshal(withoutSecrets)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(data, &fields); err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"langfuse_public_key", "langfuse_secret_key"} {
+		if _, exists := fields[key]; exists {
+			t.Errorf("민감 필드 %s 가 기본 JSON에 포함됨", key)
+		}
+	}
+
+	withSecrets := ConfigFromModel(&cfg, true)
+	if withSecrets.LangfusePublicKey == nil || *withSecrets.LangfusePublicKey != "pk-lf-dummy" {
+		t.Fatal("포함 옵션에서는 Langfuse public key 가 유지되어야 함")
+	}
+	if withSecrets.LangfuseSecretKey == nil || *withSecrets.LangfuseSecretKey != "sk-lf-dummy" {
+		t.Fatal("포함 옵션에서는 Langfuse secret key 가 유지되어야 함")
+	}
+}
+
+// TestConfigToModelPreservesLangfuseSecretsWhenAbsent 는 백업에 Langfuse 키가
+// 없을 때 기존 서버 값이 보존되는지 확인한다.
+func TestConfigToModelPreservesLangfuseSecretsWhenAbsent(t *testing.T) {
+	var tr ConfigTransfer
+	if err := json.Unmarshal([]byte(`{"name":"restored","robot_name":"butler","environment":"office"}`), &tr); err != nil {
+		t.Fatal(err)
+	}
+	existing := &models.RoboClawConfig{
+		LangfusePublicKey: "existing-public",
+		LangfuseSecretKey: "existing-secret",
+	}
+
+	model := tr.ToModel(existing)
+	if model.LangfusePublicKey != "existing-public" {
+		t.Errorf("백업에 없는 public key 는 기존 값을 보존해야 함, got %q", model.LangfusePublicKey)
+	}
+	if model.LangfuseSecretKey != "existing-secret" {
+		t.Errorf("백업에 없는 secret key 는 기존 값을 보존해야 함, got %q", model.LangfuseSecretKey)
+	}
+}

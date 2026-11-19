@@ -676,6 +676,12 @@ class LanguageManager {
     '엔드포인트 (LANGSMITH_ENDPOINT)': 'Endpoint (LANGSMITH_ENDPOINT)',
     '선택 — 자체 호스팅/프록시 엔드포인트': 'Optional — self-hosted or proxy endpoint',
 
+    // ===== Langfuse Tracing =====
+    'Langfuse 트레이싱 / 모니터링': 'Langfuse Tracing / Monitoring',
+    'Langfuse 트레이싱 활성화 (LANGFUSE_TRACING)':
+        'Enable Langfuse tracing (LANGFUSE_TRACING)',
+    '선택 — 자체 호스팅 Langfuse 서버 주소': 'Optional — self-hosted Langfuse server URL',
+
     // ===== Task Queue / Decomposition =====
     '태스크 큐 최대 대기열 크기 (RC_TASK_QUEUE_MAX_SIZE)':
         'Max Task Queue Size (RC_TASK_QUEUE_MAX_SIZE)',

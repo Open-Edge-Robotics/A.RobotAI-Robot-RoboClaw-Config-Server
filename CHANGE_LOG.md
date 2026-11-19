@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- 공통 runtime contract v2.14.0의 Langfuse 트레이싱 설정(`langfuse_tracing`, `langfuse_public_key`, `langfuse_secret_key`, `langfuse_host`)을 프로필 모델·v2 runtime manifest·백업 왕복·배포 `.env`·Flutter 설정 폼(`Langfuse 트레이싱 / 모니터링`)에 연결합니다. public/secret key는 마스킹·복원 표에 등록하고, 시드 기본값은 비활성과 빈 값으로 둡니다.
+
 ### Changed
 - Flutter의 Material import를 공식 `material_ui`로 전환하고 앱 lockfile을 추적합니다.
 - 로컬·CI에서 백엔드와 프론트엔드 커버리지 80% 게이트를 동일하게 적용합니다.

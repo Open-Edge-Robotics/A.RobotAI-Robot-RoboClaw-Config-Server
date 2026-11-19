@@ -348,3 +348,47 @@ func TestGetActiveRuntimeConfigV2IncludesFleetFields(t *testing.T) {
 		t.Errorf("expected System 1 API key masked in runtime manifest, got %v", config["system1_api_key"])
 	}
 }
+
+// TestGetActiveRuntimeConfigV2IncludesLangfuseFields 는 v2 manifest 응답이
+// Langfuse contract api_json field 를 노출하고 키를 마스킹하는지 확인한다.
+func TestGetActiveRuntimeConfigV2IncludesLangfuseFields(t *testing.T) {
+	h, db := setupRouterTestDB(t)
+	db.Create(&models.RoboClawConfig{
+		Name: "active", RobotName: "butler", Environment: "office", IsActive: true,
+		LangfuseTracing:   true,
+		LangfusePublicKey: "pk-lf-dummy",
+		LangfuseSecretKey: "sk-lf-dummy",
+		LangfuseHost:      "http://192.168.50.47:3000",
+	})
+
+	r := gin.New()
+	r.GET("/api/v2/device/runtime-config", h.GetActiveRuntimeConfigV2)
+	w := testutil.PerformJSON(r, "GET", "/api/v2/device/runtime-config?robot_name=butler&environment=office", "", nil)
+	if w.Code != 200 {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var response map[string]any
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	config := response["config"].(map[string]any)
+	for _, key := range []string{
+		"langfuse_tracing", "langfuse_public_key", "langfuse_secret_key", "langfuse_host",
+	} {
+		if _, ok := config[key]; !ok {
+			t.Errorf("expected runtime manifest to expose %q", key)
+		}
+	}
+	if config["langfuse_tracing"] != true {
+		t.Errorf("expected Langfuse tracing switch in runtime manifest, got %v", config["langfuse_tracing"])
+	}
+	if config["langfuse_host"] != "http://192.168.50.47:3000" {
+		t.Errorf("expected Langfuse host in runtime manifest, got %v", config["langfuse_host"])
+	}
+	if config["langfuse_public_key"] != MaskValue {
+		t.Errorf("expected Langfuse public key masked in runtime manifest, got %v", config["langfuse_public_key"])
+	}
+	if config["langfuse_secret_key"] != MaskValue {
+		t.Errorf("expected Langfuse secret key masked in runtime manifest, got %v", config["langfuse_secret_key"])
+	}
+}

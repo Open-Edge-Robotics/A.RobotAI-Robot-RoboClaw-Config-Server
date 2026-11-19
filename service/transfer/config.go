@@ -109,6 +109,8 @@ func ConfigFromModel(cfg *models.RoboClawConfig, includeSecrets bool) ConfigTran
 		LangsmithProject:                  cfg.LangsmithProject,
 		LangsmithEndpoint:                 cfg.LangsmithEndpoint,
 		LangsmithWorkspaceId:              cfg.LangsmithWorkspaceId,
+		LangfuseTracing:                   cfg.LangfuseTracing,
+		LangfuseHost:                      cfg.LangfuseHost,
 		System1Router:                     cfg.System1Router,
 		System1Shadow:                     cfg.System1Shadow,
 		System1ShadowLog:                  cfg.System1ShadowLog,
@@ -152,6 +154,8 @@ func ConfigFromModel(cfg *models.RoboClawConfig, includeSecrets bool) ConfigTran
 		t.HttpControlToken = strPtr(cfg.HttpControlToken)
 		t.QdrantApiKey = strPtr(cfg.QdrantApiKey)
 		t.LangsmithApiKey = strPtr(cfg.LangsmithApiKey)
+		t.LangfusePublicKey = strPtr(cfg.LangfusePublicKey)
+		t.LangfuseSecretKey = strPtr(cfg.LangfuseSecretKey)
 		t.System1ApiKey = strPtr(cfg.System1ApiKey)
 		t.McpServersJson = strPtr(cfg.McpServersJson)
 	}
@@ -312,6 +316,10 @@ func (t ConfigTransfer) ToModel(existing *models.RoboClawConfig) models.RoboClaw
 		LangsmithProject:                  t.LangsmithProject,
 		LangsmithEndpoint:                 t.LangsmithEndpoint,
 		LangsmithWorkspaceId:              t.LangsmithWorkspaceId,
+		LangfuseTracing:                   t.LangfuseTracing,
+		LangfusePublicKey:                 resolve(t.LangfusePublicKey, curStr(func(c *models.RoboClawConfig) string { return c.LangfusePublicKey })),
+		LangfuseSecretKey:                 resolve(t.LangfuseSecretKey, curStr(func(c *models.RoboClawConfig) string { return c.LangfuseSecretKey })),
+		LangfuseHost:                      t.LangfuseHost,
 		System1Router:                     t.System1Router,
 		System1Shadow:                     t.System1Shadow,
 		System1ShadowLog:                  t.System1ShadowLog,
