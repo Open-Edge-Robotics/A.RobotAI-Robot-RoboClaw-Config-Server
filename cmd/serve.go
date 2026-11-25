@@ -28,6 +28,9 @@ func ServeCmd() *wcli.Command {
 	return &wcli.Command{
 		Use:   "serve",
 		Short: "HTTP 서버를 시작합니다",
+		PreRun: func(_ *wcli.Context) error {
+			return InitConfig()
+		},
 		Run: func(_ *wcli.Context) error {
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()

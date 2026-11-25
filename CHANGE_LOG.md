@@ -3,6 +3,9 @@
 ## Unreleased
 
 ### Added
+- 원격 관리 전용 CLI `aics-cli`(Pure Go, CGO 없음)를 추가합니다. `profile`/`status`/`config`/`scenario`/`transfer`/`device`/`mcp`/`schema` 명령을 `internal/clicmd`·`internal/client`·`internal/cliconfig`·`internal/clioutput`으로 구현하고, 토큰은 환경변수·0600 파일로만 참조합니다. `.env` 조회는 stdout 기본 마스킹이며 `--out` 저장은 0600입니다. 종료 코드는 0/1/2/3/4/5로 구분합니다.
+- `aics` 바이너리도 동일한 원격 명령을 제공하도록 `main.go`에서 CLI 명령을 등록하고, `task build-cli`(`CGO_ENABLED=0`)와 `task build` 의존성에 추가합니다.
+- 테스트 시나리오 부분 수정 API(`PATCH /api/v1/admin/scenarios/:id`)를 추가합니다. `service/profile.MergeScenario`가 언급되지 않은 필드와 `id`·`is_active`·타임스탬프를 보존합니다.
 - 공통 runtime contract v2.14.0의 Langfuse 트레이싱 설정(`langfuse_tracing`, `langfuse_public_key`, `langfuse_secret_key`, `langfuse_host`)을 프로필 모델·v2 runtime manifest·백업 왕복·배포 `.env`·Flutter 설정 폼(`Langfuse 트레이싱 / 모니터링`)에 연결합니다. public/secret key는 마스킹·복원 표에 등록하고, 시드 기본값은 비활성과 빈 값으로 둡니다.
 
 ### Changed
@@ -23,6 +26,7 @@
 - GitLab release 조회·asset 다운로드에 30초 timeout 을 적용합니다.
 
 ### Fixed
+- `serve`가 하위 명령 등록 이후에도 설정을 초기화하도록 `PreRun`으로 옮깁니다.
 - Go 포맷 위반을 실제 실패로 처리하고 `testutil/`도 검사합니다.
 - 프론트엔드 영어 모드에서 한국어로 남던 라벨·설명을 모두 번역 경로에 연결합니다(Maestro/FleetControl, LangSmith, 태스크 큐, CLOi 정리 시연, MCP 카탈로그, 백업 가져오기 정책, Ollama 옵션 설명 등 95개 문구).
 - 보간값이 들어간 백업 요약·가져오기 완료 문구는 번역 템플릿(`LanguageManager.trTemplate`)으로 옮겨 영어에서도 번역되게 합니다.

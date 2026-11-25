@@ -95,8 +95,41 @@ go build -o aics .
 - 기본 포트인 `http://localhost:8080`에 접속하면 `/web/` 대시보드로 자동 리다이렉트됩니다.
 - CLI 명령어 목록:
   - `serve`: HTTP API 및 대시보드 서버를 시작합니다.
-  - `version`: 서버 바이너리의 버전을 출력합니다.
-  - `completion`: 셸 컴플리션 스크립트를 생성합니다.
+  - `profile`, `status`, `config`, `scenario`, `transfer`, `device`, `mcp`, `schema`: 원격 서버 접속·조회·수정·백업·검증 명령어.
+  - `contract`, `secret-scan`, `version`, `completion`: 컨트랙트/시크릿 검사 및 유틸리티.
+
+#### 원격 관리 전용 CLI (`aics-cli`, Pure Go / CGO 없음)
+
+로컬 머신이나 AI 에이전트 환경에서는 SQLite CGO 의존성이 없는 경량 원격 관리 바이너리 `aics-cli`를 별도로 빌드해 사용할 수 있습니다. (`aics` 바이너리에서도 동일한 원격 명령어를 지원합니다.)
+
+```bash
+# CGO 없는 Pure Go 빌드
+task build-cli
+# 또는: CGO_ENABLED=0 go build -o aics-cli ./cmd/aics-cli
+
+# 1. 원격 서버 프로필 등록 (토큰은 환경변수 또는 0600 파일 참조 권장)
+export AICS_PROD_TOKEN="<admin-token>"
+./aics-cli profile set prod --url https://config.example.com --token-env AICS_PROD_TOKEN --use
+./aics-cli status --json
+
+# 2. 설정 조회, 부분 수정(시크릿 자동 보존), 사전 diff 확인
+./aics-cli config list --robot butler --env office --json
+./aics-cli config patch --robot butler --env office --active --set llm_model=gpt-4.1 --dry-run
+./aics-cli config patch 1 --set llm_model=gpt-4.1 --json
+
+# 3. 마크다운/JSON 파일 반영 및 .env 안전 조회(stdout 기본 마스킹, --out 시 0600 저장)
+./aics-cli config file set 1 ROBOT.md --from ./ROBOT.md
+./aics-cli config file get 1 .env --out /tmp/robot.env
+
+# 4. 테스트 시나리오 및 케이스 관리 / 백업 검증·적용 / 스키마 탐색
+./aics-cli scenario patch 1 --set description="office smoke"
+./aics-cli scenario case add 1 --id tc_bat --name "Battery" --type battery
+./aics-cli transfer export --out backup.json
+./aics-cli transfer import --from backup.json --dry-run
+./aics-cli schema fields --query llm --json
+```
+
+> 파괴적 작업(`delete`, `activate`, `transfer import --conflict overwrite`)은 비대화형 안전을 위해 `--yes` 플래그가 필요합니다. 종료 코드는 `0`(성공), `1`(일반/5xx), `2`(입력/400), `3`(인증/401·403), `4`(없음/404), `5`(충돌/409·429)로 구분됩니다.
 
 ### 3. Docker 기반 빌드 및 실행
 

@@ -1,5 +1,6 @@
 ai-config-server
 aics
+/aics-cli
 
 # Created by https://www.toptal.com/developers/gitignore/api/dart,go,linux,macos,visualstudiocode,windows
 # Edit at https://www.toptal.com/developers/gitignore?templates=dart,go,linux,macos,visualstudiocode,windows

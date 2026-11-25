@@ -41,7 +41,7 @@ func TestFormatGateRejectsUnformattedGo(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			dir := t.TempDir()
-			for _, subdir := range []string{"cmd", "config", "database", "handler", "internal", "service", "testutil", "frontend", "bin"} {
+			for _, subdir := range []string{"cmd", "config", "contracts", "database", "handler", "internal", "service", "testutil", "frontend", "bin"} {
 				if err := os.Mkdir(filepath.Join(dir, subdir), 0o700); err != nil {
 					t.Fatal(err)
 				}

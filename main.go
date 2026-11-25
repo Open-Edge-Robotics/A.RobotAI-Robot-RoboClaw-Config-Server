@@ -5,6 +5,8 @@ import (
 	"os"
 
 	"ai-config-server/cmd"
+	"ai-config-server/internal/clicmd"
+	"ai-config-server/internal/client"
 	"github.com/wkqco33/wcli"
 	"github.com/wkqco33/wcli/logging"
 )
@@ -16,13 +18,11 @@ func main() {
 	logging.SetLogger(logger)
 
 	root := &wcli.Command{
-		Use:     "aics",
-		Aliases: []string{"ai-config-server"},
-		Short:   "ai-config-server 서버",
-		Version: version,
-		PersistentPreRun: func(ctx *wcli.Context) error {
-			return cmd.InitConfig()
-		},
+		Use:           "aics",
+		Aliases:       []string{"ai-config-server"},
+		Short:         "ai-config-server 서버 및 원격 관리 CLI",
+		Version:       version,
+		SilenceErrors: true,
 	}
 
 	root.AddCommand(
@@ -32,9 +32,10 @@ func main() {
 		cmd.VersionCmd(version),
 		wcli.NewCompletionCommand(root),
 	)
+	clicmd.RegisterCommands(root, clicmd.DefaultRuntime())
 
 	if err := root.Execute(os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		os.Exit(client.ExitCodeFromError(err))
 	}
 }
