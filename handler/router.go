@@ -58,6 +58,7 @@ func NewRouter(cfg *config.Config, db *gorm.DB) *gin.Engine {
 			adminGroup.GET("/scenarios/:id", h.GetTestScenario)
 			adminGroup.POST("/scenarios", h.CreateTestScenario)
 			adminGroup.PUT("/scenarios/:id", h.UpdateTestScenario)
+			adminGroup.PATCH("/scenarios/:id", h.PatchTestScenario)
 			adminGroup.DELETE("/scenarios/:id", h.DeleteTestScenario)
 			adminGroup.POST("/scenarios/:id/activate", h.ActivateTestScenario)
 			adminGroup.POST("/scenarios/:id/clone", h.CloneTestScenario)

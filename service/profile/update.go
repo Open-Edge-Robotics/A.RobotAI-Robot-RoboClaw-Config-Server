@@ -86,3 +86,40 @@ func Merge(current models.RoboClawConfig, patch map[string]json.RawMessage, id u
 	service.ApplyButlerPathDefaults(&req)
 	return req, nil
 }
+
+// MergeScenario 는 PATCH 수정 요청을 기존 TestScenario 레코드와 병합한다.
+// 언급되지 않은 필드와 보호 필드(ID/타임스탬프/is_active)는 기존 값을 유지한다.
+func MergeScenario(current models.TestScenario, patch map[string]json.RawMessage, id uint) (models.TestScenario, error) {
+	existingJSON, err := json.Marshal(current)
+	if err != nil {
+		return models.TestScenario{}, &MergeError{stage: ErrMergeBase, err: err}
+	}
+	merged := make(map[string]json.RawMessage)
+	if err := json.Unmarshal(existingJSON, &merged); err != nil {
+		return models.TestScenario{}, &MergeError{stage: ErrMergeBase, err: err}
+	}
+
+	for key, value := range patch {
+		merged[key] = value
+	}
+	for _, key := range protectedPatchKeys {
+		delete(merged, key)
+	}
+
+	mergedJSON, err := json.Marshal(merged)
+	if err != nil {
+		return models.TestScenario{}, &MergeError{stage: ErrMergePatch, err: err}
+	}
+
+	var req models.TestScenario
+	if err := json.Unmarshal(mergedJSON, &req); err != nil {
+		return models.TestScenario{}, &MergeError{stage: ErrPatchFieldType, err: err}
+	}
+
+	req.IsActive = current.IsActive
+	req.CreatedAt = current.CreatedAt
+	req.UpdatedAt = current.UpdatedAt
+	req.DeletedAt = current.DeletedAt
+	req.ID = id
+	return req, nil
+}

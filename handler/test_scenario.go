@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -151,6 +152,49 @@ func (h *Handler) UpdateTestScenario(c *gin.Context) {
 	}
 
 	LogInfo("[SUCCESS] 테스트 시나리오 수정 완료 | ID: %d, Name: %s, Robot: %s", req.ID, req.Name, req.RobotName)
+	c.JSON(http.StatusOK, req)
+}
+
+// PatchTestScenario PATCH /api/v1/admin/scenarios/:id
+// 부분 필드만 병합하여 수정하며, 미언급 필드와 is_active/메타데이터는 기존 값을 유지합니다.
+func (h *Handler) PatchTestScenario(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		LogAndRespondError(c, http.StatusBadRequest, "올바르지 않은 ID 형식입니다.", err)
+		return
+	}
+
+	var item models.TestScenario
+	if err := h.DB.WithContext(c.Request.Context()).First(&item, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			LogAndRespondError(c, http.StatusNotFound, "수정 대상 테스트 시나리오를 찾을 수 없습니다.", err)
+		} else {
+			LogAndRespondError(c, http.StatusInternalServerError, "기존 테스트 시나리오를 조회하는 중 오류가 발생했습니다.", err)
+		}
+		return
+	}
+
+	var fields map[string]json.RawMessage
+	if err := c.ShouldBindJSON(&fields); err != nil {
+		LogAndRespondError(c, http.StatusBadRequest, "수정 요청 JSON 데이터 유효성 검증에 실패했습니다.", err)
+		return
+	}
+
+	req, err := profile.MergeScenario(item, fields, uint(id))
+	if err != nil {
+		LogAndRespondError(c, mergeErrorStatus(err), mergeErrorMessage(err), err)
+		return
+	}
+
+	err = h.DB.WithContext(c.Request.Context()).Transaction(func(tx *gorm.DB) error {
+		return profile.UpdateScenarioInTx(tx, &req)
+	})
+	if err != nil {
+		LogAndRespondError(c, http.StatusInternalServerError, "테스트 시나리오 변경 사항을 반영하지 못했습니다.", err)
+		return
+	}
+
+	LogInfo("[SUCCESS] 테스트 시나리오 부분 수정 완료 | ID: %d, Name: %s, Robot: %s", req.ID, req.Name, req.RobotName)
 	c.JSON(http.StatusOK, req)
 }
 

@@ -171,3 +171,60 @@ func TestMergeIgnoresUnknownFields(t *testing.T) {
 		t.Errorf("expected patched name, got %q", merged.Name)
 	}
 }
+
+// TestMergeScenarioPreservesUnmentionedAndProtectedFields 는 시나리오 부분 수정 시
+// 언급되지 않은 필드와 보호 필드(id, is_active, 타임스탬프)를 유지하는지 검증한다.
+func TestMergeScenarioPreservesUnmentionedAndProtectedFields(t *testing.T) {
+	created := time.Date(2025, 2, 3, 4, 5, 6, 0, time.UTC)
+	current := models.TestScenario{
+		Model:       gorm.Model{ID: 11, CreatedAt: created, UpdatedAt: created.Add(time.Minute)},
+		Name:        "office-check",
+		Description: "original desc",
+		RobotName:   "butler",
+		Environment: "office",
+		IsActive:    true,
+		TestCases: models.TestCaseList{
+			{ID: "tc1", Name: "Ping", Type: "ping", TimeoutMs: 3000, Enabled: true},
+		},
+	}
+
+	merged, err := MergeScenario(current, patchOf(t, `{
+		"id": 999,
+		"is_active": false,
+		"description": "updated desc"
+	}`), 11)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if merged.ID != 11 {
+		t.Errorf("expected ID 11, got %d", merged.ID)
+	}
+	if !merged.IsActive {
+		t.Error("expected is_active preserved")
+	}
+	if !merged.CreatedAt.Equal(created) {
+		t.Errorf("expected CreatedAt preserved, got %v", merged.CreatedAt)
+	}
+	if merged.Name != "office-check" || merged.RobotName != "butler" || merged.Environment != "office" {
+		t.Errorf("expected unmentioned fields preserved, got %+v", merged)
+	}
+	if merged.Description != "updated desc" {
+		t.Errorf("expected updated description, got %q", merged.Description)
+	}
+	if len(merged.TestCases) != 1 || merged.TestCases[0].ID != "tc1" {
+		t.Errorf("expected test_cases preserved, got %+v", merged.TestCases)
+	}
+}
+
+// TestMergeScenarioRejectsInvalidFieldType 는 시나리오 필드 타입 오류를 ErrPatchFieldType 으로 구분하는지 검증한다.
+func TestMergeScenarioRejectsInvalidFieldType(t *testing.T) {
+	current := models.TestScenario{Name: "office-check"}
+	_, err := MergeScenario(current, patchOf(t, `{"test_cases":"not-an-array"}`), 1)
+	if err == nil {
+		t.Fatal("expected error for invalid test_cases type")
+	}
+	if !errors.Is(err, ErrPatchFieldType) {
+		t.Errorf("expected ErrPatchFieldType, got %v", err)
+	}
+}

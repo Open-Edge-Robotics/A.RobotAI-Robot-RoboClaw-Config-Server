@@ -126,3 +126,62 @@ func TestListTestScenariosFilter(t *testing.T) {
 		t.Fatalf("expected 1 scenario, got %d", len(list))
 	}
 }
+
+// TestPatchTestScenarioPartialUpdate 는 PATCH 로 일부 필드만 수정할 때 기존 필드와 is_active 가 보존되는지 검증한다.
+func TestPatchTestScenarioPartialUpdate(t *testing.T) {
+	h, db := setupRouterTestDB(t)
+	sc := models.TestScenario{
+		Name:        "sc-orig",
+		Description: "desc-orig",
+		RobotName:   "butler",
+		Environment: "office",
+		IsActive:    true,
+		TestCases: models.TestCaseList{
+			{ID: "tc1", Name: "Ping", Type: "ping", TimeoutMs: 1000, Enabled: true},
+		},
+	}
+	db.Create(&sc)
+
+	r := gin.New()
+	r.PATCH("/s/:id", h.PatchTestScenario)
+
+	w := testutil.PerformJSON(r, "PATCH", fmt.Sprintf("/s/%d", sc.ID), "", map[string]any{
+		"description": "desc-patched",
+		"is_active":   false,
+	})
+	if w.Code != 200 {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var stored models.TestScenario
+	db.First(&stored, sc.ID)
+	if stored.Description != "desc-patched" {
+		t.Errorf("expected description patched, got %q", stored.Description)
+	}
+	if stored.Name != "sc-orig" || stored.RobotName != "butler" || len(stored.TestCases) != 1 {
+		t.Errorf("expected unmentioned fields preserved, got %+v", stored)
+	}
+	if !stored.IsActive {
+		t.Errorf("expected is_active preserved")
+	}
+}
+
+// TestPatchTestScenarioErrors 는 PATCH 의 잘못된 ID, 없는 리소스, 타입 오류 응답을 검증한다.
+func TestPatchTestScenarioErrors(t *testing.T) {
+	h, db := setupRouterTestDB(t)
+	sc := models.TestScenario{Name: "sc", RobotName: "butler", Environment: "office"}
+	db.Create(&sc)
+
+	r := gin.New()
+	r.PATCH("/s/:id", h.PatchTestScenario)
+
+	if w := testutil.PerformJSON(r, "PATCH", "/s/abc", "", map[string]any{"name": "x"}); w.Code != 400 {
+		t.Fatalf("expected 400 for invalid id, got %d", w.Code)
+	}
+	if w := testutil.PerformJSON(r, "PATCH", "/s/9999", "", map[string]any{"name": "x"}); w.Code != 404 {
+		t.Fatalf("expected 404 for missing scenario, got %d", w.Code)
+	}
+	if w := testutil.PerformJSON(r, "PATCH", fmt.Sprintf("/s/%d", sc.ID), "", map[string]any{"test_cases": "invalid"}); w.Code != 400 {
+		t.Fatalf("expected 400 for invalid field type, got %d: %s", w.Code, w.Body.String())
+	}
+}
