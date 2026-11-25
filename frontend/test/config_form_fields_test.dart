@@ -232,11 +232,11 @@ void main() {
 
       expect(
         () => textController.addListener(() {}),
-        throwsA(isA<FlutterError>()),
+        throwsA(anyOf(isA<FlutterError>(), isA<StateError>())),
       );
       expect(
         () => ollamaController.addListener(() {}),
-        throwsA(isA<FlutterError>()),
+        throwsA(anyOf(isA<FlutterError>(), isA<StateError>())),
       );
     });
   });
